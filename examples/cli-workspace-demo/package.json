@@ -1,0 +1,13 @@
+{
+  "name": "@atlas/example-cli-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Compile and run a workspace using the atlas CLI",
+  "scripts": {
+    "demo": "pnpm exec atlas doctor --workspace . && pnpm exec atlas compile --workspace . && pnpm exec atlas run --workspace ."
+  },
+  "dependencies": {
+    "@atlas/cli": "workspace:*"
+  }
+}

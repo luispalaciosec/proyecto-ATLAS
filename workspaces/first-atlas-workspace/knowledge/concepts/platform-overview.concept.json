@@ -1,0 +1,6 @@
+{
+  "title": "Atlas Platform Overview",
+  "domain": "platform",
+  "summary": "Atlas transforms knowledge into compiled, executable intelligence through a deterministic Kernel.",
+  "capabilities": ["compile", "execute", "events", "sdk", "cli"]
+}

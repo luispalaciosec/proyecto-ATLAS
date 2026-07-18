@@ -1,0 +1,9 @@
+{
+  "title": "Access Control Policy",
+  "domain": "security",
+  "statements": [
+    "All production access requires multi-factor authentication.",
+    "Privileged actions must be audited and traceable.",
+    "Access grants expire after 90 days unless renewed."
+  ]
+}

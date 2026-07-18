@@ -1,0 +1,68 @@
+{
+  "name": "first-atlas-workspace",
+  "version": "1.0.0",
+  "environment": "memory",
+  "description": "First functional Atlas project — security knowledge base demo",
+  "units": [
+    {
+      "id": "policy.security.access-control",
+      "origin": "knowledge/policies/access-control.policy.json",
+      "checksum": "sha256:access-control-v1",
+      "version": "1.0.0",
+      "source": {
+        "title": "Access Control Policy",
+        "domain": "security",
+        "statements": [
+          "All production access requires multi-factor authentication.",
+          "Privileged actions must be audited and traceable.",
+          "Access grants expire after 90 days unless renewed."
+        ]
+      },
+      "metadata": {
+        "kind": "DocumentNode",
+        "domain": "security",
+        "owner": "platform-team",
+        "tags": ["policy", "access", "mfa"]
+      }
+    },
+    {
+      "id": "policy.compliance.data-retention",
+      "origin": "knowledge/policies/data-retention.policy.json",
+      "checksum": "sha256:data-retention-v1",
+      "version": "1.0.0",
+      "source": {
+        "title": "Data Retention Policy",
+        "domain": "compliance",
+        "statements": [
+          "Operational logs are retained for 365 days.",
+          "Customer data deletion requests must complete within 30 days.",
+          "Archived knowledge artifacts require explicit approval."
+        ]
+      },
+      "metadata": {
+        "kind": "DocumentNode",
+        "domain": "compliance",
+        "owner": "legal-team",
+        "tags": ["policy", "retention", "gdpr"]
+      }
+    },
+    {
+      "id": "concept.platform.overview",
+      "origin": "knowledge/concepts/platform-overview.concept.json",
+      "checksum": "sha256:platform-overview-v1",
+      "version": "1.0.0",
+      "source": {
+        "title": "Atlas Platform Overview",
+        "domain": "platform",
+        "summary": "Atlas transforms knowledge into compiled, executable intelligence through a deterministic Kernel.",
+        "capabilities": ["compile", "execute", "events", "sdk", "cli"]
+      },
+      "metadata": {
+        "kind": "DocumentNode",
+        "domain": "platform",
+        "owner": "atlas-team",
+        "tags": ["concept", "overview"]
+      }
+    }
+  ]
+}

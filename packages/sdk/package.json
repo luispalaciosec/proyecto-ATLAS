@@ -1,0 +1,35 @@
+{
+  "name": "@atlas/sdk",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Public facade for the Atlas Kernel — orchestrates core, compiler, events, and runtime",
+  "license": "UNLICENSED",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --sourcemap",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src tests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@atlas/core": "workspace:*",
+    "@atlas/compiler": "workspace:*",
+    "@atlas/events": "workspace:*",
+    "@atlas/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^3.0.8"
+  }
+}

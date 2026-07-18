@@ -1,0 +1,16 @@
+{
+  "name": "@atlas/example-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Kernel facade demo using only @atlas/sdk",
+  "scripts": {
+    "demo": "tsx run.ts"
+  },
+  "dependencies": {
+    "@atlas/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4"
+  }
+}

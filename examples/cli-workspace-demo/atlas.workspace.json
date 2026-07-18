@@ -1,0 +1,20 @@
+{
+  "name": "cli-demo-workspace",
+  "environment": "memory",
+  "units": [
+    {
+      "id": "policy.cli.demo",
+      "origin": "memory://policies/cli-demo",
+      "checksum": "sha256:cli-demo",
+      "version": "1.0.0",
+      "source": {
+        "title": "CLI Demo Policy",
+        "statements": ["Atlas CLI consumes the Kernel through @atlas/sdk only."]
+      },
+      "metadata": {
+        "kind": "DocumentNode",
+        "domain": "cli-demo"
+      }
+    }
+  ]
+}

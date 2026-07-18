@@ -1,0 +1,16 @@
+{
+  "name": "@atlas/workspace-first",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Milestone 1 — First functional Atlas workspace",
+  "scripts": {
+    "doctor": "pnpm exec atlas doctor --workspace .",
+    "compile": "pnpm exec atlas compile --workspace .",
+    "run": "pnpm exec atlas run --workspace .",
+    "demo": "bash scripts/demo.sh"
+  },
+  "dependencies": {
+    "@atlas/cli": "workspace:*"
+  }
+}

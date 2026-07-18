@@ -1,0 +1,17 @@
+{
+  "name": "@atlas/example-compiler-in-memory",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "In-memory end-to-end Atlas Compiler demonstration",
+  "scripts": {
+    "demo": "tsx run.ts"
+  },
+  "dependencies": {
+    "@atlas/compiler": "workspace:*",
+    "@atlas/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4"
+  }
+}

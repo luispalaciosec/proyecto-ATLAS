@@ -1,0 +1,16 @@
+{
+  "name": "@atlas/example-runtime",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Compile and execute artifacts via @atlas/sdk only",
+  "scripts": {
+    "demo": "tsx run.ts"
+  },
+  "dependencies": {
+    "@atlas/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4"
+  }
+}

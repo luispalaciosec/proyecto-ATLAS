@@ -1,0 +1,9 @@
+{
+  "title": "Data Retention Policy",
+  "domain": "compliance",
+  "statements": [
+    "Operational logs are retained for 365 days.",
+    "Customer data deletion requests must complete within 30 days.",
+    "Archived knowledge artifacts require explicit approval."
+  ]
+}

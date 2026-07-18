@@ -1,0 +1,25 @@
+{
+  "name": "@atlas/prompt",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Atlas prompt package — bootstrap stub",
+  "license": "UNLICENSED",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --sourcemap",
+    "test": "vitest run",
+    "lint": "eslint src tests",
+    "typecheck": "tsc --noEmit"
+  }
+}

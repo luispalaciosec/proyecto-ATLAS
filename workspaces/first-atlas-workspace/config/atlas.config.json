@@ -1,0 +1,20 @@
+{
+  "workspace": {
+    "name": "first-atlas-workspace",
+    "version": "1.0.0",
+    "description": "First functional Atlas project using the minimal Kernel",
+    "environment": "memory"
+  },
+  "compiler": {
+    "profile": "default",
+    "generators": ["summary"]
+  },
+  "runtime": {
+    "profile": "default",
+    "executors": ["summary"]
+  },
+  "metadata": {
+    "milestone": "M1-first-atlas-workspace",
+    "owner": "atlas-team"
+  }
+}
