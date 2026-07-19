@@ -7,7 +7,7 @@ audience: Architecture Board / Product Owner
 date: 2026-07-18
 scope: Release Sprint v0.1.0-alpha — re-auditoría post-correcciones
 related:
-  - Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md
+  - ATLAS-RELEASE-001-KERNEL_v0.1.md
   - VERSION.md
   - README.md
 supersedes:
@@ -152,7 +152,7 @@ El repositorio está **listo** para declarar el Release Candidate interno **Kern
 |----------------|--------|
 | `packages/cli/tests/*.ts` | Casts `as unknown as` para mocks type-safe |
 | 19 archivos TS/JSON | Formato Prettier |
-| `Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md` | Quality gates CI, tabla versiones |
+| `ATLAS-RELEASE-001-KERNEL_v0.1.md` | Quality gates CI, tabla versiones |
 | `IMPLEMENTATION_READINESS_REPORT.md` | Marcado histórico, Foundation completada |
 | `CORE_IMPLEMENTATION_PLAN.md` | Marcado histórico, Sprint 1 completado |
 | `README.md` | Creado |

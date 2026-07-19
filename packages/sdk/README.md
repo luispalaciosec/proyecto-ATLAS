@@ -6,8 +6,8 @@ Depends on `@atlas/core`, `@atlas/compiler`, `@atlas/events`, `@atlas/knowledge`
 
 ## Specifications
 
-- `SDK/ATLAS-200-SDK_OVERVIEW.md`
-- `SDK/ATLAS-202-SDK_TYPESCRIPT.md`
+- `../../spec/sdk/ATLAS-200-SDK_OVERVIEW.md`
+- `../../spec/sdk/ATLAS-202-SDK_TYPESCRIPT.md`
 
 ## Scope (Sprint 9)
 

@@ -6,9 +6,9 @@ Depends on `@atlas/core`, `@atlas/compiler`, and `@atlas/events`.
 
 ## Specifications
 
-- `Domain/ATLAS-DOM-009-RUNTIME_DOMAIN.md`
-- `SDK/ATLAS-204-SDK_EVENTS.md` (runtime events)
-- `SDK/ATLAS-202-SDK_TYPESCRIPT.md` (Runtime module)
+- `../../spec/domain/ATLAS-DOM-009-RUNTIME_DOMAIN.md`
+- `../../spec/sdk/ATLAS-204-SDK_EVENTS.md` (runtime events)
+- `../../spec/sdk/ATLAS-202-SDK_TYPESCRIPT.md` (Runtime module)
 
 ## Scope (Sprint 5)
 

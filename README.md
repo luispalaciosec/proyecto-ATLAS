@@ -21,7 +21,7 @@ Atlas se divide en dos etapas:
 
 El Kernel v0.1 es la plataforma estable sobre la que se construirán todas las capacidades futuras.
 
-Documentación fundacional: [`Foundation/`](./Foundation/) · Release oficial: [`Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md)
+Documentación fundacional: [`spec/foundation/`](./spec/foundation/) · Release oficial: [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/ATLAS-RELEASE-001-KERNEL_v0.1.md)
 
 ---
 
@@ -48,7 +48,7 @@ Developer
 core → events → compiler → runtime → sdk → cli
 ```
 
-Especificaciones: [`Architecture/`](./Architecture/) · [`Domain/`](./Domain/) · [`Engine/`](./Engine/) · [`SDK/`](./SDK/)
+Especificaciones: [`spec/architecture/`](./spec/architecture/) · [`spec/domain/`](./spec/domain/) · [`spec/engine/`](./spec/engine/) · [`spec/sdk/`](./spec/sdk/)
 
 ---
 
@@ -56,12 +56,15 @@ Especificaciones: [`Architecture/`](./Architecture/) · [`Domain/`](./Domain/) �
 
 ```text
 ATLAS/
-├── Foundation/          # Filosofía, principios, gobernanza
-├── Architecture/        # Especificaciones arquitectónicas
-├── Domain/              # Modelo de dominio
-├── Engine/              # Especificaciones de motores
-├── SDK/                 # Especificaciones del SDK
-├── Releases/            # Releases oficiales y readiness reports
+├── adr/                 # Architecture Decision Records
+├── spec/                # Especificaciones normativas (fuente única de verdad)
+│   ├── foundation/      # Filosofía, principios, gobernanza
+│   ├── architecture/    # Especificaciones arquitectónicas
+│   ├── domain/          # Modelo de dominio
+│   ├── engine/          # Especificaciones de motores
+│   ├── sdk/             # Especificaciones del SDK
+│   ├── capabilities/    # Especificaciones de capacidades (p. ej. knowledge/)
+│   └── product/         # Modelo conceptual de producto
 ├── packages/            # Paquetes npm @atlas/*
 │   ├── core/            # Kernel — implementado
 │   ├── compiler/        # Kernel — implementado
@@ -72,9 +75,14 @@ ATLAS/
 │   └── …                # 14 stubs Stage 2 (0.0.0)
 ├── workspaces/          # Proyectos Atlas de referencia
 ├── examples/            # Demos técnicas por sprint
+├── releases/            # Releases oficiales, readiness reports, migration reports
+├── docs/                # Documentación humana + proposals/rfc
+├── templates/           # Plantillas reutilizables
+├── tools/               # Herramientas de desarrollo
+├── scripts/             # Scripts de automatización
+├── plugins/             # Extensiones de terceros (reservado)
 ├── apps/                # Reservado
-├── tools/               # Reservado
-└── docs/                # Documentación adicional
+└── tests/               # Reservado (tests cross-package)
 ```
 
 ---

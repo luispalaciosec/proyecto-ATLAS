@@ -6,8 +6,8 @@ Consumes the Kernel **exclusively** through `@atlas/sdk`. Contains no business l
 
 ## Specifications
 
-- `SDK/ATLAS-201-SDK_CLI.md`
-- `SDK/ATLAS-202-SDK_TYPESCRIPT.md` (SDK as Kernel facade)
+- `../../spec/sdk/ATLAS-201-SDK_CLI.md`
+- `../../spec/sdk/ATLAS-202-SDK_TYPESCRIPT.md` (SDK as Kernel facade)
 
 ## Architecture
 

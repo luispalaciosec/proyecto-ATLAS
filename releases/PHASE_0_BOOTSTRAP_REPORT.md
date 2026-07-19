@@ -13,7 +13,7 @@ purpose: >
   de autorizar la implementación de packages/core.
 related:
   - IMPLEMENTATION_READINESS_REPORT.md
-  - Architecture/ATLAS-ARCH-002 — PACKAGE_ARCHITECTURE.md
+  - ../spec/architecture/ATLAS-ARCH-002-PACKAGE_ARCHITECTURE.md
 ---
 
 # PHASE_0_BOOTSTRAP_REPORT.md
@@ -721,8 +721,8 @@ Phase 0 cumplió su objetivo: **transformar el repositorio documental en un mono
 ## Apéndice B — Referencias
 
 - `IMPLEMENTATION_READINESS_REPORT.md` — Audit pre-Phase 0
-- `Architecture/ATLAS-ARCH-002 — PACKAGE_ARCHITECTURE.md` — Fuente de verdad estructural
-- `Foundation/ATLAS-000-README.md` — Organización del proyecto
+- `../spec/architecture/ATLAS-ARCH-002-PACKAGE_ARCHITECTURE.md` — Fuente de verdad estructural
+- `../spec/foundation/ATLAS-000-README.md` — Organización del proyecto
 
 ---
 

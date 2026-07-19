@@ -6,8 +6,8 @@ Depends exclusively on `@atlas/core`.
 
 ## Specifications
 
-- `SDK/ATLAS-204-SDK_EVENTS.md`
-- `Engine/ATLAS-100-ENGINE.md` (event traceability principles)
+- `../../spec/sdk/ATLAS-204-SDK_EVENTS.md`
+- `../../spec/engine/ATLAS-100-ENGINE.md` (event traceability principles)
 
 ## Scope (Sprint 3)
 

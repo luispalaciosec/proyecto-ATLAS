@@ -7,11 +7,11 @@ phase: 2
 created: 2026-07-18
 last_updated: 2026-07-18
 superseded_by:
-  - Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md
+  - ATLAS-RELEASE-001-KERNEL_v0.1.md
   - VERSION.md
 purpose: >
   Documento histórico de la transición Phase 0 → Sprint 1.
-  La Fase Fundacional está completada; ver Releases/ y VERSION.md
+  La Fase Fundacional está completada; ver releases/ y VERSION.md
   para el estado actual del repositorio.
 ---
 
@@ -22,9 +22,9 @@ purpose: >
 > **Estado actual (18/07/2026):** Fase Fundacional **COMPLETADA**. Kernel v0.1 congelado.
 >
 > Para el estado vigente del repositorio consultar:
-> - [`VERSION.md`](./VERSION.md)
-> - [`Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md)
-> - [`README.md`](./README.md)
+> - [`VERSION.md`](../VERSION.md)
+> - [`ATLAS-RELEASE-001-KERNEL_v0.1.md`](./ATLAS-RELEASE-001-KERNEL_v0.1.md)
+> - [`README.md`](../README.md)
 
 ---
 

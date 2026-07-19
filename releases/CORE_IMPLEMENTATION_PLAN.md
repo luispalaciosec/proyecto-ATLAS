@@ -9,7 +9,7 @@ created: 2026-07-18
 author: Lead Software Engineer
 audience: Owner / Software Engineer
 superseded_by:
-  - Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md
+  - ATLAS-RELEASE-001-KERNEL_v0.1.md
   - packages/core/
 purpose: >
   Documento histórico — autorización original para Sprint 1 (@atlas/core).
@@ -19,9 +19,9 @@ prerequisite:
   - Decisiones arquitectónicas owner 18/07/2026
 related:
   - IMPLEMENTATION_READINESS_REPORT.md
-  - Architecture/ATLAS-ARCH-002 — PACKAGE_ARCHITECTURE.md
-  - Engine/ATLAS-100-ENGINE.md
-  - Domain/ATLAS-DOM-000-DOMAIN_REVIEW.md
+  - ../spec/architecture/ATLAS-ARCH-002-PACKAGE_ARCHITECTURE.md
+  - ../spec/engine/ATLAS-100-ENGINE.md
+  - ../spec/domain/ATLAS-DOM-000-DOMAIN_REVIEW.md
 ---
 
 # CORE_IMPLEMENTATION_PLAN.md
@@ -29,7 +29,7 @@ related:
 > **DOCUMENTO HISTÓRICO** — Pertenece al historial de la Fase Fundacional.
 >
 > **Estado actual (18/07/2026):** Sprint 1 **COMPLETADO**. `@atlas/core` implementado en `packages/core/`.
-> Fase Fundacional **COMPLETADA**. Ver [`VERSION.md`](./VERSION.md) y [`Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md).
+> Fase Fundacional **COMPLETADA**. Ver [`VERSION.md`](../VERSION.md) y [`ATLAS-RELEASE-001-KERNEL_v0.1.md`](./ATLAS-RELEASE-001-KERNEL_v0.1.md).
 
 ---
 

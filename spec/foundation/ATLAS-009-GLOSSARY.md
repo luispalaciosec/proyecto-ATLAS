@@ -446,9 +446,9 @@ ATLAS-XXX-NAME.md
 Ejemplos.
 
 ```text
-Foundation/ATLAS-001-MANIFESTO.md
+ATLAS-001-MANIFESTO.md
 
-Foundation/ATLAS-006-GOVERNANCE.md
+ATLAS-006-GOVERNANCE.md
 ```
 
 ---
@@ -478,7 +478,7 @@ Los archivos utilizarán MAYÚSCULAS para el identificador y guiones para separa
 Ejemplo.
 
 ```text
-Foundation/ATLAS-004_DOMAIN_MODEL.md
+ATLAS-004-DOMAIN_MODEL.md
 ```
 
 ---

@@ -151,5 +151,5 @@ Estas limitaciones están documentadas en `MILESTONE_1_UX_REVIEW.md` con mejoras
 
 - [Inicio rápido](./docs/quickstart.md)
 - [Revisión UX y mejoras](./MILESTONE_1_UX_REVIEW.md)
-- `SDK/ATLAS-201-SDK_CLI.md`
-- `SDK/ATLAS-202-SDK_TYPESCRIPT.md`
+- `../../spec/sdk/ATLAS-201-SDK_CLI.md`
+- `../../spec/sdk/ATLAS-202-SDK_TYPESCRIPT.md`

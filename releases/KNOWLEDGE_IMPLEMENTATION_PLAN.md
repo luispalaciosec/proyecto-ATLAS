@@ -24,24 +24,24 @@ architectural_guidelines:
     sprint: 8
 purpose: >
   Plan de implementación arquitectónico para @atlas/knowledge.
-  Deriva exclusivamente de Capabilities/Knowledge/ (KNOWLEDGE-001–008).
+  Deriva exclusivamente de ../spec/capabilities/knowledge/ (KNOWLEDGE-001–008).
   No contiene código. Autorización requerida antes de escribir TypeScript.
 prerequisite:
   - Foundation Phase COMPLETED
   - Kernel v0.1.0-alpha FROZEN
   - KNOWLEDGE-001–008 APPROVED
 related:
-  - Capabilities/Knowledge/KNOWLEDGE-001-CAPABILITY.md
-  - Capabilities/Knowledge/KNOWLEDGE-002-METAMODEL.md
-  - Capabilities/Knowledge/KNOWLEDGE-003-OBJECT_MODEL.md
-  - Capabilities/Knowledge/KNOWLEDGE-004-GRAPH_MODEL.md
-  - Capabilities/Knowledge/KNOWLEDGE-005-LIFECYCLE.md
-  - Capabilities/Knowledge/KNOWLEDGE-006-QUERY_MODEL.md
-  - Capabilities/Knowledge/KNOWLEDGE-007-OPERATIONS.md
-  - Capabilities/Knowledge/KNOWLEDGE-008-ROADMAP.md
-  - Architecture/ATLAS-ARCH-002 — PACKAGE_ARCHITECTURE.md
-  - Engine/ATLAS-102-KNOWLEDGE_ENGINE.md
-  - Domain/ATLAS-DOM-001-KNOWLEDGE_DOMAIN.md
+  - ../spec/capabilities/knowledge/KNOWLEDGE-001-CAPABILITY.md
+  - ../spec/capabilities/knowledge/KNOWLEDGE-002-METAMODEL.md
+  - ../spec/capabilities/knowledge/KNOWLEDGE-003-OBJECT_MODEL.md
+  - ../spec/capabilities/knowledge/KNOWLEDGE-004-GRAPH_MODEL.md
+  - ../spec/capabilities/knowledge/KNOWLEDGE-005-LIFECYCLE.md
+  - ../spec/capabilities/knowledge/KNOWLEDGE-006-QUERY_MODEL.md
+  - ../spec/capabilities/knowledge/KNOWLEDGE-007-OPERATIONS.md
+  - ../spec/capabilities/knowledge/KNOWLEDGE-008-ROADMAP.md
+  - ../spec/architecture/ATLAS-ARCH-002-PACKAGE_ARCHITECTURE.md
+  - ../spec/engine/ATLAS-102-KNOWLEDGE_ENGINE.md
+  - ../spec/domain/ATLAS-DOM-001-KNOWLEDGE_DOMAIN.md
 ---
 
 # KNOWLEDGE_IMPLEMENTATION_PLAN.md

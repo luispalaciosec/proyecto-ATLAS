@@ -15,4 +15,4 @@ Runnable examples for the Atlas monorepo.
 
 For the complete Milestone 1 workspace, see [`../workspaces/first-atlas-workspace/`](../workspaces/first-atlas-workspace/).
 
-See `Architecture/ATLAS-ARCH-002 — PACKAGE_ARCHITECTURE.md`.
+See `../spec/architecture/ATLAS-ARCH-002-PACKAGE_ARCHITECTURE.md`.

@@ -6,8 +6,8 @@ Depends exclusively on `@atlas/core` for shared primitives.
 
 ## Specifications
 
-- `Architecture/ATLAS-ARCH-003 — COMPILER_ARCHITECTURE.md`
-- `Architecture/ATLAS-ARCH-006 — BUILD_COMPILATION_PIPELINE.md`
+- `../../spec/architecture/ATLAS-ARCH-003-COMPILER_ARCHITECTURE.md`
+- `../../spec/architecture/ATLAS-ARCH-006-BUILD_COMPILATION_PIPELINE.md`
 
 ## Public API
 

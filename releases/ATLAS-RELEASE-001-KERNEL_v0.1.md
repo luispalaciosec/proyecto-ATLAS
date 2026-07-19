@@ -9,7 +9,7 @@ owner: Architecture Board
 last_updated: 2026-07-18
 related:
   - VERSION.md
-  - Releases/RELEASE_READINESS_REPORT.md
+  - RELEASE_READINESS_REPORT.md
 ---
 
 # ATLAS Release 001

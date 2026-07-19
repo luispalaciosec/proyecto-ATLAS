@@ -262,8 +262,8 @@ Request
 
 | Referencia | Ubicación | Problema |
 |------------|-----------|----------|
-| `ATLAS-COMPILER-001` | `SDK/ATLAS-201-SDK_CLI.md` | No existe documento con ese ID |
-| `Template Engine` (como ATLAS-102) | `Domain/ATLAS-DOM-006-PROMPT_DOMAIN.md` | ATLAS-102 es **Knowledge Engine**, no Template Engine |
+| `ATLAS-COMPILER-001` | `../spec/sdk/ATLAS-201-SDK_CLI.md` | No existe documento con ese ID |
+| `Template Engine` (como ATLAS-102) | `../spec/domain/ATLAS-DOM-006-PROMPT_DOMAIN.md` | ATLAS-102 es **Knowledge Engine**, no Template Engine |
 | `Observability` (como ATLAS-109) | `Engine/ATLAS-100`, `101`, `102`, `103`, `110` | ATLAS-109 es **Validation Engine**; no hay doc de Observability |
 | `Java SDK` (ATLAS-203) | `SDK/ATLAS-200`, `ATLAS-205` | ATLAS-203 es **SDK Python** |
 | `.NET SDK` (ATLAS-204) | `SDK/ATLAS-200`, `ATLAS-205` | ATLAS-204 es **SDK Events** |
@@ -307,7 +307,7 @@ Esquema LEGACY (101, 102, 103, 110):
 
 ### 4.4 Estructura de proyecto obsoleta
 
-`Foundation/ATLAS-000-README.md` describe una estructura `core/`, `docs/`, `adr/` que **no coincide** con la estructura actual (`Foundation/`, `Architecture/`, `Domain/`, etc.).
+`../spec/foundation/ATLAS-000-README.md` describe una estructura `core/`, `docs/`, `adr/` que **no coincide** con la estructura actual (`Foundation/`, `Architecture/`, `Domain/`, etc.).
 
 ---
 
@@ -460,10 +460,10 @@ Coherente conceptualmente, pero **sin documento de mapeo explícito**.
 
 Estos documentos tienen el esquema Engine/SDK **alineado con los archivos reales** y pueden servir como **fuente de verdad** para una futura corrección:
 
-- `Architecture/ATLAS-ARCH-000-ARCHITECTURE_OVERVIEW.md`
-- `Engine/ATLAS-104-SEARCH_ENGINE.md` through `ATLAS-109-VALIDATION_ENGINE.md`
-- `SDK/ATLAS-201-SDK_CLI.md`, `ATLAS-202-SDK_TYPESCRIPT.md`, `ATLAS-203-SDK_PYTHON.md`, `ATLAS-204-SDK_EVENTS.md` (referencias cruzadas entre sí)
-- `SDK/ATLAS-205-REST_API.md`, `ATLAS-206-GRAPHQL_API.md`, `ATLAS-207-WEBHOOKS.md` (referencias Engine correctas; SDK 201–204 incorrectas en 205)
+- `../spec/architecture/ATLAS-ARCH-000-ARCHITECTURE_OVERVIEW.md`
+- `../spec/engine/ATLAS-104-SEARCH_ENGINE.md` through `ATLAS-109-VALIDATION_ENGINE.md`
+- `../spec/sdk/ATLAS-201-SDK_CLI.md`, `ATLAS-202-SDK_TYPESCRIPT.md`, `ATLAS-203-SDK_PYTHON.md`, `ATLAS-204-SDK_EVENTS.md` (referencias cruzadas entre sí)
+- `../spec/sdk/ATLAS-205-REST_API.md`, `ATLAS-206-GRAPHQL_API.md`, `ATLAS-207-WEBHOOKS.md` (referencias Engine correctas; SDK 201–204 incorrectas en 205)
 
 ---
 

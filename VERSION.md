@@ -16,7 +16,7 @@ last_updated: 2026-07-18
 | **Kernel Version** | `0.1` |
 | **Status** | **Frozen** |
 | **Foundation Phase** | **Completed** |
-| **Release document** | [`Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md) |
+| **Release document** | [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/ATLAS-RELEASE-001-KERNEL_v0.1.md) |
 | **Internal RC tag** | `kernel-v0.1.0-alpha.1` (propuesto) |
 
 ---
@@ -50,4 +50,4 @@ Los siguientes paquetes permanecen en `0.0.0` (bootstrap, sin implementación):
 
 - **Kernel v0.1 line:** contratos públicos congelados. Breaking changes requieren major version.
 - **Stage 2 capabilities:** no iniciadas. Sin versiones publicadas.
-- **Atlas product semver:** gobernada por este archivo y por `Releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`.
+- **Atlas product semver:** gobernada por este archivo y por `releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`.

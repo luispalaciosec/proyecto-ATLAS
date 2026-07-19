@@ -6,9 +6,9 @@ Absorbs the shared primitives, error model, and Engine I/O contracts defined by 
 
 ## Specifications
 
-- `Architecture/ATLAS-ARCH-002 — PACKAGE_ARCHITECTURE.md`
-- `Engine/ATLAS-100-ENGINE.md`
-- `Domain/ATLAS-DOM-000-DOMAIN_REVIEW.md`
+- `../../spec/architecture/ATLAS-ARCH-002-PACKAGE_ARCHITECTURE.md`
+- `../../spec/engine/ATLAS-100-ENGINE.md`
+- `../../spec/domain/ATLAS-DOM-000-DOMAIN_REVIEW.md`
 
 ## Public API
 
