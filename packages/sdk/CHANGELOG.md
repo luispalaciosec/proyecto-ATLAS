@@ -1,5 +1,21 @@
 # @atlas/sdk
 
+## 0.3.0
+
+Sprint 9 — transparent Knowledge → Compiler integration.
+
+### Added
+
+- `CompileOptions.knowledge` — pass `KnowledgeObject[]` to `atlas.compiler.compile()`
+- Internal projection via `@atlas/knowledge/compiler-adapter` (not exposed in public API philosophy)
+- Integration tests for knowledge-backed compilation
+
+### Notes
+
+- Depends on `@atlas/knowledge`
+- No new public method such as `compileFromKnowledge()` (AR-009-02)
+- `@atlas/compiler` and `@atlas/core` remain unchanged
+
 ## 0.2.0
 
 Sprint 5 integration — runtime module.

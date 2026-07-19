@@ -1,6 +1,6 @@
 # @atlas/knowledge
 
-Knowledge Capability for Atlas — Sprint 8 delivers the **Knowledge Metamodel** and **domain core**.
+Knowledge Capability for Atlas — Sprint 8 delivers the **Knowledge Metamodel** and **domain core**. Sprint 9 adds the **projection layer** toward the Compiler.
 
 ## Sprint 8 scope
 
@@ -14,10 +14,32 @@ Knowledge Capability for Atlas — Sprint 8 delivers the **Knowledge Metamodel**
 | 8.6 | Factories |
 | 8.7 | Validators |
 
+## Sprint 9 scope
+
+| Deliverable | Location |
+|-------------|----------|
+| `KnowledgeProjectionAdapter` | `src/adapters/` |
+| Public export | `@atlas/knowledge/compiler-adapter` |
+
+### Projection Rule (AR-009-03)
+
+```text
+KnowledgeObject
+      ↓
+KnowledgeProjectionAdapter
+      ↓
+CompilationUnit (disposable)
+      ↓
+Compiler
+```
+
+Projection is strictly one-way. The Compiler never modifies or reconstructs KnowledgeObjects.
+
 ## Architectural guidelines
 
 - **AG-001:** Metamodel designed as declarative reflective semantic model (no runtime reflection in Sprint 8)
 - **AMD-002:** No repository interfaces — v1 domain is persistence-agnostic; `@atlas/memory` owns future repository ports
+- **AR-009-01:** Adapter translates domain representations only — no compilation, no business logic
 
 ## Usage
 
@@ -44,6 +66,21 @@ const object = createKnowledgeObject({
 });
 ```
 
+Compiler projection (direct adapter — typically used via `@atlas/sdk`):
+
+```typescript
+import { KnowledgeProjectionAdapter } from '@atlas/knowledge/compiler-adapter';
+
+const adapter = new KnowledgeProjectionAdapter();
+const { units } = adapter.projectAll([operationalKnowledgeObject]);
+```
+
+SDK integration (recommended):
+
+```typescript
+await atlas.compiler.compile({ knowledge: [operationalKnowledgeObject] });
+```
+
 Metamodel-only import:
 
 ```typescript
@@ -53,4 +90,5 @@ import { getMetaConceptDescriptor, MetaConceptId } from '@atlas/knowledge/metamo
 ## References
 
 - `Release/KNOWLEDGE_IMPLEMENTATION_PLAN.md`
+- `Release/SPRINT9_IMPLEMENTATION_REPORT.md`
 - `Capabilities/Knowledge/KNOWLEDGE-002-METAMODEL.md`

@@ -2,22 +2,23 @@
 
 Public facade for the Atlas Kernel — SDK-202.
 
-Depends on `@atlas/core`, `@atlas/compiler`, `@atlas/events`, and `@atlas/runtime`. Contains **no business logic**; it orchestrates and composes Kernel packages only.
+Depends on `@atlas/core`, `@atlas/compiler`, `@atlas/events`, `@atlas/knowledge`, and `@atlas/runtime`. Contains **no business logic**; it orchestrates and composes Kernel packages only.
 
 ## Specifications
 
 - `SDK/ATLAS-200-SDK_OVERVIEW.md`
 - `SDK/ATLAS-202-SDK_TYPESCRIPT.md`
 
-## Scope (Sprint 5)
+## Scope (Sprint 9)
 
-| Supported | Not in Sprint 5 |
+| Supported | Not in Sprint 9 |
 |-----------|-----------------|
-| `Atlas` facade entry point | CLI |
+| `Atlas` facade entry point | CLI knowledge store |
 | `atlas.compiler.compile()` | Memory, Retrieval |
-| `atlas.runtime.execute()` | Workflow, Agent |
-| `atlas.events.subscribe()` | Publisher, Plugins |
-| Re-exports of Kernel types/events | Domain engines |
+| `atlas.compiler.compile({ knowledge })` | Workflow, Agent |
+| `atlas.runtime.execute()` | Publisher, Plugins |
+| `atlas.events.subscribe()` | Domain engines beyond projection |
+| Re-exports of Kernel types/events | |
 
 ## Public API
 
@@ -71,16 +72,11 @@ atlas.events.subscribe(RuntimeCompletedEvent, (event) => {
 });
 
 const compileResult = await atlas.compiler.compile({
-  units: [
-    {
-      id: 'doc.example',
-      origin: 'memory://doc.example',
-      checksum: 'sha256:example',
-      version: '1.0.0',
-      source: { body: 'example' },
-    },
-  ],
+  knowledge: operationalKnowledgeObjects,
 });
+
+// Path A (legacy workspace units) remains supported:
+// await atlas.compiler.compile({ units: [...] });
 
 const executionResult = await atlas.runtime.execute({
   artifacts: compileResult.context.artifacts,
@@ -95,5 +91,6 @@ Applications SHOULD import Kernel packages exclusively through `@atlas/sdk`.
 |---------|--------------|
 | `@atlas/core` | Value Objects, errors, contracts |
 | `@atlas/compiler` | Compilation pipeline |
+| `@atlas/knowledge` | Transparent KnowledgeObject projection (Sprint 9) |
 | `@atlas/events` | In-memory domain events |
 | `@atlas/runtime` | In-memory artifact execution |

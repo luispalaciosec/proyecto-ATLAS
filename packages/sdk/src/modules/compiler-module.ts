@@ -13,11 +13,14 @@ import {
 } from '@atlas/compiler';
 import { Metadata } from '@atlas/core';
 import type { EventBus } from '@atlas/events';
+import type { KnowledgeObject } from '@atlas/knowledge';
+import { KnowledgeProjectionAdapter } from '@atlas/knowledge/compiler-adapter';
 
 import type { AtlasCompilerOptions, AtlasWorkspaceOptions } from '../atlas/options.js';
 
 export interface CompileOptions {
   readonly units?: readonly CreateCompilationUnitParams[];
+  readonly knowledge?: readonly KnowledgeObject[];
   readonly workspace?: AtlasWorkspaceOptions;
   readonly metadata?: Record<string, unknown>;
   readonly packages?: readonly string[];
@@ -55,9 +58,16 @@ export class CompilerModule {
   }
 
   compile(options: CompileOptions = {}): Promise<CompilationResult> {
+    const projectedUnits =
+      options.knowledge && options.knowledge.length > 0
+        ? new KnowledgeProjectionAdapter().projectAll(options.knowledge).units
+        : [];
+
     const contextParams: CreateCompilationContextParams = {
       workspace: options.workspace ?? this.#defaultWorkspace,
-      units: (options.units ?? []).map((unit) => createCompilationUnit(unit)),
+      units: [...projectedUnits, ...(options.units ?? [])].map((unit) =>
+        createCompilationUnit(unit),
+      ),
       metadata: options.metadata ? Metadata.create(options.metadata) : undefined,
       packages: options.packages,
     };

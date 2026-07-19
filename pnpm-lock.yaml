@@ -77,6 +77,22 @@ importers:
         specifier: ^4.19.4
         version: 4.23.1
 
+  examples/knowledge-compiler-demo:
+    dependencies:
+      '@atlas/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@atlas/knowledge':
+        specifier: workspace:*
+        version: link:../../packages/knowledge
+      '@atlas/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+    devDependencies:
+      tsx:
+        specifier: ^4.19.4
+        version: 4.23.1
+
   examples/runtime-demo:
     dependencies:
       '@atlas/sdk':
@@ -145,6 +161,9 @@ importers:
 
   packages/knowledge:
     dependencies:
+      '@atlas/compiler':
+        specifier: workspace:*
+        version: link:../compiler
       '@atlas/core':
         specifier: workspace:*
         version: link:../core
@@ -192,6 +211,9 @@ importers:
       '@atlas/events':
         specifier: workspace:*
         version: link:../events
+      '@atlas/knowledge':
+        specifier: workspace:*
+        version: link:../knowledge
       '@atlas/runtime':
         specifier: workspace:*
         version: link:../runtime

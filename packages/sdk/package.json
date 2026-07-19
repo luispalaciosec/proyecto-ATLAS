@@ -1,6 +1,6 @@
 {
   "name": "@atlas/sdk",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Public facade for the Atlas Kernel — orchestrates core, compiler, events, and runtime",
@@ -27,6 +27,7 @@
     "@atlas/core": "workspace:*",
     "@atlas/compiler": "workspace:*",
     "@atlas/events": "workspace:*",
+    "@atlas/knowledge": "workspace:*",
     "@atlas/runtime": "workspace:*"
   },
   "devDependencies": {

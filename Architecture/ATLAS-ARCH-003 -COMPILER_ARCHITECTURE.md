@@ -8,7 +8,7 @@ classification: public
 foundation_version: 1.0
 architecture_version: 1.0
 created: 2026-07-16
-last_updated: 2026-07-16
+last_updated: 2026-07-19
 purpose: >
   Definir la arquitectura del Atlas Compiler, estableciendo
   su modelo de compilación, responsabilidades, pipeline,
@@ -712,7 +712,27 @@ Las optimizaciones nunca deberán comprometer el determinismo del proceso.
 
 ---
 
-# 34. Future Evolution
+# 34. Knowledge Projection Boundary (Sprint 9)
+
+Sprint 9 introduces a **projection layer** outside the Compiler package.
+
+```text
+KnowledgeObject  →  KnowledgeProjectionAdapter  →  CompilationUnit  →  Compiler
+```
+
+Rules:
+
+- The Compiler SHALL continue accepting only `CompilationUnit` inputs.
+- The Compiler SHALL NOT depend on `@atlas/knowledge`.
+- Projection is strictly one-way; the Compiler SHALL NOT modify or reconstruct KnowledgeObjects.
+- `CompilationUnit` instances produced by projection are disposable compiler artifacts.
+- The public SDK entry point remains `atlas.compiler.compile(...)`; projection is transparent to SDK consumers.
+
+See `Release/SPRINT9_IMPLEMENTATION_REPORT.md`.
+
+---
+
+# 35. Future Evolution
 
 La arquitectura permite incorporar futuras capacidades como.
 
@@ -727,7 +747,7 @@ Estas capacidades no requerirán modificar la arquitectura fundamental del Compi
 
 ---
 
-# 35. Compliance
+# 36. Compliance
 
 Toda implementación oficial SHALL cumplir.
 

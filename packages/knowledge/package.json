@@ -1,6 +1,6 @@
 {
   "name": "@atlas/knowledge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Atlas Knowledge Capability — metamodel and domain core",
@@ -13,6 +13,10 @@
     "./metamodel": {
       "types": "./dist/metamodel/index.d.ts",
       "import": "./dist/metamodel/index.js"
+    },
+    "./compiler-adapter": {
+      "types": "./dist/adapters/index.d.ts",
+      "import": "./dist/adapters/index.js"
     }
   },
   "main": "./dist/index.js",
@@ -21,13 +25,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts src/metamodel/index.ts --format esm --dts --clean --sourcemap",
+    "build": "tsup src/index.ts src/metamodel/index.ts src/adapters/index.ts --format esm --dts --clean --sourcemap",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src tests",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@atlas/compiler": "workspace:*",
     "@atlas/core": "workspace:*"
   },
   "devDependencies": {

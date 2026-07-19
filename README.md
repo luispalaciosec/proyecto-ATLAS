@@ -135,6 +135,7 @@ Guía completa: [`workspaces/first-atlas-workspace/GETTING_STARTED.md`](./worksp
 |------|---------|
 | First Atlas Workspace | `pnpm --filter @atlas/workspace-first demo` |
 | SDK facade | `pnpm --filter @atlas/example-sdk demo` |
+| Knowledge → Compiler (Sprint 9) | `pnpm --filter @atlas/example-knowledge-compiler demo` |
 | Runtime | `pnpm --filter @atlas/example-runtime demo` |
 | CLI workspace | `pnpm --filter @atlas/example-cli-workspace demo` |
 | Compiler events | `pnpm --filter @atlas/example-compiler-events demo` |
@@ -150,7 +151,7 @@ Guía completa: [`workspaces/first-atlas-workspace/GETTING_STARTED.md`](./worksp
 |------|--------|-----------|
 | **Foundation Phase** | ✅ Completada | Specs, monorepo, Kernel v0.1 |
 | **Release v0.1.0-alpha** | ✅ Completada | Kernel congelado, RC interno |
-| **Stage 2 — Knowledge** | 🔒 Próxima | Knowledge Engine (sin iniciar) |
+| **Stage 2 — Knowledge** | 🚧 En progreso | Metamodel + domain (Sprint 8), projection → compiler (Sprint 9) |
 | **Stage 2 — Memory** | 🔒 Pendiente | Memory Engine |
 | **Stage 2 — Retrieval** | 🔒 Pendiente | Retrieval Engine |
 | **Stage 2 — Workflow** | 🔒 Pendiente | Workflow Engine |

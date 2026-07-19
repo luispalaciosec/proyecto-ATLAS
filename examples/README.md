@@ -4,6 +4,7 @@ Runnable examples for the Atlas monorepo.
 
 | Example | Description |
 |---------|-------------|
+| [`knowledge-compiler-demo/`](./knowledge-compiler-demo/) | Sprint 9 — KnowledgeObject → projection → compiler |
 | [`compiler-in-memory-demo/`](./compiler-in-memory-demo/) | End-to-end compiler pipeline demo (in-memory only) |
 | [`compiler-events-demo/`](./compiler-events-demo/) | Compiler publishing `CompilerCompletedEvent` to subscribers |
 | [`sdk-demo/`](./sdk-demo/) | Kernel facade via `@atlas/sdk` only |

@@ -1,5 +1,21 @@
 # @atlas/knowledge
 
+## 0.2.0 — Sprint 9
+
+### Added
+
+- `KnowledgeProjectionAdapter` — one-way projection from `KnowledgeObject` to `CreateCompilationUnitParams`
+- Public export `@atlas/knowledge/compiler-adapter`
+- Canonical source serialization with deterministic SHA-256 checksums
+- Lifecycle guard for compilable objects (`operational`, `observed`)
+- Unit tests for projection layer
+
+### Notes
+
+- Depends on `@atlas/compiler` for projection target types only
+- Compiler package remains unaware of Knowledge (AR-009-03)
+- No repository interfaces, memory, retrieval, or workflow changes
+
 ## 0.1.0 — Sprint 8
 
 ### Added
