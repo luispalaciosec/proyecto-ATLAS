@@ -4,7 +4,7 @@
 
 Atlas es una plataforma de ingeniería del conocimiento. Modela, compila y ejecuta conocimiento organizacional como infraestructura permanente — no como prompts efímeros.
 
-**Versión actual:** `0.1.0-alpha` · **Kernel:** `0.1` · **Estado:** Frozen · **Fase Fundacional:** Completada
+**Versión actual:** `0.1.0-alpha` · **Kernel:** `0.1` (congelado) · **Repositorio:** Milestone 2 completado · **Knowledge:** Sprint 8–9 completados
 
 Ver [`VERSION.md`](./VERSION.md) para el registro oficial de versiones.
 
@@ -16,12 +16,12 @@ Atlas se divide en dos etapas:
 
 | Etapa | Alcance | Estado |
 |-------|---------|--------|
-| **Stage 1 — Platform** | Compilación, ejecución, runtime, SDK, CLI | ✅ Completado |
-| **Stage 2 — Capabilities** | Knowledge, Memory, Retrieval, Workflow, Agents, Plugins | 🔒 No iniciado |
+| **Stage 1 — Platform (Kernel)** | Compilación, ejecución, runtime, SDK, CLI | ✅ Completado — v0.1 congelado |
+| **Stage 2 — Capabilities** | Knowledge, Memory, Retrieval, Workflow, Agents, Plugins | 🚧 Knowledge en progreso |
 
-El Kernel v0.1 es la plataforma estable sobre la que se construirán todas las capacidades futuras.
+El Kernel v0.1 es la plataforma estable sobre la que se construyen las capabilities.
 
-Documentación fundacional: [`spec/foundation/`](./spec/foundation/) · Release oficial: [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/ATLAS-RELEASE-001-KERNEL_v0.1.md)
+Documentación normativa: [`spec/foundation/`](./spec/foundation/) · Gobernanza del repositorio: [`spec/foundation/ATLAS-012-REPOSITORY_GOVERNANCE.md`](./spec/foundation/ATLAS-012-REPOSITORY_GOVERNANCE.md) · Release oficial: [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/ATLAS-RELEASE-001-KERNEL_v0.1.md)
 
 ---
 
@@ -36,16 +36,17 @@ Developer
     ▼
 @atlas/sdk           ← API pública del Kernel
     │
-    ├── @atlas/compiler  ← Pipeline de compilación
-    ├── @atlas/runtime   ← Ejecución de artifacts
-    ├── @atlas/events    ← Eventos de dominio
-    └── @atlas/core      ← Primitivas fundacionales
+    ├── @atlas/compiler   ← Pipeline de compilación
+    ├── @atlas/runtime    ← Ejecución de artifacts
+    ├── @atlas/events     ← Eventos de dominio
+    ├── @atlas/knowledge  ← Knowledge Capability (proyección → compiler)
+    └── @atlas/core       ← Primitivas fundacionales
 ```
 
-**Grafo de dependencias (sin ciclos):**
+**Grafo de dependencias del Kernel (sin ciclos):**
 
 ```text
-core → events → compiler → runtime → sdk → cli
+core → events → compiler → runtime → sdk (+ knowledge) → cli
 ```
 
 Especificaciones: [`spec/architecture/`](./spec/architecture/) · [`spec/domain/`](./spec/domain/) · [`spec/engine/`](./spec/engine/) · [`spec/sdk/`](./spec/sdk/)
@@ -72,7 +73,8 @@ ATLAS/
 │   ├── runtime/         # Kernel — implementado
 │   ├── sdk/             # Kernel — implementado
 │   ├── cli/             # Kernel — implementado
-│   └── …                # 14 stubs Stage 2 (0.0.0)
+│   ├── knowledge/       # Capability — implementado (v0.2.0)
+│   └── …                # 13 stubs Stage 2 (0.0.0)
 ├── workspaces/          # Proyectos Atlas de referencia
 ├── examples/            # Demos técnicas por sprint
 ├── releases/            # Releases oficiales, readiness reports, migration reports
@@ -159,14 +161,15 @@ Guía completa: [`workspaces/first-atlas-workspace/GETTING_STARTED.md`](./worksp
 |------|--------|-----------|
 | **Foundation Phase** | ✅ Completada | Specs, monorepo, Kernel v0.1 |
 | **Release v0.1.0-alpha** | ✅ Completada | Kernel congelado, RC interno |
-| **Stage 2 — Knowledge** | 🚧 En progreso | Metamodel + domain (Sprint 8), projection → compiler (Sprint 9) |
+| **Milestone 2 — Repository Stabilization** | ✅ Completada | `spec/`, `releases/`, `adr/`, gobernanza ATLAS-012 |
+| **Stage 2 — Knowledge** | ✅ Sprint 8–9 | Metamodel, domain, projection → compiler |
 | **Stage 2 — Memory** | 🔒 Pendiente | Memory Engine |
 | **Stage 2 — Retrieval** | 🔒 Pendiente | Retrieval Engine |
 | **Stage 2 — Workflow** | 🔒 Pendiente | Workflow Engine |
 | **Stage 2 — Agents** | 🔒 Pendiente | Agent Engine |
 | **Stage 2 — Plugins** | 🔒 Pendiente | Plugin System |
 
-Próximo hito arquitectónico: **Knowledge Capability Layer** (ver Release 001).
+Próximo hito: revisión arquitectónica post-Sprint 9.1 (Documentation Alignment).
 
 ---
 

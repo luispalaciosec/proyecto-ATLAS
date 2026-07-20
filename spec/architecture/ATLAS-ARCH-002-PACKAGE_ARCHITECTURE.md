@@ -1,14 +1,16 @@
 ---
 id: ATLAS-ARCH-002
 title: Package Architecture
-version: 1.0.0
+version: 1.1.0
 status: draft
 owner: Atlas Architecture Board
 classification: public
 foundation_version: 1.0
 architecture_version: 1.0
 created: 2026-07-16
-last_updated: 2026-07-16
+last_updated: 2026-07-19
+depends_on:
+  - ATLAS-012-REPOSITORY_GOVERNANCE
 purpose: >
   Definir la arquitectura física del ecosistema Atlas,
   estableciendo la organización del monorepo, la estructura
@@ -69,21 +71,63 @@ La arquitectura de paquetes persigue los siguientes objetivos.
 
 # 4. Monorepo Structure
 
-La estructura oficial del repositorio SHALL seguir el siguiente modelo.
+Tras el **Milestone 2 (Repository Stabilization)**, la estructura oficial del repositorio SHALL seguir el modelo definido en `ATLAS-012-REPOSITORY_GOVERNANCE.md`.
 
 ```text
-Atlas/
+ATLAS/
 
-├── apps/
-├── packages/
-├── plugins/
-├── docs/
-├── examples/
-├── templates/
-├── tests/
-├── tools/
-├── scripts/
+├── spec/                    # Layer 1 — Specifications (normative, no executable code)
+│   ├── foundation/
+│   ├── architecture/
+│   ├── domain/
+│   ├── engine/
+│   ├── sdk/
+│   ├── capabilities/
+│   └── product/
+│
+├── packages/                # Layer 2 — Implementation (@atlas/* npm packages)
+├── workspaces/              # Real Atlas consumer projects
+├── examples/                # Disposable demonstrations
+├── releases/                # Layer 4 — Operations (reports, release notes, plans)
+├── docs/                    # Layer 3 — Human documentation + proposals/rfc
+├── adr/                     # Architecture Decision Records
+│
+├── apps/                    # Reserved — executable applications
+├── plugins/                 # Reserved — third-party extensions
+├── templates/               # Reusable templates
+├── tools/                   # Development utilities
+├── scripts/                 # Automation scripts
+├── tests/                   # Reserved — cross-package integration tests
+│
+├── README.md
+├── VERSION.md
+├── package.json
+├── pnpm-workspace.yaml
+├── turbo.json
 └── .github/
+```
+
+### 4.1 Separation: spec/ vs packages/
+
+| Layer | Directory | Contains | MUST NOT contain |
+|-------|-----------|----------|------------------|
+| Specifications | `spec/` | Normative WHAT documents | Executable code |
+| Implementation | `packages/` | TypeScript source, tests, CHANGELOG | Architectural specifications |
+| Documentation | `docs/` | Tutorials, guides, RFC proposals | Normative specs |
+| Operations | `releases/` | Sprint reports, release notes, plans | Normative specs |
+| Decisions | `adr/` | ADRs (WHY decisions were made) | Normative specs |
+
+Specifications define behavior. Packages implement it. `releases/` and `adr/` document evolution — they do not define Atlas.
+
+### 4.2 Workspace membership (pnpm)
+
+```yaml
+packages:
+  - 'packages/*'
+  - 'apps/*'
+  - 'tools/*'
+  - 'examples/*'
+  - 'workspaces/*'
 ```
 
 Cada directorio posee una responsabilidad claramente definida.
@@ -91,6 +135,44 @@ Cada directorio posee una responsabilidad claramente definida.
 ---
 
 # 5. Directory Responsibilities
+
+## spec/
+
+Contiene **todas** las especificaciones normativas de Atlas.
+
+Subdirectorios oficiales: `foundation/`, `architecture/`, `domain/`, `engine/`, `sdk/`, `capabilities/`, `product/`.
+
+No contiene código ejecutable. Ver `ATLAS-012 §5`.
+
+---
+
+## releases/
+
+Contiene la evolución operativa del proyecto.
+
+Ejemplos: release notes, sprint reports, implementation plans, migration reports.
+
+No define el comportamiento de Atlas. Ver `ATLAS-012 §10`.
+
+---
+
+## adr/
+
+Contiene Architecture Decision Records.
+
+Documenta decisiones puntuales (contexto, alternativas, consecuencias). Complementa `spec/` — no lo reemplaza.
+
+---
+
+## docs/
+
+Documentación orientada a humanos: índices, guías, tutoriales.
+
+Las propuestas en revisión (RFCs) viven en `docs/proposals/rfc/`.
+
+No contiene especificaciones normativas. Ver `ATLAS-012 §7`.
+
+---
 
 ## apps/
 
@@ -112,9 +194,62 @@ Nunca implementarla.
 
 ## packages/
 
-Contiene el núcleo de Atlas.
+Contiene la implementación ejecutable de Atlas.
 
-Todos los componentes reutilizables pertenecen a este directorio.
+Todos los paquetes npm `@atlas/*` pertenecen a este directorio.
+
+### 5.1 Current packages (2026-07-19)
+
+| Package | Version | Category | Status |
+|---------|---------|----------|--------|
+| `@atlas/core` | 0.1.1 | Kernel | ✅ Implemented |
+| `@atlas/events` | 0.1.0 | Kernel | ✅ Implemented |
+| `@atlas/compiler` | 0.1.1 | Kernel | ✅ Implemented |
+| `@atlas/runtime` | 0.1.0 | Kernel | ✅ Implemented |
+| `@atlas/sdk` | 0.3.0 | Integration | ✅ Implemented |
+| `@atlas/cli` | 0.1.0 | Integration | ✅ Implemented |
+| `@atlas/knowledge` | 0.2.0 | Capability | 🚧 In progress |
+| `@atlas/agent` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+| `@atlas/context` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+| `@atlas/context-planner` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+| `@atlas/graph` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+| `@atlas/memory` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+| `@atlas/ontology` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+| `@atlas/plugin` | 0.0.0 | Infra stub | 🔒 Bootstrap |
+| `@atlas/prompt` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+| `@atlas/publisher` | 0.0.0 | Infra stub | 🔒 Bootstrap |
+| `@atlas/retrieval` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+| `@atlas/search` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+| `@atlas/validation` | 0.0.0 | Infra stub | 🔒 Bootstrap |
+| `@atlas/workflow` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+
+Ver [`VERSION.md`](../../VERSION.md) para el registro oficial de versiones.
+
+### 5.2 Kernel dependency graph (implemented)
+
+```text
+@atlas/core
+    ↓
+@atlas/events
+    ↓
+@atlas/compiler
+    ↓
+@atlas/runtime
+    ↓
+@atlas/sdk  ← also depends on @atlas/knowledge (Sprint 9)
+    ↓
+@atlas/cli
+```
+
+---
+
+## workspaces/
+
+Contiene proyectos Atlas completos de referencia.
+
+Ejemplo: `workspaces/first-atlas-workspace/`.
+
+Un workspace consume la plataforma; nunca la implementa. Ver `ATLAS-012 §9`.
 
 ---
 
@@ -128,9 +263,9 @@ Los plugins SHALL comunicarse únicamente mediante contratos públicos.
 
 ## docs/
 
-Documentación oficial.
+Documentación humana e índices. Las RFCs en revisión viven en `docs/proposals/rfc/`.
 
-No contiene lógica ejecutable.
+No contiene lógica ejecutable ni especificaciones normativas.
 
 ---
 
@@ -487,6 +622,7 @@ Architecture
 
 | Version | Date | Description |
 |----------|------------|---------------------------------------------|
+| 1.1.0 | 2026-07-19 | Aligned with Milestone 2 repository structure (`spec/`, `releases/`, `adr/`, `docs/`). Added current package inventory and spec/implementation separation. Sprint 9.1. |
 | 1.0.0 | 2026-07-16 | Initial Package Architecture specification. |
 
 ---

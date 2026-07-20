@@ -13,15 +13,12 @@ Cada ADR debe registrar como mínimo:
 - decisión
 - consecuencias
 
-## ADR pendiente conocida
+## ADR aceptadas
 
-**Colisión de identificador `ATLAS-002`.** Dos documentos distintos usan actualmente el mismo identificador:
+- [`ADR-0001-DOCUMENT_ID_NAMESPACE.md`](./ADR-0001-DOCUMENT_ID_NAMESPACE.md) — Resolución de colisión `ATLAS-002` (Constitution vs Product Conceptual Model). Estado: **accepted**. Renombrado de archivos diferido a milestone futuro.
 
-- `spec/foundation/ATLAS-002-CONSTITUTION.md`
-- `spec/product/ATLAS-002-CONCEPTUAL_MODEL.md`
+## Contexto histórico
 
-Por decisión explícita durante la migración de Milestone 2 (Repository Stabilization), el documento de Product **se movió físicamente** a `spec/product/` pero **conservó su identificador `ATLAS-002` sin reasignar**, a la espera de que esta ADR defina el namespace correcto para la serie de especificaciones de Product (por ejemplo, `ATLAS-PROD-*`) antes de renombrar el identificador.
-
-Ver `releases/REPOSITORY_MIGRATION_REPORT.md` para el detalle completo de la migración que originó este directorio.
+La colisión de identificador `ATLAS-002` fue documentada durante el Milestone 2 (Repository Stabilization). Ver `releases/REPOSITORY_MIGRATION_REPORT.md` para el detalle de la migración que originó este directorio.
 
 Este directorio se creó como ampliación de la raíz del repositorio, aprobada explícitamente por el Architecture Board como parte de Milestone 2. Su inclusión formal en `ATLAS-012-REPOSITORY_GOVERNANCE.md §4` queda pendiente de una actualización futura de ese documento.

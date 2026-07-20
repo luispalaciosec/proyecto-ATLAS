@@ -728,7 +728,7 @@ Rules:
 - `CompilationUnit` instances produced by projection are disposable compiler artifacts.
 - The public SDK entry point remains `atlas.compiler.compile(...)`; projection is transparent to SDK consumers.
 
-See `Release/SPRINT9_IMPLEMENTATION_REPORT.md`.
+See [`releases/SPRINT9_IMPLEMENTATION_REPORT.md`](../../releases/SPRINT9_IMPLEMENTATION_REPORT.md).
 
 ---
 

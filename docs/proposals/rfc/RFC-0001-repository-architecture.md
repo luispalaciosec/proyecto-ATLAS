@@ -2,7 +2,8 @@
 id: RFC-0001
 title: Arquitectura Definitiva del Repositorio Atlas
 version: 1.0.0
-status: proposed
+status: superseded
+superseded_by: ATLAS-012-REPOSITORY_GOVERNANCE
 author: Principal Software Architect Review
 date: 2026-07-19
 classification: internal
@@ -14,13 +15,15 @@ purpose: >
 
 # RFC-0001 — Arquitectura Definitiva del Repositorio Atlas
 
+> **Estado: SUPERSEDED** — Reemplazado por [`spec/foundation/ATLAS-012-REPOSITORY_GOVERNANCE.md`](../../../spec/foundation/ATLAS-012-REPOSITORY_GOVERNANCE.md) (aprobado, Milestone 2). Este documento se conserva como registro histórico de la propuesta original. No usar como autoridad estructural.
+
 | Campo | Valor |
 |-------|-------|
-| **Estado** | Propuesta — revisión arquitectónica (sin implementación) |
+| **Estado** | ~~Propuesta~~ **Superseded** por ATLAS-012 |
 | **Autor** | Revisión Principal Software Architect |
 | **Fecha** | 2026-07-19 |
 | **Alcance** | Estructura completa del monorepo Atlas (5–10 años) |
-| **Restricción** | Ningún cambio físico en el repositorio hasta aprobación explícita |
+| **Autoridad vigente** | `spec/foundation/ATLAS-012-REPOSITORY_GOVERNANCE.md` |
 
 ---
 

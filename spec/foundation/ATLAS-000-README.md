@@ -7,7 +7,7 @@ status: active
 owner: Atlas Foundation
 classification: public
 created: 2026-07-13
-last_updated: 2026-07-17
+last_updated: 2026-07-19
 purpose: >
   Introducir Atlas, explicar su propósito, presentar la organización
   completa del proyecto y servir como punto oficial de entrada a toda
@@ -113,33 +113,37 @@ Los principios permanecen.
 
 # Organización del Proyecto
 
-El repositorio se organiza en bloques funcionales.
+Tras el **Milestone 2 (Repository Stabilization)**, el repositorio se organiza por **responsabilidad**, no por capas sueltas en la raíz. Toda especificación normativa vive bajo `spec/`. La implementación vive en `packages/`. La evolución del proyecto se documenta en `releases/`.
+
+Ver gobernanza completa: [`spec/foundation/ATLAS-012-REPOSITORY_GOVERNANCE.md`](./ATLAS-012-REPOSITORY_GOVERNANCE.md).
 
 ```text
-Atlas/
+ATLAS/
 
-├── Foundation/
+├── spec/                    # Especificaciones normativas (QUÉ es Atlas)
+│   ├── foundation/          # Identidad, principios, gobernanza
+│   ├── architecture/        # Arquitectura del sistema y del monorepo
+│   ├── domain/              # Modelo de dominio
+│   ├── engine/              # Especificaciones de motores
+│   ├── sdk/                 # SDK, CLI, APIs
+│   ├── capabilities/        # Capabilities (p. ej. knowledge/)
+│   └── product/             # Modelo conceptual de producto
 │
-├── Architecture/
-│
-├── Domain/
-│
-├── Engine/
-│
-├── SDK/
-│
-├── Workspace/
-│
-├── Apps/
-│
-├── packages/
-│
-├── tools/
-│
-└── docs/
+├── packages/                # Implementación ejecutable (@atlas/*)
+├── workspaces/              # Proyectos Atlas de referencia
+├── examples/                # Demos técnicas
+├── releases/                # Releases, reportes de sprint, planes
+├── docs/                    # Documentación humana + proposals/rfc
+├── adr/                     # Architecture Decision Records
+├── apps/                    # Aplicaciones (reservado)
+├── plugins/                 # Extensiones (reservado)
+├── templates/               # Plantillas reutilizables
+├── tools/                   # Herramientas de desarrollo
+├── scripts/                 # Automatización
+└── tests/                   # Tests cross-package (reservado)
 ```
 
-Cada bloque representa una responsabilidad diferente dentro del ecosistema.
+Cada bloque responde a una única pregunta. Las capas conceptuales (Foundation, Domain, Architecture, Engine, SDK) **permanecen como modelo mental**, pero **físicamente** viven bajo `spec/`.
 
 ---
 
@@ -147,12 +151,14 @@ Cada bloque representa una responsabilidad diferente dentro del ecosistema.
 
 Foundation define la identidad permanente de Atlas.
 
+Ubicación: [`spec/foundation/`](./)
+
 Incluye.
 
 - propósito;
 - visión;
 - principios;
-- gobernanza;
+- gobernanza del repositorio (`ATLAS-012`, `ATLAS-013`);
 - lenguaje común;
 - decisiones fundamentales.
 
@@ -165,6 +171,8 @@ Todo el ecosistema se construye sobre ella.
 # Domain
 
 Domain define el modelo conceptual de Atlas.
+
+Ubicación: [`spec/domain/`](../domain/)
 
 Describe las entidades principales del sistema.
 
@@ -186,6 +194,8 @@ No contiene implementaciones.
 
 Architecture define la estructura técnica del ecosistema.
 
+Ubicación: [`spec/architecture/`](../architecture/)
+
 Incluye.
 
 - arquitectura del sistema;
@@ -199,7 +209,9 @@ Incluye.
 
 # Engine
 
-Engine implementa el Kernel operativo de Atlas.
+Engine especifica el Kernel operativo de Atlas.
+
+Ubicación: [`spec/engine/`](../engine/)
 
 Incluye.
 
@@ -212,13 +224,15 @@ Incluye.
 - Agent Runtime
 - Publisher Engine
 
-Engine constituye el núcleo de ejecución.
+Las implementaciones correspondientes viven en `packages/`.
 
 ---
 
 # SDK
 
-SDK expone las interfaces públicas de Atlas.
+SDK especifica las interfaces públicas de Atlas.
+
+Ubicación: [`spec/sdk/`](../sdk/)
 
 Incluye.
 
@@ -230,7 +244,17 @@ Incluye.
 - GraphQL API
 - Webhooks
 
-Toda integración oficial debe consumir el SDK.
+Toda integración oficial debe consumir el SDK (`@atlas/sdk`).
+
+---
+
+# Capabilities
+
+Las capabilities extienden el Kernel con dominios de valor.
+
+Ubicación: [`spec/capabilities/`](../capabilities/)
+
+La primera capability implementada es **Knowledge** (`spec/capabilities/knowledge/`, `@atlas/knowledge`).
 
 ---
 
@@ -239,35 +263,39 @@ Toda integración oficial debe consumir el SDK.
 Para comprender Atlas, la documentación deberá estudiarse en el siguiente orden.
 
 ```text
-ATLAS-000 — README
+spec/foundation/ATLAS-000-README.md
 
 ↓
 
-Foundation
+spec/foundation/
 
 ↓
 
-Domain
+spec/domain/
 
 ↓
 
-Architecture
+spec/architecture/
 
 ↓
 
-Engine
+spec/engine/
 
 ↓
 
-SDK
+spec/sdk/
 
 ↓
 
-Workspace
+spec/capabilities/ (según capability)
 
 ↓
 
-Applications
+workspaces/
+
+↓
+
+packages/ (implementación)
 ```
 
 Este recorrido garantiza una comprensión progresiva de la plataforma.
@@ -278,18 +306,20 @@ Este recorrido garantiza una comprensión progresiva de la plataforma.
 
 | Área | Estado |
 |-------|--------|
-| Foundation | ✅ Completo |
-| Architecture | ✅ Completo |
-| Domain | ✅ Completo |
-| SDK | ✅ Completo |
-| Engine | 🟡 Especificación completa |
-| Workspace | 🔜 Pendiente |
-| Applications | 🔜 Pendiente |
-| Kernel | 🚧 Implementación |
+| Foundation (spec) | ✅ Completo |
+| Architecture (spec) | ✅ Completo |
+| Domain (spec) | ✅ Completo |
+| Engine (spec) | ✅ Especificación completa |
+| SDK (spec) | ✅ Completo |
+| Repository Stabilization (Milestone 2) | ✅ Completado |
+| Kernel (`@atlas/core`, compiler, events, runtime, sdk, cli) | ✅ Implementado — v0.1 congelado |
+| Knowledge Capability (`@atlas/knowledge`) | 🚧 En progreso (Sprint 8–9) |
+| Workspaces | ✅ Referencia (`first-atlas-workspace`) |
+| Applications (`apps/`) | 🔜 Reservado |
 
-Atlas ha completado su fase de diseño arquitectónico.
+Atlas completó su fase de diseño arquitectónico y la estabilización del repositorio.
 
-La siguiente etapa consiste en implementar el Kernel siguiendo los contratos definidos por la documentación.
+La etapa activa consiste en implementar capabilities sobre el Kernel congelado, respetando `spec/` como contrato.
 
 ---
 
@@ -298,43 +328,30 @@ La siguiente etapa consiste en implementar el Kernel siguiendo los contratos def
 El desarrollo del software sigue una dependencia estricta.
 
 ```text
-Foundation
+spec/ (contrato normativo)
 
 ↓
 
-Domain
+packages/ (implementación)
 
 ↓
 
-Architecture
-
-↓
-
-Compiler
-
-↓
-
-Runtime
-
-↓
-
-SDK
-
-↓
-
-Applications
+workspaces/ + examples/ (consumo)
 ```
 
-Ningún componente podrá implementarse contradiciendo la documentación oficial.
+Ningún componente podrá implementarse contradiciendo la documentación oficial en `spec/`.
 
-Toda evolución arquitectónica deberá realizarse mediante ADR (Architecture Decision Records).
+Toda evolución arquitectónica deberá realizarse mediante ADR en [`adr/`](../../adr/).
+
+Reportes de sprint, releases e implementation plans viven en [`releases/`](../../releases/) — no son normativos.
 
 ---
 
 # Documentación Principal
 
-## Foundation
+## Foundation — `spec/foundation/`
 
+- ATLAS-000 — README (este documento)
 - ATLAS-001 — Manifesto
 - ATLAS-002 — Constitution
 - ATLAS-003 — Principles
@@ -345,18 +362,20 @@ Toda evolución arquitectónica deberá realizarse mediante ADR (Architecture De
 - ATLAS-008 — Ontology
 - ATLAS-009 — Glossary
 - ATLAS-010 — Platform Mapping
+- ATLAS-012 — Repository Governance
+- ATLAS-013 — Naming Conventions
 
-## Architecture
+## Architecture — `spec/architecture/`
 
 - ATLAS-ARCH-000 — Architecture Overview
 - ATLAS-ARCH-001 — System Architecture
 - ATLAS-ARCH-002 — Package Architecture
 - ATLAS-ARCH-003 — Compiler Architecture
 - ATLAS-ARCH-004 — Knowledge Graph Architecture
-- ATLAS-ARCH-005 — Runtime Architecture
+- ATLAS-ARCH-005 — Plugin Architecture
 - ATLAS-ARCH-006 — Build Compilation Pipeline
 
-## Domain
+## Domain — `spec/domain/`
 
 - ATLAS-DOM-000 — Domain Overview
 - ATLAS-DOM-001 — Knowledge Domain
@@ -369,7 +388,21 @@ Toda evolución arquitectónica deberá realizarse mediante ADR (Architecture De
 - ATLAS-DOM-008 — Agent Domain
 - ATLAS-DOM-009 — Runtime Domain
 
-## SDK
+## Engine — `spec/engine/`
+
+- ATLAS-100 — Engine Overview
+- ATLAS-101 — Context Engine
+- ATLAS-102 — Knowledge Engine
+- ATLAS-103 — Memory Engine
+- ATLAS-104 — Search Engine
+- ATLAS-105 — Retrieval Engine
+- ATLAS-106 — Prompt Engine
+- ATLAS-107 — Agent Runtime
+- ATLAS-108 — Workflow Engine
+- ATLAS-109 — Validation Engine
+- ATLAS-110 — Context Planner
+
+## SDK — `spec/sdk/`
 
 - ATLAS-200 — SDK Overview
 - ATLAS-201 — SDK CLI
@@ -379,6 +412,20 @@ Toda evolución arquitectónica deberá realizarse mediante ADR (Architecture De
 - ATLAS-205 — REST API
 - ATLAS-206 — GraphQL API
 - ATLAS-207 — Webhooks
+
+## Capabilities — `spec/capabilities/`
+
+- KNOWLEDGE-001 … KNOWLEDGE-008 — Knowledge Capability (`spec/capabilities/knowledge/`)
+
+## Product — `spec/product/`
+
+- ATLAS-002 — Conceptual Model (ver ADR-0001 sobre namespace de IDs)
+
+## Operación — `releases/`, `adr/`, `docs/`
+
+- [`releases/`](../../releases/) — Releases oficiales, sprint reports, implementation plans
+- [`adr/`](../../adr/) — Architecture Decision Records
+- [`docs/`](../../docs/) — Documentación humana y RFCs (`docs/proposals/rfc/`)
 
 ---
 
@@ -394,4 +441,4 @@ Atlas es una plataforma para preservar el conocimiento, amplificar el criterio y
 
 La documentación oficial constituye el contrato arquitectónico del ecosistema.
 
-Toda implementación futura deberá respetar los principios, dominios y contratos definidos en Foundation, Architecture, Domain y SDK para garantizar la evolución coherente de la plataforma.
+Toda implementación futura deberá respetar los principios, dominios y contratos definidos en `spec/` para garantizar la evolución coherente de la plataforma.

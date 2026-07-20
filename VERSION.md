@@ -1,9 +1,9 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.0.0
+version: 1.1.0
 status: active
-last_updated: 2026-07-18
+last_updated: 2026-07-19
 ---
 
 # VERSION.md
@@ -14,8 +14,9 @@ last_updated: 2026-07-18
 |-------|-------|
 | **Atlas Version** | `0.1.0-alpha` |
 | **Kernel Version** | `0.1` |
-| **Status** | **Frozen** |
+| **Kernel Status** | **Frozen** |
 | **Foundation Phase** | **Completed** |
+| **Repository Stabilization (Milestone 2)** | **Completed** |
 | **Release document** | [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/ATLAS-RELEASE-001-KERNEL_v0.1.md) |
 | **Internal RC tag** | `kernel-v0.1.0-alpha.1` (propuesto) |
 
@@ -23,7 +24,7 @@ last_updated: 2026-07-18
 
 ## Kernel package versions
 
-Versiones publicadas en `package.json` al cierre de la Fase Fundacional:
+Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones post-Foundation:
 
 | Package | Version | Role |
 |---------|---------|------|
@@ -31,23 +32,31 @@ Versiones publicadas en `package.json` al cierre de la Fase Fundacional:
 | `@atlas/compiler` | 0.1.1 | Pipeline de compilación |
 | `@atlas/events` | 0.1.0 | Eventos de dominio |
 | `@atlas/runtime` | 0.1.0 | Ejecución de artifacts |
-| `@atlas/sdk` | 0.2.0 | Fachada pública del Kernel |
+| `@atlas/sdk` | 0.3.0 | Fachada pública del Kernel (+ integración Knowledge, Sprint 9) |
 | `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos |
 
-> **Nota de versionado:** La versión de producto Atlas es `0.1.0-alpha` (Kernel v0.1 congelado). Los paquetes npm mantienen semver independiente por componente; `@atlas/sdk` en `0.2.0` refleja la capa de facade completada en Sprint 4–5, no un release de producto distinto.
+> **Nota de versionado:** La versión de producto Atlas es `0.1.0-alpha` (Kernel v0.1 congelado). Los paquetes npm mantienen semver independiente por componente.
 
 ---
 
-## Stub packages (Stage 2)
+## Capability package versions
 
-Los siguientes paquetes permanecen en `0.0.0` (bootstrap, sin implementación):
+| Package | Version | Role |
+|---------|---------|------|
+| `@atlas/knowledge` | 0.2.0 | Knowledge Capability — metamodel, domain core, projection adapter (Sprint 8–9) |
 
-`agent`, `context`, `context-planner`, `graph`, `knowledge`, `memory`, `ontology`, `plugin`, `prompt`, `publisher`, `retrieval`, `search`, `validation`, `workflow`
+---
+
+## Stub packages (Stage 2 — sin implementación)
+
+Los siguientes paquetes permanecen en `0.0.0` (bootstrap):
+
+`agent`, `context`, `context-planner`, `graph`, `memory`, `ontology`, `plugin`, `prompt`, `publisher`, `retrieval`, `search`, `validation`, `workflow`
 
 ---
 
 ## Version policy
 
 - **Kernel v0.1 line:** contratos públicos congelados. Breaking changes requieren major version.
-- **Stage 2 capabilities:** no iniciadas. Sin versiones publicadas.
+- **Knowledge capability:** semver independiente bajo `@atlas/knowledge`; integración transparente vía `@atlas/sdk@0.3.0`.
 - **Atlas product semver:** gobernada por este archivo y por `releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`.
