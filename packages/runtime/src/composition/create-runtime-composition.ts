@@ -53,7 +53,13 @@ export function createRuntimeDependencies(
 
   return {
     executionEngine,
-    pipelineCoordinator: overrides.pipelineCoordinator ?? createPipelineCoordinator(),
+    pipelineCoordinator:
+      overrides.pipelineCoordinator ??
+      createPipelineCoordinator({
+        executionRepository,
+        eventDispatcher,
+        clock,
+      }),
     lifecycleManager,
     stateManager,
     workflowEngine: overrides.workflowEngine ?? createWorkflowEngine(),

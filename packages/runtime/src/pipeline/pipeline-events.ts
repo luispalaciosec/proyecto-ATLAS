@@ -1,0 +1,10 @@
+export const PIPELINE_STARTED_EVENT_TYPE = 'pipeline.started';
+export const PIPELINE_STAGE_STARTED_EVENT_TYPE = 'pipeline.stage.started';
+export const PIPELINE_STAGE_COMPLETED_EVENT_TYPE = 'pipeline.stage.completed';
+export const PIPELINE_STAGE_FAILED_EVENT_TYPE = 'pipeline.stage.failed';
+export const PIPELINE_PAUSED_EVENT_TYPE = 'pipeline.paused';
+export const PIPELINE_RESUMED_EVENT_TYPE = 'pipeline.resumed';
+export const PIPELINE_CANCELLED_EVENT_TYPE = 'pipeline.cancelled';
+export const PIPELINE_COMPLETED_EVENT_TYPE = 'pipeline.completed';
+export const PIPELINE_FAILED_EVENT_TYPE = 'pipeline.failed';
+export const PIPELINE_TRANSITION_EVENT_TYPE = 'pipeline.transition';

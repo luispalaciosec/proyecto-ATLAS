@@ -20,6 +20,7 @@ export default defineConfig({
         'src/definitions/**',
         'src/executors/**',
         'src/registries/**',
+        'src/pipeline/**',
       ],
       exclude: ['src/**/*.d.ts'],
       thresholds: {
