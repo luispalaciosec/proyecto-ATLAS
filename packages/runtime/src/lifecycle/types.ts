@@ -24,3 +24,17 @@ export interface ExecutionLifecycleSnapshot {
   readonly stage: ExecutionLifecycleStage;
   readonly entered_at: string;
 }
+
+export class InvalidLifecycleTransitionError extends Error {
+  readonly execution_id: string;
+  readonly from: ExecutionLifecycleStage;
+  readonly to: ExecutionLifecycleStage;
+
+  constructor(executionId: string, from: ExecutionLifecycleStage, to: ExecutionLifecycleStage) {
+    super(`Invalid lifecycle transition for "${executionId}": ${from} → ${to}`);
+    this.name = 'InvalidLifecycleTransitionError';
+    this.execution_id = executionId;
+    this.from = from;
+    this.to = to;
+  }
+}

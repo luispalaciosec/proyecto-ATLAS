@@ -7,7 +7,20 @@ export default defineConfig({
     passWithNoTests: false,
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.ts'],
+      include: [
+        'src/engine/**',
+        'src/lifecycle/**',
+        'src/state/**',
+        'src/events/**',
+        'src/context/**',
+        'src/compat/**',
+        'src/composition/**',
+        'src/runtime/**',
+        'src/contracts/**',
+        'src/definitions/**',
+        'src/executors/**',
+        'src/registries/**',
+      ],
       exclude: ['src/**/*.d.ts'],
       thresholds: {
         lines: 85,

@@ -12,6 +12,7 @@ import {
   RuntimeCompletedEvent,
   RuntimeStartedEvent,
   summaryArtifactExecutor,
+  isRuntimeLifecycle,
   type RuntimeCompletedPayload,
   type RuntimeStartedPayload,
 } from '../src/index.js';
@@ -139,5 +140,7 @@ describe('Runtime events', () => {
     expect(String(RuntimeCompletedEvent.type)).toBe('runtime.completed');
     expect(RuntimeStartedEvent.version).toBe('1.0.0');
     expect(RuntimeCompletedEvent.version).toBe('1.0.0');
+    expect(isRuntimeLifecycle('create')).toBe(true);
+    expect(isRuntimeLifecycle('invalid')).toBe(false);
   });
 });

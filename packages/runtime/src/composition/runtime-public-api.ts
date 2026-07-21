@@ -1,18 +1,15 @@
 import type { RuntimeEventFilter, RuntimeEventHandler } from '../events/types.js';
 import type { RuntimePublicApi } from '../api/index.js';
 import type { LegacyAtlasRuntimeOptions } from '../compat/legacy-atlas-runtime.js';
-import { createLegacyAtlasRuntime } from '../compat/legacy-atlas-runtime.js';
 import type { RuntimeDependencies } from './runtime-dependencies.js';
 
 export function createRuntimePublicApi(
   dependencies: RuntimeDependencies,
-  compatOptions: LegacyAtlasRuntimeOptions = {},
+  _compatOptions: LegacyAtlasRuntimeOptions = {},
 ): RuntimePublicApi {
-  const legacyRuntime = createLegacyAtlasRuntime(compatOptions);
-
   return Object.freeze({
     execution: Object.freeze({
-      execute: legacyRuntime.execute.bind(legacyRuntime),
+      execute: dependencies.executionEngine.execute.bind(dependencies.executionEngine),
       getExecution(executionId: string) {
         return dependencies.executionEngine.getExecution(executionId);
       },

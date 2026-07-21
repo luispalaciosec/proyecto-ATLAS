@@ -1,3 +1,6 @@
+import type { ExecutionResult } from '../contracts/execution-result.js';
+import type { ExecuteParams } from '../contracts/runtime.js';
+
 import type { ExecutionSnapshot, ExecutionUnit } from './types.js';
 
 /**
@@ -6,6 +9,8 @@ import type { ExecutionSnapshot, ExecutionUnit } from './types.js';
  */
 export interface ExecutionEngine {
   readonly component: 'execution-engine';
+
+  execute(params: ExecuteParams): Promise<ExecutionResult>;
 
   createExecution(unit: ExecutionUnit): Promise<ExecutionSnapshot>;
 

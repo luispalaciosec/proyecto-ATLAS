@@ -1,4 +1,6 @@
-import type { StateScope, StateSnapshot, StateTransition } from './types.js';
+import type { ExecutionLifecycleStage } from '../lifecycle/types.js';
+
+import type { ExecutionStateValue, StateScope, StateSnapshot, StateTransition } from './types.js';
 
 /**
  * @see ATLAS-RUNTIME-003
@@ -6,6 +8,17 @@ import type { StateScope, StateSnapshot, StateTransition } from './types.js';
  */
 export interface StateManager {
   readonly component: 'state-manager';
+
+  initializeExecution(
+    executionId: string,
+    initial: Pick<ExecutionStateValue, 'artifact_count'>,
+  ): StateSnapshot;
+
+  transitionExecution(
+    executionId: string,
+    nextStage: ExecutionLifecycleStage,
+    patch?: Partial<Pick<ExecutionStateValue, 'success' | 'output_count'>>,
+  ): StateSnapshot;
 
   getState(scope: StateScope, entityId: string): StateSnapshot | null;
 

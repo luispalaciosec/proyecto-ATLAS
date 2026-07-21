@@ -4,22 +4,22 @@ import {
   createLegacyAtlasRuntime,
   type LegacyAtlasRuntimeOptions,
 } from '../compat/legacy-atlas-runtime.js';
-import { createRuntimeComposition, type RuntimeComposition } from '../composition/index.js';
 
 export interface AtlasRuntimeOptions extends LegacyAtlasRuntimeOptions {}
 
 export class AtlasRuntime implements Runtime {
   readonly module = '@atlas/runtime' as const;
-  readonly composition: RuntimeComposition;
-  readonly #legacy;
+  readonly composition;
+
+  readonly #runtime;
 
   constructor(options: AtlasRuntimeOptions = {}) {
-    this.#legacy = createLegacyAtlasRuntime(options);
-    this.composition = createRuntimeComposition(options);
+    this.#runtime = createLegacyAtlasRuntime(options);
+    this.composition = this.#runtime.composition;
   }
 
   async execute(params: ExecuteParams): Promise<ExecutionResult> {
-    return this.#legacy.execute(params);
+    return this.#runtime.execute(params);
   }
 }
 

@@ -22,20 +22,41 @@ export interface RuntimeComposition extends RuntimeDependencies {
 
 export interface CreateRuntimeCompositionOptions extends LegacyAtlasRuntimeOptions {
   readonly dependencies?: PartialRuntimeDependencies;
+  readonly clock?: () => string;
 }
 
 export function createRuntimeDependencies(
   overrides: PartialRuntimeDependencies = {},
+  options: Pick<CreateRuntimeCompositionOptions, 'clock' | 'eventBus' | 'executors'> = {},
 ): RuntimeDependencies {
+  const clock = options.clock;
+  const eventDispatcher =
+    overrides.eventDispatcher ??
+    createEventDispatcher({ eventBus: options.eventBus, clock });
+  const lifecycleManager =
+    overrides.lifecycleManager ??
+    createLifecycleManager({ eventDispatcher, clock });
+  const stateManager =
+    overrides.stateManager ?? createStateManager({ eventDispatcher, clock });
+  const executionEngine =
+    overrides.executionEngine ??
+    createExecutionEngine({
+      lifecycleManager,
+      stateManager,
+      eventDispatcher,
+      executors: options.executors,
+      clock,
+    });
+
   return {
-    executionEngine: overrides.executionEngine ?? createExecutionEngine(),
+    executionEngine,
     pipelineCoordinator: overrides.pipelineCoordinator ?? createPipelineCoordinator(),
-    lifecycleManager: overrides.lifecycleManager ?? createLifecycleManager(),
-    stateManager: overrides.stateManager ?? createStateManager(),
+    lifecycleManager,
+    stateManager,
     workflowEngine: overrides.workflowEngine ?? createWorkflowEngine(),
     taskScheduler: overrides.taskScheduler ?? createTaskScheduler(),
     agentRuntime: overrides.agentRuntime ?? createAgentRuntime(),
-    eventDispatcher: overrides.eventDispatcher ?? createEventDispatcher(),
+    eventDispatcher,
     diagnostics: overrides.diagnostics ?? createDiagnostics(),
     errorManager: overrides.errorManager ?? createErrorManager(),
   };
@@ -44,7 +65,7 @@ export function createRuntimeDependencies(
 export function createRuntimeComposition(
   options: CreateRuntimeCompositionOptions = {},
 ): RuntimeComposition {
-  const dependencies = createRuntimeDependencies(options.dependencies);
+  const dependencies = createRuntimeDependencies(options.dependencies, options);
   const registry = createRuntimeComponentRegistry(dependencies);
   const api = createRuntimePublicApi(dependencies, options);
 
