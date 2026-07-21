@@ -1,46 +1,27 @@
-import { isValidLifecycleTransition } from '../lifecycle/transitions.js';
+import type { ExecutionRepository } from '../engine/execution-repository.js';
 import type { ExecutionLifecycleStage } from '../lifecycle/types.js';
 import { InvalidStateTransitionError, type ExecutionStateValue } from './types.js';
 import type { StateManager } from './state-manager.js';
-import type { EventDispatcher } from '../events/event-dispatcher.js';
 import type { StateScope, StateSnapshot, StateTransition } from './types.js';
 
 export interface CreateStateManagerOptions {
   readonly clock?: () => string;
-  readonly eventDispatcher?: EventDispatcher;
+  readonly executionRepository?: ExecutionRepository;
 }
 
-function asExecutionState(value: Readonly<Record<string, unknown>>): ExecutionStateValue {
-  return value as unknown as ExecutionStateValue;
+function toStateSnapshot(executionId: string, updatedAt: string, execution: NonNullable<ReturnType<ExecutionRepository['get']>>): StateSnapshot {
+  return Object.freeze({
+    scope: 'execution' as const,
+    entity_id: executionId,
+    execution_id: executionId,
+    value: execution.state.value as unknown as Readonly<Record<string, unknown>>,
+    updated_at: updatedAt,
+  });
 }
 
 export function createStateManager(options: CreateStateManagerOptions = {}): StateManager {
-  const states = new Map<string, StateSnapshot>();
-  const histories = new Map<string, StateTransition[]>();
+  const repository = options.executionRepository;
   const clock = options.clock ?? (() => new Date().toISOString());
-
-  function key(scope: StateScope, entityId: string): string {
-    return `${scope}:${entityId}`;
-  }
-
-  function validateExecutionTransition(
-    entityId: string,
-    from: ExecutionStateValue,
-    toStage: ExecutionLifecycleStage,
-  ): void {
-    if (!isValidLifecycleTransition(from.stage, toStage)) {
-      throw new InvalidStateTransitionError(
-        'execution',
-        entityId,
-        from as unknown as Readonly<Record<string, unknown>>,
-        {
-          ...from,
-          stage: toStage,
-          status: toStage,
-        } as Readonly<Record<string, unknown>>,
-      );
-    }
-  }
 
   return {
     component: 'state-manager',
@@ -49,25 +30,17 @@ export function createStateManager(options: CreateStateManagerOptions = {}): Sta
       executionId: string,
       initial: Pick<ExecutionStateValue, 'artifact_count'>,
     ): StateSnapshot {
-      const value = Object.freeze({
-        stage: 'created',
-        status: 'created',
-        success: null,
-        artifact_count: initial.artifact_count,
-        output_count: 0,
-      });
+      const execution = repository?.get(executionId);
 
-      const snapshot = Object.freeze({
-        scope: 'execution' as const,
-        entity_id: executionId,
-        execution_id: executionId,
-        value,
-        updated_at: clock(),
-      });
+      if (!execution) {
+        throw new InvalidStateTransitionError('execution', executionId, {}, { stage: 'created' });
+      }
 
-      states.set(key('execution', executionId), snapshot);
-      histories.set(key('execution', executionId), []);
-      return snapshot;
+      if (execution.state.value.artifact_count !== initial.artifact_count) {
+        throw new Error(`Execution aggregate state mismatch for ${executionId}`);
+      }
+
+      return toStateSnapshot(executionId, clock(), execution);
     },
 
     transitionExecution(
@@ -75,49 +48,40 @@ export function createStateManager(options: CreateStateManagerOptions = {}): Sta
       nextStage: ExecutionLifecycleStage,
       patch: Partial<Pick<ExecutionStateValue, 'success' | 'output_count'>> = {},
     ): StateSnapshot {
-      const stateKey = key('execution', executionId);
-      const current = states.get(stateKey);
+      if (!repository) {
+        throw new Error('ExecutionRepository is required for state transitions');
+      }
 
-      if (!current) {
+      const execution = repository.get(executionId);
+
+      if (!execution) {
         throw new InvalidStateTransitionError('execution', executionId, {}, { stage: nextStage });
       }
 
-      const from = asExecutionState(current.value);
-      validateExecutionTransition(executionId, from, nextStage);
-
-      const nextValue = Object.freeze({
-        stage: nextStage,
-        status: nextStage,
-        success: patch.success ?? from.success,
-        artifact_count: from.artifact_count,
-        output_count: patch.output_count ?? from.output_count,
-      });
-
-      const snapshot = Object.freeze({
-        scope: 'execution' as const,
-        entity_id: executionId,
-        execution_id: executionId,
-        value: nextValue,
-        updated_at: clock(),
-      });
-
-      const transition = Object.freeze({
-        from: current.value,
-        to: nextValue,
-        occurred_at: clock(),
-      });
-
-      states.set(stateKey, snapshot);
-      histories.get(stateKey)?.push(transition);
-      return snapshot;
+      const updated = repository.transition(executionId, nextStage, patch);
+      return toStateSnapshot(executionId, clock(), updated);
     },
 
     getState(scope: StateScope, entityId: string): StateSnapshot | null {
-      return states.get(key(scope, entityId)) ?? null;
+      if (scope !== 'execution' || !repository) {
+        return null;
+      }
+
+      const execution = repository.get(entityId);
+
+      if (!execution) {
+        return null;
+      }
+
+      return toStateSnapshot(entityId, clock(), execution);
     },
 
     getTransitionHistory(scope: StateScope, entityId: string): readonly StateTransition[] {
-      return Object.freeze([...(histories.get(key(scope, entityId)) ?? [])]);
+      if (scope !== 'execution' || !repository) {
+        return Object.freeze([]);
+      }
+
+      return repository.get(entityId)?.state.transitions ?? Object.freeze([]);
     },
   };
 }

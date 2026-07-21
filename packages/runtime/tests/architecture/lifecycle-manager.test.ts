@@ -1,37 +1,46 @@
 import { describe, expect, it } from 'vitest';
 
 import { createLifecycleManager, isExecutionLifecycleStage } from '../../src/index.js';
+import { createExecutionRepository } from '../../src/engine/execution-repository.js';
 import { InvalidLifecycleTransitionError } from '../../src/lifecycle/types.js';
 import { VALID_LIFECYCLE_TRANSITIONS } from '../../src/lifecycle/transitions.js';
 import { createDeterministicClock } from './helpers.js';
 
+function createWiredLifecycle(clock = createDeterministicClock()) {
+  const executionRepository = createExecutionRepository({ clock });
+  const lifecycleManager = createLifecycleManager({ clock, executionRepository });
+
+  return { executionRepository, lifecycleManager, clock };
+}
+
 describe('LifecycleManager', () => {
   it('creates executions in the created stage', () => {
-    const manager = createLifecycleManager({ clock: createDeterministicClock() });
-    const snapshot = manager.createExecution('execution.lifecycle');
+    const { executionRepository, lifecycleManager } = createWiredLifecycle();
+    executionRepository.begin({ artifacts: [] }, 'execution.lifecycle');
+    const snapshot = lifecycleManager.createExecution('execution.lifecycle');
 
     expect(snapshot.stage).toBe('created');
-    expect(manager.getCurrentStage('execution.lifecycle')).toBe('created');
-    expect(manager.getHistory('execution.lifecycle')).toHaveLength(1);
+    expect(lifecycleManager.getCurrentStage('execution.lifecycle')).toBe('created');
+    expect(lifecycleManager.getHistory('execution.lifecycle')).toHaveLength(1);
   });
 
   it('allows only valid lifecycle transitions defined by RUNTIME-006', () => {
-    const manager = createLifecycleManager({ clock: createDeterministicClock() });
-    manager.createExecution('execution.valid');
+    const { executionRepository, lifecycleManager } = createWiredLifecycle();
+    executionRepository.begin({ artifacts: [] }, 'execution.valid');
 
-    expect(manager.transition('execution.valid', 'initialized').stage).toBe('initialized');
-    expect(manager.transition('execution.valid', 'prepared').stage).toBe('prepared');
-    expect(manager.transition('execution.valid', 'running').stage).toBe('running');
-    expect(manager.transition('execution.valid', 'completing').stage).toBe('completing');
-    expect(manager.transition('execution.valid', 'completed').stage).toBe('completed');
-    expect(manager.transition('execution.valid', 'archived').stage).toBe('archived');
+    expect(lifecycleManager.transition('execution.valid', 'initialized').stage).toBe('initialized');
+    expect(lifecycleManager.transition('execution.valid', 'prepared').stage).toBe('prepared');
+    expect(lifecycleManager.transition('execution.valid', 'running').stage).toBe('running');
+    expect(lifecycleManager.transition('execution.valid', 'completing').stage).toBe('completing');
+    expect(lifecycleManager.transition('execution.valid', 'completed').stage).toBe('completed');
+    expect(lifecycleManager.transition('execution.valid', 'archived').stage).toBe('archived');
   });
 
   it('rejects invalid lifecycle transitions', () => {
-    const manager = createLifecycleManager({ clock: createDeterministicClock() });
-    manager.createExecution('execution.invalid');
+    const { executionRepository, lifecycleManager } = createWiredLifecycle();
+    executionRepository.begin({ artifacts: [] }, 'execution.invalid');
 
-    expect(() => manager.transition('execution.invalid', 'running')).toThrow(
+    expect(() => lifecycleManager.transition('execution.invalid', 'running')).toThrow(
       InvalidLifecycleTransitionError,
     );
   });

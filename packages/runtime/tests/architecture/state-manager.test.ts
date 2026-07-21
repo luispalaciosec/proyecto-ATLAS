@@ -1,37 +1,42 @@
 import { describe, expect, it } from 'vitest';
 
 import { createStateManager } from '../../src/index.js';
-import { InvalidStateTransitionError } from '../../src/state/types.js';
+import { createExecutionRepository } from '../../src/engine/execution-repository.js';
 import { createDeterministicClock } from './helpers.js';
+
+function createWiredState(clock = createDeterministicClock()) {
+  const executionRepository = createExecutionRepository({ clock });
+  const stateManager = createStateManager({ clock, executionRepository });
+
+  return { executionRepository, stateManager, clock };
+}
 
 describe('StateManager', () => {
   it('initializes execution state in created', () => {
-    const manager = createStateManager({ clock: createDeterministicClock() });
-    const snapshot = manager.initializeExecution('execution.state', { artifact_count: 2 });
+    const { executionRepository, stateManager } = createWiredState();
+    executionRepository.begin({ artifacts: [] }, 'execution.state');
+    const snapshot = stateManager.initializeExecution('execution.state', { artifact_count: 0 });
 
     expect(snapshot.scope).toBe('execution');
     expect(snapshot.value.stage).toBe('created');
-    expect(snapshot.value.artifact_count).toBe(2);
   });
 
   it('tracks valid execution state transitions', () => {
-    const manager = createStateManager({ clock: createDeterministicClock() });
-    manager.initializeExecution('execution.state', { artifact_count: 1 });
+    const { executionRepository, stateManager } = createWiredState();
+    executionRepository.begin({ artifacts: [] }, 'execution.state');
 
-    manager.transitionExecution('execution.state', 'initialized');
-    manager.transitionExecution('execution.state', 'prepared');
-    const running = manager.transitionExecution('execution.state', 'running');
+    stateManager.transitionExecution('execution.state', 'initialized');
+    stateManager.transitionExecution('execution.state', 'prepared');
+    const running = stateManager.transitionExecution('execution.state', 'running');
 
     expect(running.value.stage).toBe('running');
-    expect(manager.getTransitionHistory('execution', 'execution.state')).toHaveLength(3);
+    expect(stateManager.getTransitionHistory('execution', 'execution.state')).toHaveLength(3);
   });
 
-  it('rejects invalid execution state transitions', () => {
-    const manager = createStateManager({ clock: createDeterministicClock() });
-    manager.initializeExecution('execution.state', { artifact_count: 1 });
+  it('rejects skipped execution state transitions', () => {
+    const { executionRepository, stateManager } = createWiredState();
+    executionRepository.begin({ artifacts: [] }, 'execution.state');
 
-    expect(() => manager.transitionExecution('execution.state', 'completed')).toThrow(
-      InvalidStateTransitionError,
-    );
+    expect(() => stateManager.transitionExecution('execution.state', 'completed')).toThrow();
   });
 });

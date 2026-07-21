@@ -3,6 +3,7 @@ import type { LegacyAtlasRuntimeOptions } from '../compat/legacy-atlas-runtime.j
 import { createAgentRuntime } from '../agents/agent-runtime.factory.js';
 import { createDiagnostics } from '../diagnostics/diagnostics.factory.js';
 import { createEventDispatcher } from '../events/event-dispatcher.factory.js';
+import { createExecutionRepository } from '../engine/execution-repository.js';
 import { createExecutionEngine } from '../engine/execution-engine.factory.js';
 import { createErrorManager } from '../errors/error-manager.factory.js';
 import { createLifecycleManager } from '../lifecycle/lifecycle-manager.factory.js';
@@ -30,17 +31,19 @@ export function createRuntimeDependencies(
   options: Pick<CreateRuntimeCompositionOptions, 'clock' | 'eventBus' | 'executors'> = {},
 ): RuntimeDependencies {
   const clock = options.clock;
+  const executionRepository = createExecutionRepository({ clock });
   const eventDispatcher =
     overrides.eventDispatcher ??
-    createEventDispatcher({ eventBus: options.eventBus, clock });
+    createEventDispatcher({ eventBus: options.eventBus, clock, executionRepository });
   const lifecycleManager =
     overrides.lifecycleManager ??
-    createLifecycleManager({ eventDispatcher, clock });
+    createLifecycleManager({ eventDispatcher, clock, executionRepository });
   const stateManager =
-    overrides.stateManager ?? createStateManager({ eventDispatcher, clock });
+    overrides.stateManager ?? createStateManager({ clock, executionRepository });
   const executionEngine =
     overrides.executionEngine ??
     createExecutionEngine({
+      executionRepository,
       lifecycleManager,
       stateManager,
       eventDispatcher,
@@ -57,7 +60,7 @@ export function createRuntimeDependencies(
     taskScheduler: overrides.taskScheduler ?? createTaskScheduler(),
     agentRuntime: overrides.agentRuntime ?? createAgentRuntime(),
     eventDispatcher,
-    diagnostics: overrides.diagnostics ?? createDiagnostics(),
+    diagnostics: overrides.diagnostics ?? createDiagnostics({ executionRepository }),
     errorManager: overrides.errorManager ?? createErrorManager(),
   };
 }

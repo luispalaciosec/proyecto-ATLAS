@@ -1,6 +1,7 @@
 import type { ExecutionResult } from '../contracts/execution-result.js';
 import type { ExecuteParams } from '../contracts/runtime.js';
 
+import type { Execution } from './execution-aggregate.js';
 import type { ExecutionSnapshot, ExecutionUnit } from './types.js';
 
 /**
@@ -15,4 +16,6 @@ export interface ExecutionEngine {
   createExecution(unit: ExecutionUnit): Promise<ExecutionSnapshot>;
 
   getExecution(executionId: string): ExecutionSnapshot | null;
+
+  getExecutionAggregate(executionId: string): Execution | null;
 }

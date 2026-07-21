@@ -4,10 +4,7 @@ import type { ArtifactExecutor } from '../contracts/artifact-executor.js';
 import type { ExecutionOutput } from '../contracts/execution-output.js';
 import type { ExecutionResult } from '../contracts/execution-result.js';
 import type { ExecuteParams } from '../contracts/runtime.js';
-import {
-  createExecutionContext,
-  updateExecutionContext,
-} from '../context/execution-context.js';
+import { createExecutionContext } from '../context/execution-context.js';
 import {
   EXECUTION_COMPLETED_EVENT_TYPE,
   EXECUTION_FAILED_EVENT_TYPE,
@@ -15,15 +12,15 @@ import {
 } from '../definitions/execution-events.js';
 import type { EventDispatcher } from '../events/event-dispatcher.js';
 import { createRuntimeEventEnvelope } from '../events/event-dispatcher.factory.js';
-import type { LifecycleManager } from '../lifecycle/lifecycle-manager.js';
 import type { ExecutionLifecycleStage } from '../lifecycle/types.js';
 import { createExecutorRegistry } from '../registries/executor-registry.js';
-import type { StateManager } from '../state/state-manager.js';
 import { createDefaultArtifactExecutors } from '../executors/default-executors.js';
 
+import type { ExecutionRepository } from './execution-repository.js';
+import { buildCompatExecutionContext } from './execution-repository.js';
+
 export interface ExecutionFlowDependencies {
-  readonly lifecycleManager: LifecycleManager;
-  readonly stateManager: StateManager;
+  readonly executionRepository: ExecutionRepository;
   readonly eventDispatcher: EventDispatcher;
   readonly executors?: readonly ArtifactExecutor[];
   readonly clock?: () => string;
@@ -42,50 +39,6 @@ function timestamp(clock?: () => string): AtlasTimestamp {
   return (clock?.() ?? new Date().toISOString()) as AtlasTimestamp;
 }
 
-function transitionExecutionState(
-  deps: ExecutionFlowDependencies,
-  executionId: string,
-  stage: ExecutionLifecycleStage,
-  patch?: Parameters<StateManager['transitionExecution']>[2],
-): void {
-  deps.lifecycleManager.transition(executionId, stage);
-  deps.stateManager.transitionExecution(executionId, stage, patch);
-}
-
-function buildCompatExecutionContext(
-  executionId: string,
-  params: ExecuteParams,
-  outputs: readonly ExecutionOutput[],
-  success: boolean,
-  startedAt: AtlasTimestamp,
-  completedAt: AtlasTimestamp,
-): ExecutionResult['context'] {
-  let context = createExecutionContext({
-    session_id: executionId,
-    workspace: params.workspace,
-    artifacts: params.artifacts,
-    metadata: params.metadata,
-  });
-
-  context = updateExecutionContext(context, { lifecycle: 'initialize' });
-  context = updateExecutionContext(context, { lifecycle: 'load' });
-  context = updateExecutionContext(context, { lifecycle: 'start', started_at: startedAt });
-  context = updateExecutionContext(context, { lifecycle: 'execute' });
-  context = updateExecutionContext(context, {
-    lifecycle: success ? 'monitor' : 'failed',
-    outputs,
-  });
-
-  if (success) {
-    context = updateExecutionContext(context, { lifecycle: 'stop' });
-  }
-
-  return updateExecutionContext(context, {
-    lifecycle: 'dispose',
-    completed_at: completedAt,
-  });
-}
-
 export async function runExecutionFlow(
   params: ExecuteParams,
   deps: ExecutionFlowDependencies,
@@ -100,15 +53,13 @@ export async function runExecutionFlow(
   const correlationId = executionId;
   const registry = createExecutorRegistry(deps.executors ?? createDefaultArtifactExecutors());
 
-  deps.lifecycleManager.createExecution(executionId);
-  deps.stateManager.initializeExecution(executionId, {
-    artifact_count: params.artifacts.length,
-  });
+  deps.executionRepository.begin(params, executionId);
 
   for (const stage of EXECUTION_PATH) {
     if (stage === 'running') {
       const startedAt = timestamp(deps.clock);
-      transitionExecutionState(deps, executionId, stage);
+      deps.executionRepository.recordMetrics(executionId, { started_at: startedAt });
+      deps.executionRepository.transition(executionId, stage, {}, deps.eventDispatcher);
 
       deps.eventDispatcher.publish(
         createRuntimeEventEnvelope({
@@ -127,6 +78,7 @@ export async function runExecutionFlow(
         }),
       );
 
+      const execution = deps.executionRepository.get(executionId)!;
       const outputs: ExecutionOutput[] = [];
       let success = true;
 
@@ -148,7 +100,7 @@ export async function runExecutionFlow(
           continue;
         }
 
-        const output = executor.execute(artifact, contextSeed);
+        const output = executor.execute(artifact, execution.context);
         outputs.push(output);
 
         if (!output.success) {
@@ -156,10 +108,13 @@ export async function runExecutionFlow(
         }
       }
 
-      transitionExecutionState(deps, executionId, 'completing', {
-        output_count: outputs.length,
-        success,
-      });
+      deps.executionRepository.setOutputs(executionId, outputs);
+      deps.executionRepository.transition(
+        executionId,
+        'completing',
+        { output_count: outputs.length, success },
+        deps.eventDispatcher,
+      );
 
       if (success) {
         deps.eventDispatcher.publish(
@@ -201,26 +156,41 @@ export async function runExecutionFlow(
         );
       }
 
-      transitionExecutionState(deps, executionId, 'completed', { success, output_count: outputs.length });
-      transitionExecutionState(deps, executionId, 'archived', { success, output_count: outputs.length });
+      deps.executionRepository.transition(
+        executionId,
+        'completed',
+        { success, output_count: outputs.length },
+        deps.eventDispatcher,
+      );
+      deps.executionRepository.transition(
+        executionId,
+        'archived',
+        { success, output_count: outputs.length },
+        deps.eventDispatcher,
+      );
 
       const completedAt = timestamp(deps.clock);
+      deps.executionRepository.recordMetrics(executionId, { completed_at: completedAt });
+
       const compatContext = buildCompatExecutionContext(
-        executionId,
-        params,
+        deps.executionRepository.get(executionId)!,
         outputs,
         success,
         startedAt,
         completedAt,
       );
 
-      return Object.freeze({
+      const result = Object.freeze({
         context: compatContext,
         success: success && compatContext.lifecycle === 'dispose',
       });
+
+      deps.executionRepository.finalizeCompatContext(executionId, compatContext, result);
+
+      return result;
     }
 
-    transitionExecutionState(deps, executionId, stage);
+    deps.executionRepository.transition(executionId, stage, {}, deps.eventDispatcher);
   }
 
   throw new Error(`Execution flow did not finalize for "${executionId}"`);

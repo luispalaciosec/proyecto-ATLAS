@@ -7,6 +7,7 @@ import {
   RuntimeCompletedEvent,
   RuntimeStartedEvent,
 } from '../../src/index.js';
+import { createExecutionRepository } from '../../src/engine/execution-repository.js';
 import {
   EXECUTION_COMPLETED_EVENT_TYPE,
   EXECUTION_FAILED_EVENT_TYPE,
@@ -17,7 +18,9 @@ import { createDeterministicClock } from './helpers.js';
 
 describe('EventDispatcher', () => {
   it('stores and queries runtime events', () => {
-    const dispatcher = createEventDispatcher({ clock: createDeterministicClock() });
+    const repository = createExecutionRepository({ clock: createDeterministicClock() });
+    repository.begin({ artifacts: [] }, 'execution.events');
+    const dispatcher = createEventDispatcher({ clock: createDeterministicClock(), executionRepository: repository });
 
     dispatcher.publish({
       event_id: 'event.1',

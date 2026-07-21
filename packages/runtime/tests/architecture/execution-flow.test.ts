@@ -41,6 +41,11 @@ describe('Execution flow', () => {
       'archived',
     );
 
+    const aggregate = runtime.composition.executionEngine.getExecutionAggregate(executionId);
+    expect(aggregate?.identity.execution_id).toBe(executionId);
+    expect(aggregate?.result?.success).toBe(true);
+    expect(aggregate?.events.length).toBeGreaterThan(0);
+
     const events = runtime.composition.eventDispatcher.query({ execution_id: executionId });
     const eventTypes = events.map((event) => event.event_type);
 
@@ -103,8 +108,8 @@ describe('ExecutionResult', () => {
       ],
     });
 
-    expect(result.context.started_at).toBe('2026-07-20T10:00:00.010Z');
-    expect(result.context.completed_at).toBe('2026-07-20T10:00:00.029Z');
+    expect(result.context.started_at).toBe('2026-07-20T10:00:00.009Z');
+    expect(result.context.completed_at).toBe('2026-07-20T10:00:00.028Z');
     expect(result.context.started_at! < result.context.completed_at!).toBe(true);
   });
 });

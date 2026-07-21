@@ -10,14 +10,17 @@ import {
   createEventDispatcher,
   summaryArtifactExecutor,
 } from '../../src/index.js';
+import { createExecutionRepository } from '../../src/engine/execution-repository.js';
 import { createDeterministicClock } from './helpers.js';
 
 function createWiredEngine(clock = createDeterministicClock()) {
-  const eventDispatcher = createEventDispatcher({ clock });
-  const lifecycleManager = createLifecycleManager({ eventDispatcher, clock });
-  const stateManager = createStateManager({ eventDispatcher, clock });
+  const executionRepository = createExecutionRepository({ clock });
+  const eventDispatcher = createEventDispatcher({ clock, executionRepository });
+  const lifecycleManager = createLifecycleManager({ eventDispatcher, clock, executionRepository });
+  const stateManager = createStateManager({ clock, executionRepository });
 
   const executionEngine = createExecutionEngine({
+    executionRepository,
     lifecycleManager,
     stateManager,
     eventDispatcher,
@@ -25,7 +28,7 @@ function createWiredEngine(clock = createDeterministicClock()) {
     clock,
   });
 
-  return { executionEngine, lifecycleManager, stateManager, eventDispatcher, clock };
+  return { executionEngine, lifecycleManager, stateManager, eventDispatcher, executionRepository, clock };
 }
 
 describe('ExecutionEngine', () => {

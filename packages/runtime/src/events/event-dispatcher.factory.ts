@@ -2,6 +2,7 @@ import type { EventBus } from '@atlas/events';
 import { createEventPublisher } from '@atlas/events';
 import { Identifier } from '@atlas/core';
 
+import type { ExecutionRepository } from '../engine/execution-repository.js';
 import { RuntimeCompletedEvent } from '../definitions/runtime-completed.js';
 import { RuntimeStartedEvent } from '../definitions/runtime-started.js';
 
@@ -12,6 +13,7 @@ export interface CreateEventDispatcherOptions {
   readonly eventBus?: EventBus;
   readonly moduleId?: string;
   readonly clock?: () => string;
+  readonly executionRepository?: ExecutionRepository;
 }
 
 function matchesFilter(event: RuntimeEventEnvelope, filter: RuntimeEventFilter): boolean {
@@ -32,7 +34,7 @@ function matchesFilter(event: RuntimeEventEnvelope, filter: RuntimeEventFilter):
 
 export function createEventDispatcher(options: CreateEventDispatcherOptions = {}): EventDispatcher {
   const handlers = new Set<RuntimeEventHandler>();
-  const events: RuntimeEventEnvelope[] = [];
+  const repository = options.executionRepository;
   const moduleId = options.moduleId ?? '@atlas/runtime';
   const publisher = options.eventBus ? createEventPublisher(options.eventBus, moduleId) : undefined;
 
@@ -74,12 +76,27 @@ export function createEventDispatcher(options: CreateEventDispatcherOptions = {}
     }
   }
 
+  function recordOnAggregate(event: RuntimeEventEnvelope): void {
+    if (!repository) {
+      return;
+    }
+
+    const execution = repository.get(event.execution_id);
+
+    if (!execution || execution.events.some((existing) => existing.event_id === event.event_id)) {
+      return;
+    }
+
+    repository.appendEvent(event.execution_id, event);
+  }
+
   return {
     component: 'event-dispatcher',
 
     publish(event: RuntimeEventEnvelope): void {
       const frozen = Object.freeze({ ...event, payload: Object.freeze({ ...event.payload }) });
-      events.push(frozen);
+
+      recordOnAggregate(frozen);
 
       for (const handler of handlers) {
         handler(frozen);
@@ -89,12 +106,20 @@ export function createEventDispatcher(options: CreateEventDispatcherOptions = {}
     },
 
     query(filter: RuntimeEventFilter = {}): readonly RuntimeEventEnvelope[] {
+      if (!repository) {
+        return Object.freeze([]);
+      }
+
+      const events = filter.execution_id
+        ? [...(repository.get(filter.execution_id)?.events ?? [])]
+        : repository.list().flatMap((execution) => [...execution.events]);
+
       return Object.freeze(events.filter((event) => matchesFilter(event, filter)));
     },
 
     subscribe(handler: RuntimeEventHandler): RuntimeEventSubscription {
       handlers.add(handler);
-      const subscriptionId = Identifier.create(`subscription.${events.length + 1}`).toJSON();
+      const subscriptionId = Identifier.create(`subscription.${handlers.size}`).toJSON();
 
       return Object.freeze({
         subscription_id: subscriptionId,

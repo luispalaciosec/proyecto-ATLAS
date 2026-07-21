@@ -3,11 +3,14 @@ import type { EventDispatcher } from '../events/event-dispatcher.js';
 import type { LifecycleManager } from '../lifecycle/lifecycle-manager.js';
 import type { StateManager } from '../state/state-manager.js';
 
+import type { Execution } from './execution-aggregate.js';
 import type { ExecutionEngine } from './execution-engine.js';
 import { runExecutionFlow } from './execution-flow.js';
+import type { ExecutionRepository } from './execution-repository.js';
 import type { ExecutionUnit } from './types.js';
 
 export interface CreateExecutionEngineOptions {
+  readonly executionRepository: ExecutionRepository;
   readonly lifecycleManager: LifecycleManager;
   readonly stateManager: StateManager;
   readonly eventDispatcher: EventDispatcher;
@@ -16,62 +19,42 @@ export interface CreateExecutionEngineOptions {
 }
 
 export function createExecutionEngine(options: CreateExecutionEngineOptions): ExecutionEngine {
-  const executions = new Map<string, ReturnType<LifecycleManager['getCurrentStage']>>();
-
   return {
     component: 'execution-engine',
 
     async execute(params) {
-      const result = await runExecutionFlow(params, {
-        lifecycleManager: options.lifecycleManager,
-        stateManager: options.stateManager,
+      return runExecutionFlow(params, {
+        executionRepository: options.executionRepository,
         eventDispatcher: options.eventDispatcher,
         executors: options.executors,
         clock: options.clock,
       });
-
-      const executionId = result.context.session_id.toJSON();
-      const stage = options.lifecycleManager.getCurrentStage(executionId);
-
-      executions.set(executionId, stage);
-
-      return result;
     },
 
     async createExecution(unit: ExecutionUnit) {
-      options.lifecycleManager.createExecution(unit.execution_id.toJSON());
-      options.stateManager.initializeExecution(unit.execution_id.toJSON(), { artifact_count: 0 });
+      options.executionRepository.begin({ artifacts: [] }, unit.execution_id.toJSON());
 
-      const snapshot = Object.freeze({
+      return Object.freeze({
         execution_id: unit.execution_id.toJSON(),
         status: 'pending' as const,
       });
-
-      executions.set(unit.execution_id.toJSON(), 'created');
-      return snapshot;
     },
 
     getExecution(executionId: string) {
-      const stage = options.lifecycleManager.getCurrentStage(executionId);
+      const aggregate = options.executionRepository.get(executionId);
 
-      if (!stage) {
-        return executions.has(executionId)
-          ? Object.freeze({ execution_id: executionId, status: 'pending' as const })
-          : null;
+      if (!aggregate) {
+        return null;
       }
 
-      const state = options.stateManager.getState('execution', executionId);
-      const success = state?.value.success;
+      return Object.freeze({
+        execution_id: aggregate.identity.execution_id,
+        status: aggregate.status,
+      });
+    },
 
-      let status: 'pending' | 'active' | 'completed' | 'failed' | 'cancelled' = 'active';
-
-      if (stage === 'archived') {
-        status = success === false ? 'failed' : 'completed';
-      } else if (stage === 'created') {
-        status = 'pending';
-      }
-
-      return Object.freeze({ execution_id: executionId, status });
+    getExecutionAggregate(executionId: string): Execution | null {
+      return options.executionRepository.get(executionId);
     },
   };
 }
