@@ -1,9 +1,9 @@
 {
   "name": "@atlas/workflow",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Atlas workflow package — bootstrap stub",
+  "description": "Atlas Workflow Definition System — graph model and pipeline compiler (Sprint 10E)",
   "license": "UNLICENSED",
   "exports": {
     ".": {
@@ -19,7 +19,11 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean --sourcemap",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src tests",
     "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^3.0.8"
   }
 }
