@@ -159,6 +159,16 @@ importers:
 
   packages/graph: {}
 
+  packages/intelligence:
+    dependencies:
+      '@atlas/workflow':
+        specifier: workspace:*
+        version: link:../workflow
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: ^3.0.8
+        version: 3.2.7(vitest@3.2.7(@types/node@22.20.1)(tsx@4.23.1))
+
   packages/knowledge:
     dependencies:
       '@atlas/compiler':

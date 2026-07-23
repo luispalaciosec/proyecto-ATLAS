@@ -4,9 +4,9 @@
 
 Atlas es una plataforma de ingeniería del conocimiento. Modela, compila y ejecuta conocimiento organizacional como infraestructura permanente — no como prompts efímeros.
 
-**Versión actual:** `0.1.0-alpha` · **Kernel:** `0.1` (congelado) · **Repositorio:** Milestone 2 completado · **Knowledge:** Sprint 8–9 completados
+**Versión actual:** `0.1.0-alpha` · **Kernel:** `0.1` (congelado) · **Architecture Phase:** Completada · **Current Phase:** Implementation · **Next Sprint:** 11A (Memory Engine)
 
-Ver [`VERSION.md`](./VERSION.md) para el registro oficial de versiones.
+Ver [`VERSION.md`](./VERSION.md) y [`ATLAS_ARCHITECTURE_MASTER.md`](./ATLAS_ARCHITECTURE_MASTER.md) para el registro oficial.
 
 ---
 
@@ -16,8 +16,8 @@ Atlas se divide en dos etapas:
 
 | Etapa | Alcance | Estado |
 |-------|---------|--------|
-| **Stage 1 — Platform (Kernel)** | Compilación, ejecución, runtime, SDK, CLI | ✅ Completado — v0.1 congelado |
-| **Stage 2 — Capabilities** | Knowledge, Memory, Retrieval, Workflow, Agents, Plugins | 🚧 Knowledge en progreso |
+| **Stage 1 — Platform (Kernel)** | Core, Compiler, Events, Runtime, SDK, CLI | ✅ Completado — v0.1 congelado |
+| **Stage 2 — Capabilities** | Knowledge, Workflow, Planning, Memory, Retrieval, Context, Reasoning, Agents | 🚧 Knowledge, Workflow y Planning implementados; Memory → Sprint 11A |
 
 El Kernel v0.1 es la plataforma estable sobre la que se construyen las capabilities.
 
@@ -49,7 +49,7 @@ Developer
 core → events → compiler → runtime → sdk (+ knowledge) → cli
 ```
 
-Especificaciones: [`spec/architecture/`](./spec/architecture/) · [`spec/domain/`](./spec/domain/) · [`spec/engine/`](./spec/engine/) · [`spec/sdk/`](./spec/sdk/)
+Especificaciones: [`spec/foundation/`](./spec/foundation/) · [`spec/runtime/`](./spec/runtime/) · [`spec/intelligence/`](./spec/intelligence/) · [`spec/memory/`](./spec/memory/) · [`spec/reasoning/`](./spec/reasoning/) · [`spec/architecture/`](./spec/architecture/) · [`spec/domain/`](./spec/domain/) · [`spec/engine/`](./spec/engine/) · [`spec/sdk/`](./spec/sdk/)
 
 ---
 
@@ -65,7 +65,12 @@ ATLAS/
 │   ├── engine/          # Especificaciones de motores
 │   ├── sdk/             # Especificaciones del SDK
 │   ├── capabilities/    # Especificaciones de capacidades (p. ej. knowledge/)
+│   ├── runtime/         # Runtime specs (Sprint 10A–10D)
+│   ├── intelligence/    # Intelligence Layer specs
+│   ├── memory/          # Memory Engine specs
+│   ├── reasoning/       # Reasoning Engine specs
 │   └── product/         # Modelo conceptual de producto
+├── ATLAS_ARCHITECTURE_MASTER.md  # Referencia arquitectónica consolidada
 ├── packages/            # Paquetes npm @atlas/*
 │   ├── core/            # Kernel — implementado
 │   ├── compiler/        # Kernel — implementado
@@ -73,8 +78,10 @@ ATLAS/
 │   ├── runtime/         # Kernel — implementado
 │   ├── sdk/             # Kernel — implementado
 │   ├── cli/             # Kernel — implementado
-│   ├── knowledge/       # Capability — implementado (v0.2.0)
-│   └── …                # 13 stubs Stage 2 (0.0.0)
+│   ├── knowledge/       # Capability — implementado (v0.2.0, stable)
+│   ├── workflow/        # Capability — implementado (v0.1.0, frozen, Sprint 10E)
+│   ├── intelligence/    # Capability — Planning (v0.1.0, frozen, Sprint 10F)
+│   └── …                # 12 stubs Stage 2 (0.0.0)
 ├── workspaces/          # Proyectos Atlas de referencia
 ├── examples/            # Demos técnicas por sprint
 ├── releases/            # Releases oficiales, readiness reports, migration reports
@@ -159,17 +166,20 @@ Guía completa: [`workspaces/first-atlas-workspace/GETTING_STARTED.md`](./worksp
 
 | Fase | Estado | Contenido |
 |------|--------|-----------|
+| **Architecture Phase** | ✅ Completada | Specs (119), ADRs, Runtime/Workflow/Planning congelados |
 | **Foundation Phase** | ✅ Completada | Specs, monorepo, Kernel v0.1 |
 | **Release v0.1.0-alpha** | ✅ Completada | Kernel congelado, RC interno |
 | **Milestone 2 — Repository Stabilization** | ✅ Completada | `spec/`, `releases/`, `adr/`, gobernanza ATLAS-012 |
 | **Stage 2 — Knowledge** | ✅ Sprint 8–9 | Metamodel, domain, projection → compiler |
-| **Stage 2 — Memory** | 🔒 Pendiente | Memory Engine |
+| **Stage 2 — Runtime** | ✅ Sprint 10A–10D | Execution, Lifecycle, State, Pipeline Engine (frozen) |
+| **Stage 2 — Workflow** | ✅ Sprint 10E | Workflow Definition System (frozen) |
+| **Stage 2 — Planning** | ✅ Sprint 10F | Cognitive Planning Engine (frozen) |
+| **Stage 2 — Memory** | 🚧 Sprint 11A | Memory Engine — **próximo sprint** |
 | **Stage 2 — Retrieval** | 🔒 Pendiente | Retrieval Engine |
-| **Stage 2 — Workflow** | 🔒 Pendiente | Workflow Engine |
-| **Stage 2 — Agents** | 🔒 Pendiente | Agent Engine |
-| **Stage 2 — Plugins** | 🔒 Pendiente | Plugin System |
+| **Stage 2 — Context / Reasoning** | 🔒 Pendiente | Context Builder, Reasoning Engine |
+| **Stage 2 — Agents / Plugins** | 🔒 Pendiente | Agent Engine, Plugin System |
 
-Próximo hito: revisión arquitectónica post-Sprint 9.1 (Documentation Alignment).
+**Current Phase:** Implementation · **Próximo hito:** Sprint 11A — `@atlas/memory`
 
 ---
 

@@ -16,6 +16,7 @@ Cada ADR debe registrar como mínimo:
 ## ADR aceptadas
 
 - [`ADR-0001-DOCUMENT_ID_NAMESPACE.md`](./ADR-0001-DOCUMENT_ID_NAMESPACE.md) — Resolución de colisión `ATLAS-002` (Constitution vs Product Conceptual Model). Estado: **accepted**. Renombrado de archivos diferido a milestone futuro.
+- [`ADR-0002-PLANNING_CONSOLIDATION.md`](./ADR-0002-PLANNING_CONSOLIDATION.md) — Consolidación Planning/Workflow pospuesta a Sprint 11. Sprint 10F congelado sin refactor. Estado: **accepted**.
 
 ## Contexto histórico
 

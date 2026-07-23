@@ -8,7 +8,7 @@ classification: public
 foundation_version: 1.0
 architecture_version: 1.0
 created: 2026-07-16
-last_updated: 2026-07-19
+last_updated: 2026-07-23
 depends_on:
   - ATLAS-012-REPOSITORY_GOVERNANCE
 purpose: >
@@ -83,7 +83,13 @@ ATLAS/
 │   ├── engine/
 │   ├── sdk/
 │   ├── capabilities/
+│   ├── runtime/
+│   ├── intelligence/
+│   ├── memory/
+│   ├── reasoning/
 │   └── product/
+│
+├── ATLAS_ARCHITECTURE_MASTER.md
 │
 ├── packages/                # Layer 2 — Implementation (@atlas/* npm packages)
 ├── workspaces/              # Real Atlas consumer projects
@@ -140,7 +146,7 @@ Cada directorio posee una responsabilidad claramente definida.
 
 Contiene **todas** las especificaciones normativas de Atlas.
 
-Subdirectorios oficiales: `foundation/`, `architecture/`, `domain/`, `engine/`, `sdk/`, `capabilities/`, `product/`.
+Subdirectorios oficiales: `foundation/`, `architecture/`, `domain/`, `engine/`, `sdk/`, `capabilities/`, `runtime/`, `intelligence/`, `memory/`, `reasoning/`, `product/`.
 
 No contiene código ejecutable. Ver `ATLAS-012 §5`.
 
@@ -198,22 +204,24 @@ Contiene la implementación ejecutable de Atlas.
 
 Todos los paquetes npm `@atlas/*` pertenecen a este directorio.
 
-### 5.1 Current packages (2026-07-19)
+### 5.1 Current packages (2026-07-23)
 
 | Package | Version | Category | Status |
 |---------|---------|----------|--------|
-| `@atlas/core` | 0.1.1 | Kernel | ✅ Implemented |
-| `@atlas/events` | 0.1.0 | Kernel | ✅ Implemented |
-| `@atlas/compiler` | 0.1.1 | Kernel | ✅ Implemented |
-| `@atlas/runtime` | 0.1.0 | Kernel | ✅ Implemented |
-| `@atlas/sdk` | 0.3.0 | Integration | ✅ Implemented |
-| `@atlas/cli` | 0.1.0 | Integration | ✅ Implemented |
-| `@atlas/knowledge` | 0.2.0 | Capability | 🚧 In progress |
+| `@atlas/core` | 0.1.1 | Kernel | ✅ Frozen |
+| `@atlas/events` | 0.1.0 | Kernel | ✅ Frozen |
+| `@atlas/compiler` | 0.1.1 | Kernel | ✅ Frozen |
+| `@atlas/runtime` | 0.1.0 | Kernel (+ Sprint 10D Pipeline) | ✅ Frozen |
+| `@atlas/sdk` | 0.3.0 | Integration | ✅ Frozen |
+| `@atlas/cli` | 0.1.0 | Integration | ✅ Frozen |
+| `@atlas/knowledge` | 0.2.0 | Capability | ✅ Stable |
+| `@atlas/workflow` | 0.1.0 | Capability | ✅ Frozen (Sprint 10E) |
+| `@atlas/intelligence` | 0.1.0 | Capability | ✅ Frozen (Sprint 10F) |
 | `@atlas/agent` | 0.0.0 | Capability stub | 🔒 Bootstrap |
 | `@atlas/context` | 0.0.0 | Capability stub | 🔒 Bootstrap |
 | `@atlas/context-planner` | 0.0.0 | Capability stub | 🔒 Bootstrap |
 | `@atlas/graph` | 0.0.0 | Capability stub | 🔒 Bootstrap |
-| `@atlas/memory` | 0.0.0 | Capability stub | 🔒 Bootstrap |
+| `@atlas/memory` | 0.0.0 | Capability stub | 🔒 Bootstrap — Sprint 11A next |
 | `@atlas/ontology` | 0.0.0 | Capability stub | 🔒 Bootstrap |
 | `@atlas/plugin` | 0.0.0 | Infra stub | 🔒 Bootstrap |
 | `@atlas/prompt` | 0.0.0 | Capability stub | 🔒 Bootstrap |
@@ -221,7 +229,6 @@ Todos los paquetes npm `@atlas/*` pertenecen a este directorio.
 | `@atlas/retrieval` | 0.0.0 | Capability stub | 🔒 Bootstrap |
 | `@atlas/search` | 0.0.0 | Capability stub | 🔒 Bootstrap |
 | `@atlas/validation` | 0.0.0 | Infra stub | 🔒 Bootstrap |
-| `@atlas/workflow` | 0.0.0 | Capability stub | 🔒 Bootstrap |
 
 Ver [`VERSION.md`](../../VERSION.md) para el registro oficial de versiones.
 

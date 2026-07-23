@@ -7,7 +7,7 @@ status: active
 owner: Atlas Foundation
 classification: public
 created: 2026-07-13
-last_updated: 2026-07-19
+last_updated: 2026-07-23
 purpose: >
   Introducir Atlas, explicar su propósito, presentar la organización
   completa del proyecto y servir como punto oficial de entrada a toda
@@ -127,6 +127,10 @@ ATLAS/
 │   ├── engine/              # Especificaciones de motores
 │   ├── sdk/                 # SDK, CLI, APIs
 │   ├── capabilities/        # Capabilities (p. ej. knowledge/)
+│   ├── runtime/             # Runtime specs (Sprint 10A–10D)
+│   ├── intelligence/        # Intelligence Layer specs (+ contracts/)
+│   ├── memory/              # Memory Engine specs (+ contracts/)
+│   ├── reasoning/           # Reasoning Engine specs (+ contracts/)
 │   └── product/             # Modelo conceptual de producto
 │
 ├── packages/                # Implementación ejecutable (@atlas/*)
@@ -135,6 +139,7 @@ ATLAS/
 ├── releases/                # Releases, reportes de sprint, planes
 ├── docs/                    # Documentación humana + proposals/rfc
 ├── adr/                     # Architecture Decision Records
+├── ATLAS_ARCHITECTURE_MASTER.md  # Referencia arquitectónica consolidada
 ├── apps/                    # Aplicaciones (reservado)
 ├── plugins/                 # Extensiones (reservado)
 ├── templates/               # Plantillas reutilizables
@@ -310,16 +315,26 @@ Este recorrido garantiza una comprensión progresiva de la plataforma.
 | Architecture (spec) | ✅ Completo |
 | Domain (spec) | ✅ Completo |
 | Engine (spec) | ✅ Especificación completa |
+| Runtime (spec) | ✅ Completo |
+| Intelligence (spec) | ✅ Completo |
+| Memory (spec) | ✅ Completo |
+| Reasoning (spec) | ✅ Completo |
 | SDK (spec) | ✅ Completo |
+| Architecture Phase | ✅ Completada |
+| Current Phase | 🚧 Implementation |
+| Next Sprint | Sprint 11A — Memory Engine |
 | Repository Stabilization (Milestone 2) | ✅ Completado |
 | Kernel (`@atlas/core`, compiler, events, runtime, sdk, cli) | ✅ Implementado — v0.1 congelado |
-| Knowledge Capability (`@atlas/knowledge`) | 🚧 En progreso (Sprint 8–9) |
+| Knowledge Capability (`@atlas/knowledge`) | ✅ Stable (Sprint 8–9) |
+| Workflow (`@atlas/workflow`) | ✅ Frozen (Sprint 10E) |
+| Planning (`@atlas/intelligence`) | ✅ Frozen (Sprint 10F) |
+| Runtime extensions (10A–10D) | ✅ Frozen |
 | Workspaces | ✅ Referencia (`first-atlas-workspace`) |
 | Applications (`apps/`) | 🔜 Reservado |
 
-Atlas completó su fase de diseño arquitectónico y la estabilización del repositorio.
+Atlas completó oficialmente su fase de arquitectura.
 
-La etapa activa consiste en implementar capabilities sobre el Kernel congelado, respetando `spec/` como contrato.
+La etapa activa consiste en implementar capabilities sobre el Kernel congelado, comenzando por Memory (Sprint 11A), respetando `spec/` como contrato.
 
 ---
 
@@ -417,6 +432,28 @@ Reportes de sprint, releases e implementation plans viven en [`releases/`](../..
 
 - KNOWLEDGE-001 … KNOWLEDGE-008 — Knowledge Capability (`spec/capabilities/knowledge/`)
 
+## Runtime — `spec/runtime/`
+
+- ATLAS-RUNTIME-001 … ATLAS-RUNTIME-009 — Runtime models and architecture
+- ATLAS-RUNTIME-100 — Runtime Public API
+
+## Intelligence — `spec/intelligence/`
+
+- ATLAS-INTELLIGENCE-001 … ATLAS-INTELLIGENCE-011 — Intelligence Layer
+- ATLAS-INTELLIGENCE-100 — Intelligence Public API
+- ATLAS-INTELLIGENCE-007 — Workflow (capability spec)
+- [`spec/intelligence/contracts/`](../../intelligence/contracts/) — Intelligence contracts
+
+## Memory — `spec/memory/`
+
+- ATLAS-MEMORY-001 … ATLAS-MEMORY-008 — Memory Engine
+- [`spec/memory/contracts/`](../../memory/contracts/) — Memory contracts
+
+## Reasoning — `spec/reasoning/`
+
+- ATLAS-REASONING-001 … ATLAS-REASONING-007 — Reasoning Engine
+- [`spec/reasoning/contracts/`](../../reasoning/contracts/) — Reasoning contracts
+
 ## Product — `spec/product/`
 
 - ATLAS-002 — Conceptual Model (ver ADR-0001 sobre namespace de IDs)
@@ -424,8 +461,9 @@ Reportes de sprint, releases e implementation plans viven en [`releases/`](../..
 ## Operación — `releases/`, `adr/`, `docs/`
 
 - [`releases/`](../../releases/) — Releases oficiales, sprint reports, implementation plans
-- [`adr/`](../../adr/) — Architecture Decision Records
+- [`adr/`](../../adr/) — Architecture Decision Records (ADR-0001, ADR-0002)
 - [`docs/`](../../docs/) — Documentación humana y RFCs (`docs/proposals/rfc/`)
+- [`ATLAS_ARCHITECTURE_MASTER.md`](../../ATLAS_ARCHITECTURE_MASTER.md) — Referencia arquitectónica consolidada
 
 ---
 
