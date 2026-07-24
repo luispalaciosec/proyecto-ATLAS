@@ -1,0 +1,61 @@
+import {
+  BROKEN_REFERENCE,
+  CORRUPTED_RECORD,
+  DUPLICATE_IDENTIFIER,
+  INVALID_ENTRY,
+  INVALID_MEMORY_RECORD,
+  INVALID_QUERY,
+  MEMORY_INDEX_ERROR,
+  MEMORY_INVALID_COLLECTION,
+  MEMORY_INVALID_ID,
+  MEMORY_INVALID_NAMESPACE,
+  MEMORY_INVALID_RECORD,
+  MEMORY_INVALID_RELATIONSHIP,
+  MEMORY_INVALID_VERSION,
+  MEMORY_IMMUTABLE_VERSION,
+  MEMORY_NOT_FOUND,
+  MEMORY_RETRIEVAL_ERROR,
+  MEMORY_STORAGE_ERROR,
+  MISSING_INDEX,
+  SESSION_CORRUPTED,
+} from './memory-error-codes.js';
+
+export class MemoryDomainError extends Error {
+  readonly code: string;
+
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'MemoryDomainError';
+    this.code = code;
+  }
+}
+
+export function createMemoryError(code: string, message: string): MemoryDomainError {
+  return new MemoryDomainError(code, message);
+}
+
+export function isMemoryDomainError(value: unknown): value is MemoryDomainError {
+  return value instanceof MemoryDomainError;
+}
+
+export {
+  BROKEN_REFERENCE,
+  CORRUPTED_RECORD,
+  DUPLICATE_IDENTIFIER,
+  INVALID_ENTRY,
+  INVALID_MEMORY_RECORD,
+  INVALID_QUERY,
+  MEMORY_IMMUTABLE_VERSION,
+  MEMORY_INDEX_ERROR,
+  MEMORY_INVALID_COLLECTION,
+  MEMORY_INVALID_ID,
+  MEMORY_INVALID_NAMESPACE,
+  MEMORY_INVALID_RECORD,
+  MEMORY_INVALID_RELATIONSHIP,
+  MEMORY_INVALID_VERSION,
+  MEMORY_NOT_FOUND,
+  MEMORY_RETRIEVAL_ERROR,
+  MEMORY_STORAGE_ERROR,
+  MISSING_INDEX,
+  SESSION_CORRUPTED,
+};
