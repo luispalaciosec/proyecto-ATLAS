@@ -109,7 +109,7 @@ No administra compilación.
 El lenguaje oficial del dominio incluye.
 
 - Memory
-- Memory Entry
+- Memory Record
 - Memory Store
 - Memory Scope
 - Memory Snapshot
@@ -144,7 +144,7 @@ La Memoria nunca existe aislada del Knowledge Domain.
 
 # 8. Memory Entity
 
-La entidad principal del dominio es **Memory**.
+La entidad conceptual principal del dominio es **Memory**.
 
 Toda Memory SHALL poseer.
 
@@ -156,6 +156,15 @@ Toda Memory SHALL poseer.
 - Metadata;
 - Status;
 - Retention Policy.
+
+La representación canónica de persistencia para `@atlas/memory` está definida en **ATLAS-MEMORY-004-STORAGE_MODEL.md**:
+
+- **Namespace** — dominio lógico de memoria;
+- **Collection** — agrupación de registros relacionados;
+- **Record** — unidad lógica de identidad inmutable;
+- **Version** — instantánea inmutable del contenido de un Record.
+
+El nombre oficial de la unidad almacenada expuesta por la API pública es **MemoryRecord** (ver ATLAS-MEMORY-008 §12), como proyección del Record canónico.
 
 ---
 
@@ -523,29 +532,19 @@ Los servicios encapsulan la lógica operacional del dominio.
 
 # 23. Memory Events
 
-Todo cambio relevante SHALL generar eventos.
+Todo cambio relevante SHALL generar eventos observables.
 
-Ejemplos.
+El vocabulario oficial de eventos de la capability Memory está definido exclusivamente en **ATLAS-MEMORY-002-ARCHITECTURE.md** (§ Observability Architecture):
 
-```text
-MemoryCaptured
+- MemoryCreated
+- MemoryUpdated
+- MemoryRetrieved
+- MemoryIndexed
+- MemoryArchived
 
-MemoryClassified
+Ningún otro documento SHALL redefinir ni ampliar este vocabulario. Los demás documentos SHALL referenciar MEMORY-002.
 
-MemoryConsolidated
-
-MemoryStored
-
-MemoryRecalled
-
-MemoryUpdated
-
-MemoryArchived
-
-MemoryForgotten
-```
-
-Los eventos representan hechos históricos.
+Los eventos representan hechos históricos observables.
 
 ---
 
@@ -698,6 +697,17 @@ Toda implementación SHALL respetar.
 - ATLAS-105 — Retrieval Engine
 - ATLAS-108 — Workflow Engine
 
+## Memory Capability
+
+- ATLAS-MEMORY-001 — Vision
+- ATLAS-MEMORY-002 — Architecture
+- ATLAS-MEMORY-003 — Memory Engine
+- ATLAS-MEMORY-004 — Storage Model (modelo canónico de persistencia)
+- ATLAS-MEMORY-005 — Retrieval
+- ATLAS-MEMORY-006 — Indexing
+- ATLAS-MEMORY-007 — Consistency
+- ATLAS-MEMORY-008 — Public API
+
 ---
 
 # 31. Implementation Mapping
@@ -705,49 +715,14 @@ Toda implementación SHALL respetar.
 Este dominio será implementado principalmente en.
 
 ```text
-packages/
-
-memory/
-│
-├── entities/
-│   ├── Memory.ts
-│   ├── MemoryEntry.ts
-│   ├── MemorySnapshot.ts
-│   ├── MemoryCategory.ts
-│   └── RetentionPolicy.ts
-│
-├── value-objects/
-│   ├── MemoryId.ts
-│   ├── MemoryVersion.ts
-│   ├── RecallScore.ts
-│   └── RetentionPeriod.ts
-│
-├── services/
-│   ├── MemoryCaptureService.ts
-│   ├── MemoryRecallService.ts
-│   ├── MemoryConsolidationService.ts
-│   ├── MemoryRetentionService.ts
-│   ├── MemoryForgettingService.ts
-│   └── MemorySnapshotService.ts
-│
-├── repositories/
-│   └── MemoryRepository.ts
-│
-├── specifications/
-│   ├── MemoryConsistencySpecification.ts
-│   ├── RetentionSpecification.ts
-│   ├── RecallSpecification.ts
-│   └── ConsolidationSpecification.ts
-│
-├── events/
-│   ├── MemoryCaptured.ts
-│   ├── MemoryStored.ts
-│   ├── MemoryConsolidated.ts
-│   ├── MemoryRecalled.ts
-│   └── MemoryForgotten.ts
-│
-└── index.ts
+packages/memory/src/domain/
 ```
+
+Las entidades canónicas de persistencia (Namespace, Collection, Record, Version) se implementan conforme a **ATLAS-MEMORY-004-STORAGE_MODEL.md**.
+
+La unidad almacenada expuesta por la API pública se denomina **MemoryRecord** (ver ATLAS-MEMORY-008 §12).
+
+La estructura interna del domain layer, los contratos de providers y la autoridad de implementación completa están definidos en `spec/memory/`.
 
 ---
 

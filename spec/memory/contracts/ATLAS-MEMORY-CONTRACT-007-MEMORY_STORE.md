@@ -3,6 +3,7 @@
 Version: 1.0
 Status: Frozen
 Owner: Memory
+Source: ATLAS-MEMORY-008-PUBLIC_API.md §11
 
 ---
 
@@ -10,9 +11,11 @@ Owner: Memory
 
 Define the abstraction representing a Memory Store.
 
-A Memory Store groups Memory Entries under a common persistence boundary.
+A Memory Store groups Memory Records under a common persistence boundary.
 
 It represents a logical repository, not a physical database.
+
+The official interface is defined in **ATLAS-MEMORY-008-PUBLIC_API.md** §11.
 
 ---
 
@@ -20,23 +23,9 @@ It represents a logical repository, not a physical database.
 
 The Memory Store SHALL:
 
-- contain Memory Entries
-- expose storage metadata
-- expose capacity information
-- expose statistics
-- expose lifecycle information
-
----
-
-# It SHALL NOT
-
-The Memory Store SHALL NOT:
-
-- perform searches
-- execute retrieval
-- generate embeddings
-- execute workflows
-- execute reasoning
+- contain Memory Records
+- expose put(), get(), remove(), and search()
+- represent a logical container for memory operations
 
 ---
 
@@ -50,74 +39,33 @@ Supported logical stores MAY include:
 - Session
 - Hybrid
 
----
+A store may represent:
 
-# Store Metadata
+- episodic memory
+- semantic memory
+- procedural memory
 
-Every store SHALL expose:
-
-- store_id
-- name
-- description
-- created_at
-- updated_at
-- owner
-- tags
-- metadata
+without exposing implementation.
 
 ---
-
-# Capacity
-
-A store MAY expose:
-
-- total entries
-- used capacity
-- available capacity
-- statistics
-
 
 # Public Interface
 
 ```typescript
 export interface MemoryStore {
 
-    readonly identity: StoreIdentity;
+    put()
 
-    readonly metadata: StoreMetadata;
+    get()
 
-    readonly statistics: StoreStatistics;
+    remove()
 
-}
-```
-
----
-
-# StoreIdentity
-
-```typescript
-interface StoreIdentity {
-
-    store_id: string;
+    search()
 
 }
 ```
 
----
-
-# StoreStatistics
-
-```typescript
-interface StoreStatistics {
-
-    entries: number;
-
-    indexes: number;
-
-    size_bytes: number;
-
-}
-```
+See ATLAS-MEMORY-008-PUBLIC_API.md §11 for the authoritative definition.
 
 ---
 
@@ -161,4 +109,3 @@ Workflow.
 ---
 
 END OF CONTRACT
-

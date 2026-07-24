@@ -56,7 +56,7 @@ The provider SHALL NOT:
 
 The provider validates consistency for:
 
-- MemoryEntry
+- MemoryRecord (see ATLAS-MEMORY-008 §12; canonical structure in ATLAS-MEMORY-004)
 - MemoryStore
 - Indexes
 - References
@@ -119,8 +119,8 @@ Non-recoverable inconsistencies SHALL return an error.
 ```typescript
 export interface ConsistencyProvider {
 
-    validateEntry(
-        entry: MemoryEntry
+    validateRecord(
+        record: MemoryRecord
     ): Promise<ValidationResult>;
 
     validateStore(): Promise<ValidationResult>;

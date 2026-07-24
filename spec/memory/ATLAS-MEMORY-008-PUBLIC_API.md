@@ -285,6 +285,10 @@ interface MemoryRecord {
 }
 ```
 
+MemoryRecord is the official name for the stored memory unit.
+
+It is the public API projection of the canonical **Record** defined in **ATLAS-MEMORY-004-STORAGE_MODEL.md**. Content evolution follows the **Version** model in MEMORY-004: updates create new versions; identity remains stable.
+
 Records are immutable.
 
 Updates create new versions.
@@ -373,15 +377,15 @@ Errors are deterministic.
 
 # 17. Events
 
-The package may publish:
+The official event vocabulary is defined exclusively in **ATLAS-MEMORY-002-ARCHITECTURE.md** (§ Observability Architecture):
 
-- MemoryInitialized
-- MemoryStored
-- MemoryRetrieved
+- MemoryCreated
 - MemoryUpdated
-- MemoryDeleted
+- MemoryRetrieved
 - MemoryIndexed
-- MemorySnapshotCreated
+- MemoryArchived
+
+This document SHALL NOT redefine or extend that vocabulary. See MEMORY-002 for the authoritative list.
 
 Events are immutable.
 

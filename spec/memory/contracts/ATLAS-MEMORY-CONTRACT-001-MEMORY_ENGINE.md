@@ -380,35 +380,9 @@ Errors are translated into canonical Memory Errors.
 
 # 14. Event Publication
 
-The engine publishes canonical events including:
+The engine publishes canonical observability events.
 
-Memory Started
-
-Memory Completed
-
-Memory Failed
-
-Memory Stored
-
-Memory Retrieved
-
-Memory Updated
-
-Memory Deleted
-
-Memory Indexed
-
-Memory Reindexed
-
-Memory Invalidated
-
-Memory Synchronized
-
-Memory Session Started
-
-Memory Session Completed
-
-Memory Session Closed
+The official event vocabulary is defined exclusively in **ATLAS-MEMORY-002-ARCHITECTURE.md** (§ Observability Architecture). This contract SHALL NOT redefine or extend that vocabulary.
 
 No provider publishes platform events directly.
 
