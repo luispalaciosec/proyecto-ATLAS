@@ -17,7 +17,7 @@ import { NamespaceId } from '../domain/value-objects/namespace-id.js';
 import { RecordId } from '../domain/value-objects/record-id.js';
 import { RecordStatus, isRecordStatus } from '../domain/value-objects/record-status.js';
 import { RecordType } from '../domain/value-objects/record-type.js';
-import { RelationshipType, isRelationshipType } from '../domain/value-objects/relationship-type.js';
+import { isRelationshipType } from '../domain/value-objects/relationship-type.js';
 import { RevisionNumber } from '../domain/value-objects/revision-number.js';
 
 export const REPOSITORY_ENTITY_NAMESPACE = 'Namespace';

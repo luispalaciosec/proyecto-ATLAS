@@ -29,7 +29,6 @@ import {
   validateVersion,
   validateVersionImmutability,
   MEMORY_IMMUTABLE_VERSION,
-  MEMORY_INVALID_VERSION,
 } from '../../src/domain/index.js';
 
 describe('Memory domain value objects', () => {

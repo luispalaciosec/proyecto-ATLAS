@@ -1,7 +1,7 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.3.0
+version: 1.4.0
 status: active
 last_updated: 2026-07-25
 ---
@@ -17,8 +17,9 @@ last_updated: 2026-07-25
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
 | **Current Phase** | **Implementation** |
-| **Next Sprint** | **Sprint 11B — Memory Application Layer** (`@atlas/memory`) |
+| **Next Sprint** | **Pendiente de autorización Owner** (propuesta: Sprint 11C — Memory Engine Operations) |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
+| **Memory Application Tag** | `memory-application-certified` |
 | **Memory Architecture ADR** | [`adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md`](./adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md) |
 | **Foundation Phase** | **Completed** |
 | **Repository Stabilization (Milestone 2)** | **Completed** |
@@ -52,7 +53,7 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/knowledge` | 0.2.0 | Knowledge Capability — metamodel, domain core, projection adapter (Sprint 8–9) | **Stable** |
 | `@atlas/workflow` | 0.1.0 | Workflow Definition System — graph model, WorkflowCompiler (Sprint 10E) | **Frozen** |
 | `@atlas/intelligence` | 0.1.0 | Cognitive Planning Engine — Goal → WorkflowDefinition (Sprint 10F) | **Frozen** |
-| `@atlas/memory` | 0.0.0 | Memory Engine — domain, engine, internal repositories (Sprint 11A) | **Architecture Certified** |
+| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application layer (Sprint 11A–11B) | **Application Certified** |
 
 ---
 
@@ -83,7 +84,21 @@ Arquitectura de `@atlas/memory` certificada bajo **ADR-0003** (Accepted).
 
 Baseline congelada: Single Entry Point (`MemoryEngine`), `@atlas/core Result`, API pública MEMORY-008, entity repositories internos.
 
-**Próximo sprint autorizado:** 11B — Application Layer (Sessions, Event Bus, Providers).
+**Próximo sprint propuesto:** 11C — Memory Engine Operations (`retrieve` / `search` / `update`).
+
+---
+
+## Memory application certification (Sprint 11B)
+
+Application Layer de `@atlas/memory` certificada sobre baseline ADR-0003.
+
+| Sprint | Componente | Tag | Status |
+|--------|------------|-----|--------|
+| 11B | Application Layer — Use Cases | `memory-application-certified` | **Certified** |
+
+Implementado: 5 Use Cases (`Store`, `Retrieve`, `Delete`, `Search`, `Update`), contratos Request/Response, `ApplicationError`, 32 tests de aplicación.
+
+Baseline congelada: Use Cases orquestan exclusivamente `MemoryEngine`; sin acceso a MemoryStore, Providers ni Repositories.
 
 ---
 

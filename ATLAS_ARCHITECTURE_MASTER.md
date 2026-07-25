@@ -838,7 +838,7 @@ The following capabilities are fully specified but not yet implemented.
 
 | Capability | Planned Package | Status |
 |------------|----------------|--------|
-| Memory | @atlas/memory | **Architecture Certified** (ADR-0003, tag `memory-architecture-certified`) |
+| Memory | @atlas/memory | **Application Certified** (ADR-0003, tags `memory-architecture-certified` + `memory-application-certified`) |
 | Retrieval | @atlas/retrieval | Architecture Complete |
 | Context | @atlas/context | Architecture Complete |
 | Reasoning | @atlas/reasoning | Architecture Complete |
@@ -938,7 +938,7 @@ These capabilities have architectural specifications and implementation.
 | @atlas/knowledge | 0.2.0 | Stable |
 | @atlas/workflow | 0.1.0 | Frozen |
 | @atlas/intelligence | 0.1.0 | Frozen (Sprint 10F) |
-| @atlas/memory | 0.0.0 | Architecture Certified (Sprint 11A, ADR-0003) |
+| @atlas/memory | 0.0.0 | Application Certified (Sprint 11A–11B, ADR-0003) |
 
 ---
 
@@ -1034,7 +1034,7 @@ Specifications always precede implementation.
 | Knowledge | Complete | Complete | Complete | Stable |
 | Workflow | Complete | Complete | Complete | Frozen |
 | Planning | Complete | Complete | Complete | Frozen (ADR-0002) |
-| Memory | Complete | Complete | Complete | **Architecture Certified** |
+| Memory | Complete | Complete | Complete | **Application Certified** |
 | Retrieval | Complete | None | None | Planned |
 | Context | Complete | None | None | Planned |
 | Reasoning | Complete | None | None | Planned |
@@ -1055,7 +1055,7 @@ Current maturity of each subsystem.
 | Workflow | Production Ready |
 | Knowledge | Stable |
 | Planning | Stable (Frozen) |
-| Memory | **Architecture Certified** (ADR-0003) |
+| Memory | **Application Certified** (ADR-0003) |
 | Retrieval | Architecture Complete |
 | Context | Architecture Complete |
 | Reasoning | Architecture Complete |
@@ -1410,7 +1410,9 @@ This transition is intentionally postponed by ADR-0002.
 
 Status:
 
-**Architecture Certified** — Sprint 11A complete (tag `memory-architecture-certified`, ADR-0003).
+**Architecture Certified** — Sprint 11A (tag `memory-architecture-certified`, ADR-0003).
+
+**Application Certified** — Sprint 11B (tag `memory-application-certified`).
 
 Implemented (Sprint 11A):
 
@@ -1420,11 +1422,22 @@ Implemented (Sprint 11A):
 - Public API (MEMORY-008)
 - `@atlas/core Result` integration
 
-Next (Sprint 11B — Application Layer):
+Implemented (Sprint 11B):
+
+- Application Layer — Use Cases (`Store`, `Retrieve`, `Delete`, `Search`, `Update`)
+- Request/Response contracts
+- ApplicationError mapping (MEMORY-008 §16)
+
+Next (proposed Sprint 11C — Engine Operations):
+
+- Canonical `retrieve(request)` / `search(query)` / `update(record)` on MemoryEngine
+- Provider coordination for read/update paths
+
+Deferred (post-11C):
 
 - Storage Providers
 - Index Providers
-- Retrieval Interfaces
+- Retrieval Provider implementations
 - Session Management
 - Event Bus
 
@@ -1714,7 +1727,7 @@ The implementation status of ATLAS at the end of the Architecture Phase is:
 | Knowledge | Complete |
 | Workflow | Complete |
 | Planning | Complete (Frozen) |
-| Memory | **Architecture Certified** (ADR-0003) |
+| Memory | **Application Certified** (ADR-0003) |
 | Retrieval | Architecture Complete |
 | Context | Architecture Complete |
 | Reasoning | Architecture Complete |
@@ -1748,17 +1761,9 @@ The comprehension corridor will be implemented next.
 
 # 28. Next Approved Phase
 
-The next phase of ATLAS is:
+Memory Application Layer is certified (Sprint 11B complete, tag `memory-application-certified`).
 
-Implementation — Sprint 11B.
-
-Memory architecture is certified (Sprint 11A complete, ADR-0003, tag `memory-architecture-certified`).
-
-The next implementation sprint is:
-
-Sprint 11B
-
-Memory Application Layer
+The next implementation sprint **requires Owner authorization** (proposed: Sprint 11C — Memory Engine Operations).
 
 Development continues exclusively inside:
 
@@ -1772,9 +1777,7 @@ following the approved specifications located in:
 spec/memory/
 ```
 
-No additional cognitive capability will begin implementation until Memory Application Layer reaches its planned completion milestone.
-
-This preserves the dependency order defined by the architecture.
+No additional cognitive capability will begin implementation until Memory Engine operations (`retrieve`, `search`, `update`) reach certification.
 
 ---
 
@@ -1847,6 +1850,10 @@ IMPLEMENTATION
 
 Certified — Sprint 11A (tag `memory-architecture-certified`, ADR-0003)
 
+**Memory Application Status**
+
+Certified — Sprint 11B (tag `memory-application-certified`)
+
 **Next Implementation Sprint**
 
-Sprint 11B — Memory Application Layer
+Pendiente de autorización Owner — propuesta: Sprint 11C — Memory Engine Operations
