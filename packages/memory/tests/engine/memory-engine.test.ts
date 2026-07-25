@@ -3,13 +3,13 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ConsistencyProvider } from '../../src/domain/interfaces/consistency-provider.js';
 import type { MemoryStore } from '../../src/domain/interfaces/memory-store.js';
 import type { MemoryRecord, SearchResult } from '../../src/domain/types/memory-types.js';
-import { INVALID_MEMORY_RECORD, MEMORY_STORAGE_ERROR } from '../../src/domain/index.js';
+import { INVALID_MEMORY_RECORD, MEMORY_STORAGE_ERROR } from '../../src/domain/errors/memory-error-codes.js';
 import {
   ENGINE_CONSISTENCY,
   ENGINE_DOMAIN_VALIDATION,
   ENGINE_STORE,
-  MemoryEngine,
-} from '../../src/engine/index.js';
+} from '../../src/engine/engine-errors.js';
+import { createMemoryEngine, MemoryEngine } from '../../src/engine/index.js';
 
 function createMemoryRecord(overrides: Partial<MemoryRecord> = {}): MemoryRecord {
   return Object.freeze({
@@ -53,75 +53,80 @@ function createMemoryStore(overrides: Partial<MemoryStore> = {}): MemoryStore {
 }
 
 describe('MemoryEngine orchestration', () => {
-  it('orchestrates successful write operations', async () => {
+  it('orchestrates successful store operations', async () => {
     const record = createMemoryRecord();
     const store = createMemoryStore();
     const consistencyProvider = createConsistencyProvider();
-    const engine = new MemoryEngine(store, consistencyProvider);
+    const engine = createMemoryEngine(store, consistencyProvider);
 
-    const result = await engine.write(record);
+    const result = await engine.store(record);
 
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data).toBe(record);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toBe(record);
     }
     expect(store.put).toHaveBeenCalledTimes(1);
     expect(consistencyProvider.validateRecord).toHaveBeenCalledWith(record);
   });
 
-  it('orchestrates successful read operations', async () => {
+  it('orchestrates successful retrieve operations', async () => {
     const record = createMemoryRecord();
     const store = createMemoryStore({
       get: vi.fn().mockResolvedValue(record),
     });
-    const engine = new MemoryEngine(store, createConsistencyProvider());
+    const engine = createMemoryEngine(store, createConsistencyProvider());
 
-    const result = await engine.read();
+    const result = await engine.retrieve();
 
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data).toEqual(record);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toEqual(record);
     }
     expect(store.get).toHaveBeenCalledTimes(1);
   });
 
-  it('orchestrates successful remove operations', async () => {
+  it('orchestrates successful delete operations', async () => {
     const record = createMemoryRecord();
     const store = createMemoryStore();
     const consistencyProvider = createConsistencyProvider();
-    const engine = new MemoryEngine(store, consistencyProvider);
+    const engine = createMemoryEngine(store, consistencyProvider);
 
-    const result = await engine.remove(record);
+    const result = await engine.delete(record);
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
     expect(store.remove).toHaveBeenCalledTimes(1);
     expect(consistencyProvider.validateRecord).toHaveBeenCalledWith(record);
   });
 
-  it('delegates search operations to MemoryStore', async () => {
+  it('delegates search operations through the internal store gateway', async () => {
     const searchResult = createSearchResult();
     const store = createMemoryStore({
       search: vi.fn().mockResolvedValue(searchResult),
     });
-    const engine = new MemoryEngine(store, createConsistencyProvider());
+    const engine = createMemoryEngine(store, createConsistencyProvider());
 
-    await expect(engine.search()).resolves.toEqual(searchResult);
+    const result = await engine.search();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toEqual(searchResult);
+    }
     expect(store.search).toHaveBeenCalledTimes(1);
   });
 
   it('returns domain validation failures without invoking providers', async () => {
     const store = createMemoryStore();
     const consistencyProvider = createConsistencyProvider();
-    const engine = new MemoryEngine(store, consistencyProvider);
+    const engine = createMemoryEngine(store, consistencyProvider);
 
-    const result = await engine.write(
+    const result = await engine.store(
       createMemoryRecord({
         id: '',
       }),
     );
 
-    expect(result.success).toBe(false);
-    if (!result.success) {
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
       expect(result.error.code).toBe(ENGINE_DOMAIN_VALIDATION);
       expect(result.error.canonicalCode).toBe(INVALID_MEMORY_RECORD);
     }
@@ -129,19 +134,19 @@ describe('MemoryEngine orchestration', () => {
     expect(store.put).not.toHaveBeenCalled();
   });
 
-  it('returns domain validation failures on remove without invoking providers', async () => {
+  it('returns domain validation failures on delete without invoking providers', async () => {
     const store = createMemoryStore();
     const consistencyProvider = createConsistencyProvider();
-    const engine = new MemoryEngine(store, consistencyProvider);
+    const engine = createMemoryEngine(store, consistencyProvider);
 
-    const result = await engine.remove(
+    const result = await engine.delete(
       createMemoryRecord({
         type: '',
       }),
     );
 
-    expect(result.success).toBe(false);
-    if (!result.success) {
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
       expect(result.error.code).toBe(ENGINE_DOMAIN_VALIDATION);
       expect(result.error.canonicalCode).toBe(INVALID_MEMORY_RECORD);
     }
@@ -158,12 +163,12 @@ describe('MemoryEngine orchestration', () => {
         issues: [{ code: 'BrokenReference', message: 'Invalid record graph' }],
       }),
     });
-    const engine = new MemoryEngine(store, consistencyProvider);
+    const engine = createMemoryEngine(store, consistencyProvider);
 
-    const result = await engine.write(record);
+    const result = await engine.store(record);
 
-    expect(result.success).toBe(false);
-    if (!result.success) {
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
       expect(result.error.code).toBe(ENGINE_CONSISTENCY);
     }
     expect(store.put).not.toHaveBeenCalled();
@@ -173,57 +178,63 @@ describe('MemoryEngine orchestration', () => {
     const store = createMemoryStore({
       put: vi.fn().mockRejectedValue(new Error('store unavailable')),
     });
-    const engine = new MemoryEngine(store, createConsistencyProvider());
+    const engine = createMemoryEngine(store, createConsistencyProvider());
 
-    const result = await engine.write(createMemoryRecord());
+    const result = await engine.store(createMemoryRecord());
 
-    expect(result.success).toBe(false);
-    if (!result.success) {
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
       expect(result.error.code).toBe(ENGINE_STORE);
       expect(result.error.canonicalCode).toBe(MEMORY_STORAGE_ERROR);
       expect(result.error.cause).toBeInstanceOf(Error);
     }
   });
 
-  it('propagates MemoryStore read errors as engine failures', async () => {
+  it('propagates MemoryStore retrieve errors as engine failures', async () => {
     const store = createMemoryStore({
       get: vi.fn().mockRejectedValue(new Error('read unavailable')),
     });
-    const engine = new MemoryEngine(store, createConsistencyProvider());
+    const engine = createMemoryEngine(store, createConsistencyProvider());
 
-    const result = await engine.read();
+    const result = await engine.retrieve();
 
-    expect(result.success).toBe(false);
-    if (!result.success) {
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
       expect(result.error.code).toBe(ENGINE_STORE);
       expect(result.error.canonicalCode).toBe(MEMORY_STORAGE_ERROR);
       expect(result.error.cause).toBeInstanceOf(Error);
     }
   });
 
-  it('propagates MemoryStore search errors', async () => {
+  it('propagates MemoryStore search errors as engine failures', async () => {
     const store = createMemoryStore({
       search: vi.fn().mockRejectedValue(new Error('search unavailable')),
     });
-    const engine = new MemoryEngine(store, createConsistencyProvider());
+    const engine = createMemoryEngine(store, createConsistencyProvider());
 
-    await expect(engine.search()).rejects.toThrow('search unavailable');
+    const result = await engine.search();
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe(ENGINE_STORE);
+      expect(result.error.canonicalCode).toBe(MEMORY_STORAGE_ERROR);
+    }
   });
 
   it('propagates ConsistencyProvider errors', async () => {
     const consistencyProvider = createConsistencyProvider({
       validateRecord: vi.fn().mockRejectedValue(new Error('consistency unavailable')),
     });
-    const engine = new MemoryEngine(createMemoryStore(), consistencyProvider);
+    const engine = createMemoryEngine(createMemoryStore(), consistencyProvider);
 
-    await expect(engine.write(createMemoryRecord())).rejects.toThrow('consistency unavailable');
+    await expect(engine.store(createMemoryRecord())).rejects.toThrow('consistency unavailable');
   });
 
-  it('invokes MemoryStore.put exactly once on successful write', async () => {
+  it('invokes MemoryStore.put exactly once on successful store', async () => {
     const store = createMemoryStore();
-    const engine = new MemoryEngine(store, createConsistencyProvider());
+    const engine = createMemoryEngine(store, createConsistencyProvider());
 
-    await engine.write(createMemoryRecord());
+    await engine.store(createMemoryRecord());
 
     expect(store.put).toHaveBeenCalledTimes(1);
   });
@@ -241,10 +252,32 @@ describe('MemoryEngine orchestration', () => {
         return { valid: true, issues: [] };
       }),
     });
-    const engine = new MemoryEngine(store, consistencyProvider);
+    const engine = createMemoryEngine(store, consistencyProvider);
 
-    await engine.write(createMemoryRecord());
+    await engine.store(createMemoryRecord());
 
     expect(callOrder).toEqual(['consistency', 'put']);
+  });
+
+  it('owns internal entity repositories as collaborators', () => {
+    const engine = createMemoryEngine(createMemoryStore(), createConsistencyProvider());
+    const collaborators = engine.getCollaborators();
+
+    expect(collaborators.namespace).toBeDefined();
+    expect(collaborators.collection).toBeDefined();
+    expect(collaborators.record).toBeDefined();
+    expect(collaborators.version).toBeDefined();
+    expect(collaborators.relationship).toBeDefined();
+  });
+});
+
+describe('MemoryEngine ADR-0003 single entry point', () => {
+  it('routes persistence through the internal store gateway owned by the engine', async () => {
+    const store = createMemoryStore();
+    const engine = new MemoryEngine(store, createConsistencyProvider());
+
+    await engine.store(createMemoryRecord());
+
+    expect(store.put).toHaveBeenCalledTimes(1);
   });
 });

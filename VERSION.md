@@ -1,9 +1,9 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.2.0
+version: 1.3.0
 status: active
-last_updated: 2026-07-23
+last_updated: 2026-07-25
 ---
 
 # VERSION.md
@@ -17,7 +17,9 @@ last_updated: 2026-07-23
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
 | **Current Phase** | **Implementation** |
-| **Next Sprint** | **Sprint 11A — Memory Engine** (`@atlas/memory`) |
+| **Next Sprint** | **Sprint 11B — Memory Application Layer** (`@atlas/memory`) |
+| **Memory Architecture Tag** | `memory-architecture-certified` |
+| **Memory Architecture ADR** | [`adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md`](./adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md) |
 | **Foundation Phase** | **Completed** |
 | **Repository Stabilization (Milestone 2)** | **Completed** |
 | **Release document** | [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/ATLAS-RELEASE-001-KERNEL_v0.1.md) |
@@ -50,6 +52,7 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/knowledge` | 0.2.0 | Knowledge Capability — metamodel, domain core, projection adapter (Sprint 8–9) | **Stable** |
 | `@atlas/workflow` | 0.1.0 | Workflow Definition System — graph model, WorkflowCompiler (Sprint 10E) | **Frozen** |
 | `@atlas/intelligence` | 0.1.0 | Cognitive Planning Engine — Goal → WorkflowDefinition (Sprint 10F) | **Frozen** |
+| `@atlas/memory` | 0.0.0 | Memory Engine — domain, engine, internal repositories (Sprint 11A) | **Architecture Certified** |
 
 ---
 
@@ -66,11 +69,29 @@ Extensiones cognitivas dentro de `@atlas/runtime@0.1.0`. Congeladas — no modif
 
 ---
 
+## Memory certification (Sprint 11A)
+
+Arquitectura de `@atlas/memory` certificada bajo **ADR-0003** (Accepted).
+
+| Sprint | Componente | Tag | Status |
+|--------|------------|-----|--------|
+| 11A.0.1 | Specification Reconciliation | — | Complete |
+| 11A.1R | Domain Layer (MEMORY-004) | `sprint-11a-1r` | Complete |
+| 11A.2R | Memory Engine Validation | `sprint-11a-2r` | Complete |
+| 11A.3A | ADR-0003 Ratification | — | Accepted |
+| 11A.3B | Architecture Realignment | `memory-architecture-certified` | **Certified** |
+
+Baseline congelada: Single Entry Point (`MemoryEngine`), `@atlas/core Result`, API pública MEMORY-008, entity repositories internos.
+
+**Próximo sprint autorizado:** 11B — Application Layer (Sessions, Event Bus, Providers).
+
+---
+
 ## Stub packages (Stage 2 — sin implementación)
 
 Los siguientes paquetes permanecen en `0.0.0` (bootstrap):
 
-`agent`, `context`, `context-planner`, `graph`, `memory`, `ontology`, `plugin`, `prompt`, `publisher`, `retrieval`, `search`, `validation`
+`agent`, `context`, `context-planner`, `graph`, `ontology`, `plugin`, `prompt`, `publisher`, `retrieval`, `search`, `validation`
 
 ---
 

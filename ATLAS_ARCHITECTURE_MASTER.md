@@ -3,7 +3,7 @@
 **Document ID:** ATLAS-000  
 **Version:** 1.0.0-draft  
 **Status:** Master Architecture Reference  
-**Last Updated:** 2026-07-22  
+**Last Updated:** 2026-07-25  
 **Owner:** ATLAS Architecture Board
 
 ---
@@ -838,7 +838,7 @@ The following capabilities are fully specified but not yet implemented.
 
 | Capability | Planned Package | Status |
 |------------|----------------|--------|
-| Memory | @atlas/memory | Architecture Complete |
+| Memory | @atlas/memory | **Architecture Certified** (ADR-0003, tag `memory-architecture-certified`) |
 | Retrieval | @atlas/retrieval | Architecture Complete |
 | Context | @atlas/context | Architecture Complete |
 | Reasoning | @atlas/reasoning | Architecture Complete |
@@ -938,6 +938,7 @@ These capabilities have architectural specifications and implementation.
 | @atlas/knowledge | 0.2.0 | Stable |
 | @atlas/workflow | 0.1.0 | Frozen |
 | @atlas/intelligence | 0.1.0 | Frozen (Sprint 10F) |
+| @atlas/memory | 0.0.0 | Architecture Certified (Sprint 11A, ADR-0003) |
 
 ---
 
@@ -947,7 +948,6 @@ These packages already have architectural specifications but no implementation.
 
 | Package | Status |
 |----------|--------|
-| @atlas/memory | Architecture Complete — Sprint 11A next |
 | @atlas/retrieval | Architecture Complete |
 | @atlas/context | Architecture Complete |
 | @atlas/context-planner | Planned |
@@ -1034,7 +1034,7 @@ Specifications always precede implementation.
 | Knowledge | Complete | Complete | Complete | Stable |
 | Workflow | Complete | Complete | Complete | Frozen |
 | Planning | Complete | Complete | Complete | Frozen (ADR-0002) |
-| Memory | Complete | None | None | Planned |
+| Memory | Complete | Complete | Complete | **Architecture Certified** |
 | Retrieval | Complete | None | None | Planned |
 | Context | Complete | None | None | Planned |
 | Reasoning | Complete | None | None | Planned |
@@ -1055,7 +1055,7 @@ Current maturity of each subsystem.
 | Workflow | Production Ready |
 | Knowledge | Stable |
 | Planning | Stable (Frozen) |
-| Memory | Architecture Complete |
+| Memory | **Architecture Certified** (ADR-0003) |
 | Retrieval | Architecture Complete |
 | Context | Architecture Complete |
 | Reasoning | Architecture Complete |
@@ -1410,15 +1410,23 @@ This transition is intentionally postponed by ADR-0002.
 
 Status:
 
-Next Implementation Phase.
+**Architecture Certified** — Sprint 11A complete (tag `memory-architecture-certified`, ADR-0003).
 
-Memory will introduce:
+Implemented (Sprint 11A):
 
-- Memory Engine
+- Domain Layer (MEMORY-004)
+- Memory Engine (Single Entry Point, CONTRACT-001)
+- Internal entity repositories
+- Public API (MEMORY-008)
+- `@atlas/core Result` integration
+
+Next (Sprint 11B — Application Layer):
+
 - Storage Providers
 - Index Providers
 - Retrieval Interfaces
 - Session Management
+- Event Bus
 
 Memory becomes the first capability responsible for persistent experience.
 
@@ -1706,7 +1714,7 @@ The implementation status of ATLAS at the end of the Architecture Phase is:
 | Knowledge | Complete |
 | Workflow | Complete |
 | Planning | Complete (Frozen) |
-| Memory | Architecture Complete |
+| Memory | **Architecture Certified** (ADR-0003) |
 | Retrieval | Architecture Complete |
 | Context | Architecture Complete |
 | Reasoning | Architecture Complete |
@@ -1742,15 +1750,17 @@ The comprehension corridor will be implemented next.
 
 The next phase of ATLAS is:
 
-Implementation.
+Implementation — Sprint 11B.
 
-The first implementation sprint is:
+Memory architecture is certified (Sprint 11A complete, ADR-0003, tag `memory-architecture-certified`).
 
-Sprint 11A
+The next implementation sprint is:
 
-Memory Engine
+Sprint 11B
 
-Development begins exclusively inside:
+Memory Application Layer
+
+Development continues exclusively inside:
 
 ```
 packages/memory
@@ -1762,7 +1772,7 @@ following the approved specifications located in:
 spec/memory/
 ```
 
-No additional cognitive capability will begin implementation until Memory reaches its planned completion milestone.
+No additional cognitive capability will begin implementation until Memory Application Layer reaches its planned completion milestone.
 
 This preserves the dependency order defined by the architecture.
 
@@ -1777,6 +1787,7 @@ Primary references include:
 - VERSION.md
 - ADR-0001
 - ADR-0002
+- ADR-0003
 - ATLAS-RELEASE-001-KERNEL_v0.1
 - SPRINT10F_ARCHITECTURE_REVIEW
 - Foundation Specifications
@@ -1832,6 +1843,10 @@ COMPLETED
 
 IMPLEMENTATION
 
-**First Implementation Sprint**
+**Memory Architecture Status**
 
-Sprint 11A — Memory Engine
+Certified — Sprint 11A (tag `memory-architecture-certified`, ADR-0003)
+
+**Next Implementation Sprint**
+
+Sprint 11B — Memory Application Layer
