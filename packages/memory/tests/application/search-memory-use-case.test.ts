@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { SearchMemoryUseCase } from '../../src/application/use-cases/SearchMemoryUseCase.js';
-import { INVALID_QUERY, MEMORY_STORAGE_ERROR } from '../../src/domain/errors/memory-error-codes.js';
+import { INVALID_QUERY, MEMORY_RETRIEVAL_ERROR } from '../../src/domain/errors/memory-error-codes.js';
 import { memoryErr } from '../../src/internal/result.js';
-import { createEngineError, ENGINE_STORE } from '../../src/engine/engine-errors.js';
+import { createEngineError, ENGINE_RETRIEVAL } from '../../src/engine/engine-errors.js';
 import { createEngineSpy, createMemoryRecord, createSearchResult, createTestEngine } from './test-helpers.js';
 
 describe('SearchMemoryUseCase', () => {
@@ -41,15 +41,15 @@ describe('SearchMemoryUseCase', () => {
   it('maps engine failures to ApplicationError', async () => {
     const engine = createEngineSpy();
     engine.search = vi.fn().mockResolvedValue(
-      memoryErr(createEngineError(ENGINE_STORE, 'search failed', { canonicalCode: MEMORY_STORAGE_ERROR })),
+      memoryErr(createEngineError(ENGINE_RETRIEVAL, 'search failed', { canonicalCode: MEMORY_RETRIEVAL_ERROR })),
     );
     const useCase = new SearchMemoryUseCase(engine);
 
-    const result = await useCase.execute({ query: {} });
+    const result = await useCase.execute({ query: { recordType: 'Fact' } });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.code).toBe(MEMORY_STORAGE_ERROR);
+      expect(result.error.code).toBe(MEMORY_RETRIEVAL_ERROR);
     }
   });
 });

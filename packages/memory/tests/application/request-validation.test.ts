@@ -27,11 +27,13 @@ describe('request validation', () => {
   });
 
   it('rejects invalid retrieve requests', () => {
-    const result = validateRetrieveMemoryRequest({ recordId: '  ' });
+    const emptyId = validateRetrieveMemoryRequest({ recordId: '  ' });
+    expect(emptyId.ok).toBe(false);
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe(INVALID_QUERY);
+    const missingId = validateRetrieveMemoryRequest({});
+    expect(missingId.ok).toBe(false);
+    if (!missingId.ok) {
+      expect(missingId.error.code).toBe(INVALID_QUERY);
     }
   });
 

@@ -54,6 +54,7 @@ export function createEngineSpy(): MemoryEngine {
   return {
     store: vi.fn(),
     retrieve: vi.fn(),
+    update: vi.fn(),
     delete: vi.fn(),
     search: vi.fn(),
     getCollaborators: vi.fn(),

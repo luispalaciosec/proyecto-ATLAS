@@ -12,10 +12,6 @@ import {
 } from '../request-validation.js';
 import type { UpdateMemoryResponse } from '../responses/UpdateMemoryResponse.js';
 
-/**
- * Certified MemoryEngine baseline does not expose update() yet (ADR-0003 deferred).
- * Update semantics delegate to MemoryEngine.store() until engine.update() lands.
- */
 export class UpdateMemoryUseCase {
   constructor(private readonly engine: MemoryEngine) {}
 
@@ -27,14 +23,8 @@ export class UpdateMemoryUseCase {
       return validation;
     }
 
-    const currentVersion = resolveVersion(request.record);
-    const nextVersion = currentVersion + 1;
-    const record = mergeRecordMetadata(request.record, {
-      ...request.metadata,
-      version: nextVersion,
-    });
-
-    const result = await this.engine.store(record);
+    const record = mergeRecordMetadata(request.record, request.metadata);
+    const result = await this.engine.update(record);
 
     if (!result.ok) {
       return memoryErr(mapEngineError(result.error));
@@ -43,7 +33,7 @@ export class UpdateMemoryUseCase {
     return memoryOk({
       record: result.value,
       updated: true,
-      version: resolveVersion(result.value, nextVersion),
+      version: resolveVersion(result.value),
     });
   }
 }

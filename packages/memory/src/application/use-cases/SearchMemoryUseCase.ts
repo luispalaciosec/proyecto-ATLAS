@@ -19,7 +19,7 @@ export class SearchMemoryUseCase {
       return validation;
     }
 
-    const result = await this.engine.search();
+    const result = await this.engine.search(validation.value.query);
 
     if (!result.ok) {
       return memoryErr(mapEngineError(result.error));

@@ -3,10 +3,19 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ConsistencyProvider } from '../../src/domain/interfaces/consistency-provider.js';
 import type { MemoryStore } from '../../src/domain/interfaces/memory-store.js';
 import type { MemoryRecord, SearchResult } from '../../src/domain/types/memory-types.js';
-import { INVALID_MEMORY_RECORD, MEMORY_STORAGE_ERROR } from '../../src/domain/errors/memory-error-codes.js';
+import {
+  INVALID_MEMORY_RECORD,
+  INVALID_QUERY,
+  MEMORY_NOT_FOUND,
+  MEMORY_RETRIEVAL_ERROR,
+  MEMORY_STORAGE_ERROR,
+} from '../../src/domain/errors/memory-error-codes.js';
 import {
   ENGINE_CONSISTENCY,
   ENGINE_DOMAIN_VALIDATION,
+  ENGINE_NOT_FOUND,
+  ENGINE_QUERY_VALIDATION,
+  ENGINE_RETRIEVAL,
   ENGINE_STORE,
 } from '../../src/engine/engine-errors.js';
 import { createMemoryEngine, MemoryEngine } from '../../src/engine/index.js';
@@ -22,10 +31,10 @@ function createMemoryRecord(overrides: Partial<MemoryRecord> = {}): MemoryRecord
   });
 }
 
-function createSearchResult(): SearchResult {
+function createSearchResult(records: readonly MemoryRecord[] = [createMemoryRecord()]): SearchResult {
   return Object.freeze({
-    records: [createMemoryRecord()],
-    total: 1,
+    records,
+    total: records.length,
   });
 }
 
@@ -69,20 +78,48 @@ describe('MemoryEngine orchestration', () => {
     expect(consistencyProvider.validateRecord).toHaveBeenCalledWith(record);
   });
 
-  it('orchestrates successful retrieve operations', async () => {
+  it('orchestrates successful retrieve operations by canonical identity', async () => {
     const record = createMemoryRecord();
     const store = createMemoryStore({
       get: vi.fn().mockResolvedValue(record),
     });
     const engine = createMemoryEngine(store, createConsistencyProvider());
 
-    const result = await engine.retrieve();
+    const result = await engine.retrieve({ recordId: record.id });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value).toEqual(record);
     }
     expect(store.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns MemoryNotFoundError when retrieve identity does not match', async () => {
+    const store = createMemoryStore({
+      get: vi.fn().mockResolvedValue(undefined),
+      search: vi.fn().mockResolvedValue(createSearchResult([])),
+    });
+    const engine = createMemoryEngine(store, createConsistencyProvider());
+
+    const result = await engine.retrieve({ recordId: 'record.missing' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe(ENGINE_NOT_FOUND);
+      expect(result.error.canonicalCode).toBe(MEMORY_NOT_FOUND);
+    }
+  });
+
+  it('rejects retrieve requests without canonical identity', async () => {
+    const engine = createMemoryEngine(createMemoryStore(), createConsistencyProvider());
+
+    const result = await engine.retrieve({ recordId: '   ' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe(ENGINE_QUERY_VALIDATION);
+      expect(result.error.canonicalCode).toBe(INVALID_QUERY);
+    }
   });
 
   it('orchestrates successful delete operations', async () => {
@@ -98,20 +135,60 @@ describe('MemoryEngine orchestration', () => {
     expect(consistencyProvider.validateRecord).toHaveBeenCalledWith(record);
   });
 
-  it('delegates search operations through the internal store gateway', async () => {
-    const searchResult = createSearchResult();
+  it('orchestrates search through the internal retrieval provider port', async () => {
+    const matching = createMemoryRecord({
+      id: 'record.fact.1',
+      type: 'Fact',
+      metadata: { namespaceId: 'namespace.1' },
+    });
+    const other = createMemoryRecord({
+      id: 'record.fact.2',
+      type: 'Observation',
+      metadata: { namespaceId: 'namespace.2' },
+    });
     const store = createMemoryStore({
-      search: vi.fn().mockResolvedValue(searchResult),
+      search: vi.fn().mockResolvedValue(createSearchResult([matching, other])),
     });
     const engine = createMemoryEngine(store, createConsistencyProvider());
 
-    const result = await engine.search();
+    const result = await engine.search({ recordType: 'Fact', namespaceId: 'namespace.1' });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value).toEqual(searchResult);
+      expect(result.value.records).toHaveLength(1);
+      expect(result.value.records[0]?.id).toBe('record.fact.1');
     }
     expect(store.search).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects invalid search queries at the engine boundary', async () => {
+    const engine = createMemoryEngine(createMemoryStore(), createConsistencyProvider());
+
+    const result = await engine.search({ recordType: '   ' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe(ENGINE_QUERY_VALIDATION);
+      expect(result.error.canonicalCode).toBe(INVALID_QUERY);
+    }
+  });
+
+  it('orchestrates update with monotonic version metadata', async () => {
+    const record = createMemoryRecord({ metadata: { revision: 2 } });
+    const store = createMemoryStore();
+    const consistencyProvider = createConsistencyProvider();
+    const engine = createMemoryEngine(store, consistencyProvider);
+
+    const result = await engine.update(record);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.metadata.revision).toBe(3);
+      expect(result.value.metadata.version).toBe(3);
+      expect(result.value.id).toBe(record.id);
+    }
+    expect(store.put).toHaveBeenCalledTimes(1);
+    expect(consistencyProvider.validateRecord).toHaveBeenCalledTimes(1);
   });
 
   it('returns domain validation failures without invoking providers', async () => {
@@ -196,12 +273,12 @@ describe('MemoryEngine orchestration', () => {
     });
     const engine = createMemoryEngine(store, createConsistencyProvider());
 
-    const result = await engine.retrieve();
+    const result = await engine.retrieve({ recordId: 'record.fact.1' });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.code).toBe(ENGINE_STORE);
-      expect(result.error.canonicalCode).toBe(MEMORY_STORAGE_ERROR);
+      expect(result.error.code).toBe(ENGINE_RETRIEVAL);
+      expect(result.error.canonicalCode).toBe(MEMORY_RETRIEVAL_ERROR);
       expect(result.error.cause).toBeInstanceOf(Error);
     }
   });
@@ -212,12 +289,12 @@ describe('MemoryEngine orchestration', () => {
     });
     const engine = createMemoryEngine(store, createConsistencyProvider());
 
-    const result = await engine.search();
+    const result = await engine.search({});
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.code).toBe(ENGINE_STORE);
-      expect(result.error.canonicalCode).toBe(MEMORY_STORAGE_ERROR);
+      expect(result.error.code).toBe(ENGINE_RETRIEVAL);
+      expect(result.error.canonicalCode).toBe(MEMORY_RETRIEVAL_ERROR);
     }
   });
 
@@ -239,7 +316,7 @@ describe('MemoryEngine orchestration', () => {
     expect(store.put).toHaveBeenCalledTimes(1);
   });
 
-  it('invokes ConsistencyProvider before MemoryStore.put', async () => {
+  it('invokes ConsistencyProvider before MemoryStore.put on update', async () => {
     const callOrder: string[] = [];
     const store = createMemoryStore({
       put: vi.fn(async () => {
@@ -254,7 +331,7 @@ describe('MemoryEngine orchestration', () => {
     });
     const engine = createMemoryEngine(store, consistencyProvider);
 
-    await engine.store(createMemoryRecord());
+    await engine.update(createMemoryRecord());
 
     expect(callOrder).toEqual(['consistency', 'put']);
   });

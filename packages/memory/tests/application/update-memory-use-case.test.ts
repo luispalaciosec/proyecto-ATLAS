@@ -10,23 +10,24 @@ import { createEngineError, ENGINE_STORE } from '../../src/engine/engine-errors.
 import { createEngineSpy, createMemoryRecord, createTestEngine } from './test-helpers.js';
 
 describe('UpdateMemoryUseCase', () => {
-  it('delegates update semantics through MemoryEngine.store', async () => {
+  it('delegates to MemoryEngine.update without using store()', async () => {
     const engine = createTestEngine();
+    const updateSpy = vi.spyOn(engine, 'update');
     const storeSpy = vi.spyOn(engine, 'store');
     const useCase = new UpdateMemoryUseCase(engine);
-    const record = createMemoryRecord({ metadata: { version: 2 } });
+    const record = createMemoryRecord({ metadata: { revision: 2 } });
 
     const result = await useCase.execute({
       record,
       metadata: { source: 'application-update' },
     });
 
-    expect(storeSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(storeSpy).not.toHaveBeenCalled();
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value.updated).toBe(true);
       expect(result.value.version).toBe(3);
-      expect(result.value.record.metadata.source).toBe('application-update');
     }
   });
 
@@ -42,12 +43,13 @@ describe('UpdateMemoryUseCase', () => {
     if (!result.ok) {
       expect(result.error.code).toBe(INVALID_MEMORY_RECORD);
     }
+    expect(engine.update).not.toHaveBeenCalled();
     expect(engine.store).not.toHaveBeenCalled();
   });
 
   it('maps engine failures to ApplicationError', async () => {
     const engine = createEngineSpy();
-    engine.store = vi.fn().mockResolvedValue(
+    engine.update = vi.fn().mockResolvedValue(
       memoryErr(createEngineError(ENGINE_STORE, 'update failed')),
     );
     const useCase = new UpdateMemoryUseCase(engine);

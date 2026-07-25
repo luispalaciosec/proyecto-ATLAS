@@ -1,7 +1,7 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.4.0
+version: 1.5.0
 status: active
 last_updated: 2026-07-25
 ---
@@ -17,9 +17,10 @@ last_updated: 2026-07-25
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
 | **Current Phase** | **Implementation** |
-| **Next Sprint** | **Pendiente de autorización Owner** (propuesta: Sprint 11C — Memory Engine Operations) |
+| **Next Sprint** | **Sprint 11D — Memory Providers** (`@atlas/memory`) |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
 | **Memory Application Tag** | `memory-application-certified` |
+| **Memory Engine Operations Tag** | `memory-engine-operations-certified` |
 | **Memory Architecture ADR** | [`adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md`](./adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md) |
 | **Foundation Phase** | **Completed** |
 | **Repository Stabilization (Milestone 2)** | **Completed** |
@@ -53,7 +54,7 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/knowledge` | 0.2.0 | Knowledge Capability — metamodel, domain core, projection adapter (Sprint 8–9) | **Stable** |
 | `@atlas/workflow` | 0.1.0 | Workflow Definition System — graph model, WorkflowCompiler (Sprint 10E) | **Frozen** |
 | `@atlas/intelligence` | 0.1.0 | Cognitive Planning Engine — Goal → WorkflowDefinition (Sprint 10F) | **Frozen** |
-| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application layer (Sprint 11A–11B) | **Application Certified** |
+| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application layer (Sprint 11A–11C) | **Engine Operations Certified** |
 
 ---
 
@@ -84,7 +85,23 @@ Arquitectura de `@atlas/memory` certificada bajo **ADR-0003** (Accepted).
 
 Baseline congelada: Single Entry Point (`MemoryEngine`), `@atlas/core Result`, API pública MEMORY-008, entity repositories internos.
 
-**Próximo sprint propuesto:** 11C — Memory Engine Operations (`retrieve` / `search` / `update`).
+**Próximo sprint autorizado:** 11D — Memory Providers.
+
+---
+
+## Memory engine operations certification (Sprint 11C)
+
+Operaciones canónicas del MemoryEngine certificadas sobre baseline ADR-0003.
+
+| Sprint | Componente | Tag | Status |
+|--------|------------|-----|--------|
+| 11C | Memory Engine Operations — `retrieve` / `search` / `update` | `memory-engine-operations-certified` | **Certified** |
+
+Implementado: `retrieve(request)`, `search(query)`, `update(record)`, `RetrievalProviderPort` stub, realineación Application Layer sin workarounds.
+
+Baseline congelada: orquestación exclusiva del Engine; pipeline Engine → Retrieval Port (stub) → InternalStoreGateway → MemoryStore.
+
+**Próximo sprint autorizado:** 11D — Memory Providers.
 
 ---
 

@@ -94,6 +94,10 @@ export function validateRetrieveMemoryRequest(
     return applicationValidationError(INVALID_QUERY, 'recordId must not be empty when provided');
   }
 
+  if (request.recordId === undefined) {
+    return applicationValidationError(INVALID_QUERY, 'recordId is required');
+  }
+
   return memoryOk(request);
 }
 
