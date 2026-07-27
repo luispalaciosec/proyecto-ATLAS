@@ -79,10 +79,15 @@ export class VersionRepository {
       );
     }
 
-    versionToMemoryRecord(version);
-    recordToMemoryRecord(evolvedRecord, version);
+    const versionRecord = versionToMemoryRecord(version);
+    const recordMemoryRecord = recordToMemoryRecord(evolvedRecord, version);
 
-    const storeResult = await invokeStorePut(this.storeGateway);
+    const versionStoreResult = await invokeStorePut(this.storeGateway, versionRecord);
+    if (!versionStoreResult.ok) {
+      return versionStoreResult;
+    }
+
+    const storeResult = await invokeStorePut(this.storeGateway, recordMemoryRecord);
     if (!storeResult.ok) {
       return storeResult;
     }

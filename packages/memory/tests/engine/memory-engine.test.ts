@@ -19,6 +19,8 @@ import {
   ENGINE_STORE,
 } from '../../src/engine/engine-errors.js';
 import { createMemoryEngine, MemoryEngine } from '../../src/engine/index.js';
+import { MemoryProviderStackRequiredError } from '../../src/providers/storage/memory-store-from-storage-provider.js';
+import { createTestMemoryStoreWithLegacyAdapter } from '../support/memory-store-test-support.js';
 
 function createMemoryRecord(overrides: Partial<MemoryRecord> = {}): MemoryRecord {
   return Object.freeze({
@@ -52,13 +54,7 @@ function createConsistencyProvider(
 }
 
 function createMemoryStore(overrides: Partial<MemoryStore> = {}): MemoryStore {
-  return {
-    put: vi.fn().mockResolvedValue(undefined),
-    get: vi.fn().mockResolvedValue(createMemoryRecord()),
-    remove: vi.fn().mockResolvedValue(undefined),
-    search: vi.fn().mockResolvedValue(createSearchResult()),
-    ...overrides,
-  };
+  return createTestMemoryStoreWithLegacyAdapter(overrides, createMemoryRecord());
 }
 
 describe('MemoryEngine orchestration', () => {
@@ -135,7 +131,7 @@ describe('MemoryEngine orchestration', () => {
     expect(consistencyProvider.validateRecord).toHaveBeenCalledWith(record);
   });
 
-  it('orchestrates search through the internal retrieval provider port', async () => {
+  it('orchestrates search through the retrieval provider pipeline', async () => {
     const matching = createMemoryRecord({
       id: 'record.fact.1',
       type: 'Fact',
@@ -349,6 +345,27 @@ describe('MemoryEngine orchestration', () => {
 });
 
 describe('MemoryEngine ADR-0003 single entry point', () => {
+  it('constructs the official in-memory provider stack when no store is supplied', async () => {
+    const engine = createMemoryEngine(createConsistencyProvider());
+    const result = await engine.store(createMemoryRecord());
+
+    expect(result.ok).toBe(true);
+  });
+
+  it('rejects MemoryStore instances without an explicit StorageProvider', () => {
+    expect(() =>
+      createMemoryEngine(
+        {
+          put: vi.fn(),
+          get: vi.fn(),
+          remove: vi.fn(),
+          search: vi.fn(),
+        },
+        createConsistencyProvider(),
+      ),
+    ).toThrow(MemoryProviderStackRequiredError);
+  });
+
   it('routes persistence through the internal store gateway owned by the engine', async () => {
     const store = createMemoryStore();
     const engine = new MemoryEngine(store, createConsistencyProvider());

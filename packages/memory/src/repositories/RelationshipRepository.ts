@@ -42,8 +42,8 @@ export class RelationshipRepository {
       );
     }
 
-    relationshipToMemoryRecord(relationship);
-    const storeResult = await invokeStorePut(this.storeGateway);
+    const memoryRecord = relationshipToMemoryRecord(relationship);
+    const storeResult = await invokeStorePut(this.storeGateway, memoryRecord);
     if (!storeResult.ok) {
       return storeResult;
     }
@@ -57,8 +57,7 @@ export class RelationshipRepository {
       return relationshipResult;
     }
 
-    relationshipToMemoryRecord(relationshipResult.value);
-    return invokeStoreRemove(this.storeGateway);
+    return invokeStoreRemove(this.storeGateway, relationshipId.toString());
   }
 
   async getRelationships(
@@ -79,7 +78,7 @@ export class RelationshipRepository {
   private async getRelationship(
     relationshipId: RelationshipId,
   ): Promise<Result<Relationship, RepositoryError>> {
-    const directResult = await invokeStoreGet(this.storeGateway);
+    const directResult = await invokeStoreGet(this.storeGateway, relationshipId.toString());
     if (!directResult.ok) {
       return directResult;
     }

@@ -6,9 +6,12 @@ import type { MemoryRecord, SearchResult } from '../domain/types/memory-types.js
 
 import { createRepositoryError, REPOSITORY_STORE, type RepositoryError } from './repository-errors.js';
 
-export async function invokeStorePut(gateway: InternalStoreGateway): Promise<Result<void, RepositoryError>> {
+export async function invokeStorePut(
+  gateway: InternalStoreGateway,
+  record: MemoryRecord,
+): Promise<Result<void, RepositoryError>> {
   try {
-    await gateway.put();
+    await gateway.put(record);
     return memoryOk(undefined);
   } catch (cause) {
     return memoryErr(
@@ -19,9 +22,10 @@ export async function invokeStorePut(gateway: InternalStoreGateway): Promise<Res
 
 export async function invokeStoreGet(
   gateway: InternalStoreGateway,
+  recordId?: string,
 ): Promise<Result<MemoryRecord | undefined, RepositoryError>> {
   try {
-    const record = await gateway.get();
+    const record = await gateway.get(recordId);
     return memoryOk(record);
   } catch (cause) {
     return memoryErr(
@@ -32,9 +36,10 @@ export async function invokeStoreGet(
 
 export async function invokeStoreRemove(
   gateway: InternalStoreGateway,
+  recordId: string,
 ): Promise<Result<void, RepositoryError>> {
   try {
-    await gateway.remove();
+    await gateway.remove(recordId);
     return memoryOk(undefined);
   } catch (cause) {
     return memoryErr(

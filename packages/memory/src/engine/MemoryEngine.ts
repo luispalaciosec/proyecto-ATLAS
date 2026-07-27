@@ -1,17 +1,17 @@
 import type { Result } from '@atlas/core';
 
-import { createStoreGateway, type InternalStoreGateway } from '../internal/store-gateway.js';
 import { validateEngineMemoryQuery, validateRetrieveEngineRequest } from '../internal/engine-query-validation.js';
 import { buildUpdatedMemoryRecord } from '../internal/memory-record-update.js';
 import { memoryErr, memoryOk } from '../internal/result.js';
-import {
-  createRetrievalProviderPort,
-  type RetrievalProviderPort,
-} from '../internal/retrieval-provider-port.js';
+import { createStoreGateway, type InternalStoreGateway } from '../internal/store-gateway.js';
 import type { ConsistencyProvider } from '../domain/interfaces/consistency-provider.js';
 import type { MemoryStore } from '../domain/interfaces/memory-store.js';
 import type { MemoryQuery, MemoryRecord, SearchResult } from '../domain/types/memory-types.js';
 import { isValid, validateMemoryRecord } from '../domain/validators/memory-validators.js';
+import { resolveProviderStack } from '../providers/create-memory-providers.js';
+import type { IndexProvider } from '../providers/index/index-provider.js';
+import type { RetrievalProvider } from '../providers/retrieval/retrieval-provider.js';
+import type { StorageProvider } from '../providers/storage/storage-provider.js';
 import { CollectionRepository } from '../repositories/CollectionRepository.js';
 import { NamespaceRepository } from '../repositories/NamespaceRepository.js';
 import { RecordRepository } from '../repositories/RecordRepository.js';
@@ -38,16 +38,21 @@ export interface MemoryEngineCollaborators {
 }
 
 export class MemoryEngine {
+  private readonly storageProvider: StorageProvider;
+  private readonly indexProvider: IndexProvider;
+  private readonly retrievalProvider: RetrievalProvider;
   private readonly storeGateway: InternalStoreGateway;
-  private readonly retrievalProvider: RetrievalProviderPort;
   private readonly collaborators: MemoryEngineCollaborators;
 
   constructor(
     store: MemoryStore,
     private readonly consistencyProvider: ConsistencyProvider,
   ) {
-    this.storeGateway = createStoreGateway(store);
-    this.retrievalProvider = createRetrievalProviderPort(this.storeGateway);
+    const providers = resolveProviderStack(store);
+    this.storageProvider = providers.storageProvider;
+    this.indexProvider = providers.indexProvider;
+    this.retrievalProvider = providers.retrievalProvider;
+    this.storeGateway = createStoreGateway(this.storageProvider);
     this.collaborators = Object.freeze({
       namespace: new NamespaceRepository(this.storeGateway),
       collection: new CollectionRepository(this.storeGateway),
@@ -82,9 +87,10 @@ export class MemoryEngine {
     }
 
     try {
-      await this.storeGateway.put();
+      await this.storageProvider.store(record);
+      await this.indexProvider.updateIndex(record);
     } catch (cause) {
-      return memoryErr(createEngineError(ENGINE_STORE, 'MemoryStore.put failed', { cause }));
+      return memoryErr(createEngineError(ENGINE_STORE, 'StorageProvider.store failed', { cause }));
     }
 
     return memoryOk(record);
@@ -153,9 +159,10 @@ export class MemoryEngine {
     }
 
     try {
-      await this.storeGateway.put();
+      await this.storageProvider.update(updatedRecord);
+      await this.indexProvider.updateIndex(updatedRecord);
     } catch (cause) {
-      return memoryErr(createEngineError(ENGINE_STORE, 'MemoryStore.put failed', { cause }));
+      return memoryErr(createEngineError(ENGINE_STORE, 'StorageProvider.update failed', { cause }));
     }
 
     return memoryOk(updatedRecord);
@@ -181,9 +188,10 @@ export class MemoryEngine {
     }
 
     try {
-      await this.storeGateway.remove();
+      await this.storageProvider.delete(record.id);
+      await this.indexProvider.deleteIndexEntry(record.id);
     } catch (cause) {
-      return memoryErr(createEngineError(ENGINE_STORE, 'MemoryStore.remove failed', { cause }));
+      return memoryErr(createEngineError(ENGINE_STORE, 'StorageProvider.delete failed', { cause }));
     }
 
     return memoryOk(undefined);

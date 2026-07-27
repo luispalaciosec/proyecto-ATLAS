@@ -23,6 +23,7 @@ import {
   REPOSITORY_NOT_FOUND,
   REPOSITORY_STORE,
 } from '../../src/repositories/repository-errors.js';
+import { createTestMemoryStoreWithLegacyAdapter } from '../support/memory-store-test-support.js';
 
 const CREATED_AT = '2026-07-24T00:00:00.000Z';
 
@@ -37,13 +38,7 @@ function createConsistencyProvider(): ConsistencyProvider {
 }
 
 function createMemoryStore(overrides: Partial<MemoryStore> = {}): MemoryStore {
-  return {
-    put: vi.fn().mockResolvedValue(undefined),
-    get: vi.fn().mockResolvedValue(undefined),
-    remove: vi.fn().mockResolvedValue(undefined),
-    search: vi.fn().mockResolvedValue({ records: [], total: 0 }),
-    ...overrides,
-  };
+  return createTestMemoryStoreWithLegacyAdapter(overrides);
 }
 
 function createFixture() {
@@ -173,7 +168,7 @@ describe('Engine-owned entity repositories', () => {
       expect(result.value.record.currentVersion.value).toBe(2);
       expect(result.value.version.revision.value).toBe(2);
     }
-    expect(store.put).toHaveBeenCalledTimes(1);
+    expect(store.put).toHaveBeenCalledTimes(2);
   });
 
   it('returns the current version from a record aggregate', async () => {

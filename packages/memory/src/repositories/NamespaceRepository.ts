@@ -39,8 +39,8 @@ export class NamespaceRepository {
       );
     }
 
-    namespaceToMemoryRecord(namespace);
-    const storeResult = await invokeStorePut(this.storeGateway);
+    const memoryRecord = namespaceToMemoryRecord(namespace);
+    const storeResult = await invokeStorePut(this.storeGateway, memoryRecord);
     if (!storeResult.ok) {
       return storeResult;
     }
@@ -54,12 +54,11 @@ export class NamespaceRepository {
       return namespaceResult;
     }
 
-    namespaceToMemoryRecord(namespaceResult.value);
-    return invokeStoreRemove(this.storeGateway);
+    return invokeStoreRemove(this.storeGateway, namespaceId.toString());
   }
 
   async getNamespace(namespaceId: NamespaceId): Promise<Result<Namespace, RepositoryError>> {
-    const directResult = await invokeStoreGet(this.storeGateway);
+    const directResult = await invokeStoreGet(this.storeGateway, namespaceId.toString());
     if (!directResult.ok) {
       return directResult;
     }

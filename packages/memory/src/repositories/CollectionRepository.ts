@@ -44,8 +44,8 @@ export class CollectionRepository {
       );
     }
 
-    collectionToMemoryRecord(collection);
-    const storeResult = await invokeStorePut(this.storeGateway);
+    const memoryRecord = collectionToMemoryRecord(collection);
+    const storeResult = await invokeStorePut(this.storeGateway, memoryRecord);
     if (!storeResult.ok) {
       return storeResult;
     }
@@ -59,12 +59,11 @@ export class CollectionRepository {
       return collectionResult;
     }
 
-    collectionToMemoryRecord(collectionResult.value);
-    return invokeStoreRemove(this.storeGateway);
+    return invokeStoreRemove(this.storeGateway, collectionId.toString());
   }
 
   async getCollection(collectionId: CollectionId): Promise<Result<Collection, RepositoryError>> {
-    const directResult = await invokeStoreGet(this.storeGateway);
+    const directResult = await invokeStoreGet(this.storeGateway, collectionId.toString());
     if (!directResult.ok) {
       return directResult;
     }

@@ -54,8 +54,8 @@ export class RecordRepository {
       );
     }
 
-    recordToMemoryRecord(record, initialVersion);
-    const storeResult = await invokeStorePut(this.storeGateway);
+    const memoryRecord = recordToMemoryRecord(record, initialVersion);
+    const storeResult = await invokeStorePut(this.storeGateway, memoryRecord);
     if (!storeResult.ok) {
       return storeResult;
     }
@@ -64,7 +64,7 @@ export class RecordRepository {
   }
 
   async getRecord(recordId: RecordId): Promise<Result<Record, RepositoryError>> {
-    const directResult = await invokeStoreGet(this.storeGateway);
+    const directResult = await invokeStoreGet(this.storeGateway, recordId.toString());
     if (!directResult.ok) {
       return directResult;
     }
@@ -104,7 +104,7 @@ export class RecordRepository {
       );
     }
 
-    const storeResult = await invokeStoreRemove(this.storeGateway);
+    const storeResult = await invokeStoreRemove(this.storeGateway, record.recordId.toString());
     if (!storeResult.ok) {
       return storeResult;
     }
@@ -147,7 +147,28 @@ export class RecordRepository {
       );
     }
 
-    const storeResult = await invokeStorePut(this.storeGateway);
+    const existingResult = await invokeStoreGet(this.storeGateway, record.recordId.toString());
+    if (!existingResult.ok) {
+      return existingResult;
+    }
+
+    if (existingResult.value === undefined) {
+      return memoryErr(
+        createRepositoryError(
+          REPOSITORY_NOT_FOUND,
+          `Record "${record.recordId.toString()}" was not found`,
+        ),
+      );
+    }
+
+    const memoryRecord = Object.freeze({
+      ...existingResult.value,
+      metadata: Object.freeze({
+        ...existingResult.value.metadata,
+        collectionId: targetCollection.collectionId.toString(),
+      }),
+    });
+    const storeResult = await invokeStorePut(this.storeGateway, memoryRecord);
     if (!storeResult.ok) {
       return storeResult;
     }

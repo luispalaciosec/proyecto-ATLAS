@@ -4,6 +4,7 @@ import type { ConsistencyProvider } from '../../src/domain/interfaces/consistenc
 import type { MemoryStore } from '../../src/domain/interfaces/memory-store.js';
 import type { MemoryRecord, SearchResult } from '../../src/domain/types/memory-types.js';
 import { createMemoryEngine, type MemoryEngine } from '../../src/engine/index.js';
+import { createTestMemoryStoreWithLegacyAdapter } from '../support/memory-store-test-support.js';
 
 export function createMemoryRecord(overrides: Partial<MemoryRecord> = {}): MemoryRecord {
   return Object.freeze({
@@ -37,13 +38,7 @@ export function createConsistencyProvider(
 }
 
 export function createMemoryStore(overrides: Partial<MemoryStore> = {}): MemoryStore {
-  return {
-    put: vi.fn().mockResolvedValue(undefined),
-    get: vi.fn().mockResolvedValue(createMemoryRecord()),
-    remove: vi.fn().mockResolvedValue(undefined),
-    search: vi.fn().mockResolvedValue(createSearchResult()),
-    ...overrides,
-  };
+  return createTestMemoryStoreWithLegacyAdapter(overrides, createMemoryRecord());
 }
 
 export function createTestEngine(overrides: Partial<MemoryStore> = {}): MemoryEngine {

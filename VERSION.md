@@ -3,7 +3,7 @@ id: ATLAS-VERSION-001
 title: Atlas Version Registry
 version: 1.5.0
 status: active
-last_updated: 2026-07-25
+last_updated: 2026-07-26
 ---
 
 # VERSION.md
@@ -17,10 +17,11 @@ last_updated: 2026-07-25
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
 | **Current Phase** | **Implementation** |
-| **Next Sprint** | **Sprint 11D — Memory Providers** (`@atlas/memory`) |
+| **Next Sprint** | **Pending owner authorization** |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
 | **Memory Application Tag** | `memory-application-certified` |
 | **Memory Engine Operations Tag** | `memory-engine-operations-certified` |
+| **Memory Providers Tag** | `memory-providers-certified` |
 | **Memory Architecture ADR** | [`adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md`](./adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md) |
 | **Foundation Phase** | **Completed** |
 | **Repository Stabilization (Milestone 2)** | **Completed** |
@@ -54,7 +55,7 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/knowledge` | 0.2.0 | Knowledge Capability — metamodel, domain core, projection adapter (Sprint 8–9) | **Stable** |
 | `@atlas/workflow` | 0.1.0 | Workflow Definition System — graph model, WorkflowCompiler (Sprint 10E) | **Frozen** |
 | `@atlas/intelligence` | 0.1.0 | Cognitive Planning Engine — Goal → WorkflowDefinition (Sprint 10F) | **Frozen** |
-| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application layer (Sprint 11A–11C) | **Engine Operations Certified** |
+| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application layer, providers (Sprint 11A–11D) | **Providers Certified** |
 
 ---
 
@@ -89,6 +90,24 @@ Baseline congelada: Single Entry Point (`MemoryEngine`), `@atlas/core Result`, A
 
 ---
 
+---
+
+## Memory providers certification (Sprint 11D)
+
+Providers reales de `@atlas/memory` certificados sobre baseline ADR-0003.
+
+| Sprint | Componente | Tag | Status |
+|--------|------------|-----|--------|
+| 11D | Memory Providers — Storage / Index / Retrieval (in-memory reference) | `memory-providers-certified` | **Certified** |
+
+Implementado: `InMemoryStorageProvider`, `InMemoryIndexProvider`, `InMemoryRetrievalProvider`; pipeline Application → MemoryEngine → Providers → MemoryStore; eliminación del fallback silencioso Legacy; `createMemoryEngine(consistencyProvider)` con stack oficial; 103 tests PASS.
+
+Baseline congelada: MemoryEngine orquesta Storage, Index y Retrieval Providers; ConsistencyProvider exclusivo del Engine; InternalStoreGateway subordinado al Storage Provider; API pública MEMORY-008 sin cambios; Providers no exportados en `index.ts`.
+
+**Próximo sprint:** pendiente de autorización del Owner. Sprint 11E no iniciado.
+
+---
+
 ## Memory engine operations certification (Sprint 11C)
 
 Operaciones canónicas del MemoryEngine certificadas sobre baseline ADR-0003.
@@ -116,6 +135,41 @@ Application Layer de `@atlas/memory` certificada sobre baseline ADR-0003.
 Implementado: 5 Use Cases (`Store`, `Retrieve`, `Delete`, `Search`, `Update`), contratos Request/Response, `ApplicationError`, 32 tests de aplicación.
 
 Baseline congelada: Use Cases orquestan exclusivamente `MemoryEngine`; sin acceso a MemoryStore, Providers ni Repositories.
+
+---
+
+## Accepted Technical Debt
+
+Deuda técnica aceptada por auditoría independiente. No bloquea certificación ni Sprint 11E. Debe resolverse antes del primer StorageProvider productivo.
+
+| ID | Título | Estado | Prioridad |
+|----|--------|--------|-----------|
+| **TD-11D-001** | StorageProvider contract still relies on optional listAll() through internal type casts. | **Accepted Technical Debt** | Resolve before first production StorageProvider implementation. |
+
+### TD-11D-001 — StorageProvider contract still relies on optional listAll() through internal type casts.
+
+| Field | Value |
+|-------|-------|
+| **ID** | TD-11D-001 |
+| **Title** | StorageProvider contract still relies on optional listAll() through internal type casts. |
+| **Status** | Accepted Technical Debt |
+| **Priority** | Resolve before first production StorageProvider implementation. |
+| **Sprint** | 11D — Memory Providers |
+| **Audit** | Independent audit — non-blocking observation |
+
+**Description:**
+
+Current InMemoryStorageProvider is not affected.
+
+Future production providers (SQLite/PostgreSQL/Redis) must eliminate this dependency by formalizing the contract instead of relying on optional runtime capabilities.
+
+**Impact:**
+
+- Does not affect current InMemoryStorageProvider.
+- Does not break ADR-0003.
+- Does not break the Engine → Providers → MemoryStore pipeline.
+- Does not break Single Entry Point.
+- Does not block Sprint 11E.
 
 ---
 

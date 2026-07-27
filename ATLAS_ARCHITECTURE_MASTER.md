@@ -1416,6 +1416,8 @@ Status:
 
 **Engine Operations Certified** — Sprint 11C (tag `memory-engine-operations-certified`).
 
+**Providers Certified** — Sprint 11D (tag `memory-providers-certified`).
+
 Implemented (Sprint 11A):
 
 - Domain Layer (MEMORY-004)
@@ -1437,11 +1439,13 @@ Implemented (Sprint 11C):
 - `update(record)` with MEMORY-004 version semantics
 - Internal Retrieval Provider port (stub pipeline)
 
-Next (Sprint 11D — Memory Providers):
+Implemented (Sprint 11D):
 
-- Storage Provider
-- Index Provider
-- Retrieval Provider (real implementations)
+- Storage Provider (CONTRACT-002, in-memory reference)
+- Index Provider (CONTRACT-003, in-memory reference)
+- Retrieval Provider (CONTRACT-004, in-memory reference)
+- Pipeline Application → MemoryEngine → Providers → MemoryStore
+- Explicit provider stack requirement (no silent Legacy fallback)
 
 Deferred (post-11D):
 
@@ -1768,27 +1772,11 @@ The comprehension corridor will be implemented next.
 
 # 28. Next Approved Phase
 
-Memory Engine Operations are certified (Sprint 11C complete, tag `memory-engine-operations-certified`).
+Memory Providers are certified (Sprint 11D complete, tag `memory-providers-certified`).
 
-The next authorized implementation sprint is:
+The next implementation sprint is pending owner authorization.
 
-Sprint 11D
-
-Memory Providers
-
-Development continues exclusively inside:
-
-```
-packages/memory
-```
-
-following the approved specifications located in:
-
-```
-spec/memory/
-```
-
-No additional cognitive capability will begin implementation until Memory Providers reach certification.
+Sprint 11E has not started.
 
 ---
 
@@ -1869,6 +1857,46 @@ Certified — Sprint 11B (tag `memory-application-certified`)
 
 Certified — Sprint 11C (tag `memory-engine-operations-certified`)
 
+**Memory Providers Status**
+
+Certified — Sprint 11D (tag `memory-providers-certified`)
+
 **Next Implementation Sprint**
 
-Sprint 11D — Memory Providers
+Pending owner authorization. Sprint 11E has not started.
+
+---
+
+# 31. Accepted Technical Debt
+
+Technical debt explicitly accepted by independent audit. Does not block Sprint 11D certification or Sprint 11E. Must be resolved before the first production StorageProvider implementation.
+
+## TD-11D-001 — StorageProvider contract still relies on optional listAll() through internal type casts.
+
+| Field | Value |
+|-------|-------|
+| **ID** | TD-11D-001 |
+| **Title** | StorageProvider contract still relies on optional listAll() through internal type casts. |
+| **Status** | Accepted Technical Debt |
+| **Priority** | Resolve before first production StorageProvider implementation. |
+| **Sprint** | 11D — Memory Providers |
+| **Package** | `@atlas/memory` |
+| **Audit** | Independent audit — non-blocking observation |
+
+**Description:**
+
+Current InMemoryStorageProvider is not affected.
+
+Future production providers (SQLite/PostgreSQL/Redis) must eliminate this dependency by formalizing the contract instead of relying on optional runtime capabilities.
+
+**Impact:**
+
+- Does not affect current InMemoryStorageProvider.
+- Does not break ADR-0003.
+- Does not break the Engine → Providers → MemoryStore pipeline.
+- Does not break Single Entry Point.
+- Does not block Sprint 11E.
+
+**Resolution trigger:**
+
+Formalize StorageProvider contract capabilities before implementing SQLite, PostgreSQL, or Redis providers. Do not rely on optional internal type casts to undocumented methods such as `listAll()`.
