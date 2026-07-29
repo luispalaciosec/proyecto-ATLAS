@@ -18,6 +18,7 @@ import { RecordRepository } from '../repositories/RecordRepository.js';
 import { RelationshipRepository } from '../repositories/RelationshipRepository.js';
 import { VersionRepository } from '../repositories/VersionRepository.js';
 
+import { wrapConsistencyProviderWithSessionValidation } from './memory-engine-consistency.js';
 import type { RetrieveMemoryEngineRequest } from './engine-requests.js';
 import {
   createEngineError,
@@ -28,6 +29,13 @@ import {
   ENGINE_STORE,
   type EngineError,
 } from './engine-errors.js';
+import {
+  MemoryEngineSessionOrchestrator,
+  resolveMemoryEngineNamespaceId,
+  type MemoryEngineExecutionContext,
+  type MemoryEngineSessionScope,
+} from './memory-engine-session-orchestrator.js';
+import { MemoryEngineSessionRegistry } from './memory-engine-session-registry.js';
 
 export interface MemoryEngineCollaborators {
   readonly namespace: NamespaceRepository;
@@ -43,10 +51,13 @@ export class MemoryEngine {
   private readonly retrievalProvider: RetrievalProvider;
   private readonly storeGateway: InternalStoreGateway;
   private readonly collaborators: MemoryEngineCollaborators;
+  private readonly consistencyProvider: ConsistencyProvider;
+  private readonly sessionRegistry: MemoryEngineSessionRegistry;
+  private readonly sessionOrchestrator: MemoryEngineSessionOrchestrator;
 
   constructor(
     store: MemoryStore,
-    private readonly consistencyProvider: ConsistencyProvider,
+    consistencyProvider: ConsistencyProvider,
   ) {
     const providers = resolveProviderStack(store);
     this.storageProvider = providers.storageProvider;
@@ -60,6 +71,12 @@ export class MemoryEngine {
       version: new VersionRepository(this.storeGateway),
       relationship: new RelationshipRepository(this.storeGateway),
     });
+    this.sessionRegistry = new MemoryEngineSessionRegistry();
+    this.sessionOrchestrator = new MemoryEngineSessionOrchestrator(this.sessionRegistry);
+    this.consistencyProvider = wrapConsistencyProviderWithSessionValidation(
+      consistencyProvider,
+      this.sessionRegistry,
+    );
   }
 
   /** @internal Package-internal accessor for collaborator tests. Not public API. */
@@ -67,133 +84,281 @@ export class MemoryEngine {
     return this.collaborators;
   }
 
-  async store(record: MemoryRecord): Promise<Result<MemoryRecord, EngineError>> {
-    const domainIssues = validateMemoryRecord(record);
-    if (!isValid(domainIssues)) {
-      return memoryErr(
-        createEngineError(ENGINE_DOMAIN_VALIDATION, 'MemoryRecord domain validation failed', {
-          issues: domainIssues,
-        }),
-      );
-    }
+  /** @internal Package-internal accessor for session integration tests. Not public API. */
+  getLastCompletedSession() {
+    return this.sessionOrchestrator.getLastCompletedSession();
+  }
 
-    const consistencyResult = await this.consistencyProvider.validateRecord(record);
-    if (!consistencyResult.valid) {
-      return memoryErr(
-        createEngineError(ENGINE_CONSISTENCY, 'MemoryRecord consistency validation failed', {
-          issues: consistencyResult.issues,
-        }),
-      );
-    }
+  /** @internal Package-internal accessor for session integration tests. Not public API. */
+  getCompletedSessions() {
+    return this.sessionRegistry.getCompletedSessions();
+  }
+
+  /** @internal Package-internal accessor for session integration tests. Not public API. */
+  getConsistencyProvider(): ConsistencyProvider {
+    return this.consistencyProvider;
+  }
+
+  private async withMemorySession<T>(
+    context: MemoryEngineExecutionContext,
+    execute: (scope: MemoryEngineSessionScope) => Promise<Result<T, EngineError>>,
+  ): Promise<Result<T, EngineError>> {
+    const scope = this.sessionOrchestrator.beginExecution(context);
 
     try {
-      await this.storageProvider.store(record);
-      await this.indexProvider.updateIndex(record);
-    } catch (cause) {
-      return memoryErr(createEngineError(ENGINE_STORE, 'StorageProvider.store failed', { cause }));
-    }
+      const result = await execute(scope);
 
-    return memoryOk(record);
+      if (result.ok) {
+        scope.finalizeSuccess();
+      } else {
+        if (result.error.issues !== undefined && result.error.issues.length > 0) {
+          scope.recordWarning(result.error.message);
+        } else {
+          scope.recordProviderFailure(result.error.canonicalCode, result.error.message);
+        }
+        scope.finalizeFailure(result.error);
+      }
+
+      return result;
+    } catch (cause) {
+      const error = createEngineError(ENGINE_STORE, 'MemoryEngine execution failed unexpectedly', {
+        cause,
+      });
+      scope.recordProviderFailure(error.canonicalCode, error.message);
+      scope.finalizeFailure(error);
+      throw cause;
+    }
+  }
+
+  async store(record: MemoryRecord): Promise<Result<MemoryRecord, EngineError>> {
+    return this.withMemorySession(
+      {
+        operationName: 'store',
+        namespaceId: resolveMemoryEngineNamespaceId(record.metadata),
+        executionKey: record.id,
+      },
+      async (scope) => {
+        const domainIssues = validateMemoryRecord(record);
+        scope.recordValidationOperation({ phase: 'domain', valid: isValid(domainIssues) });
+        if (!isValid(domainIssues)) {
+          return memoryErr(
+            createEngineError(ENGINE_DOMAIN_VALIDATION, 'MemoryRecord domain validation failed', {
+              issues: domainIssues,
+            }),
+          );
+        }
+
+        const consistencyStartedAt = Date.now();
+        const consistencyResult = await this.consistencyProvider.validateRecord(record);
+        scope.recordValidationOperation({
+          phase: 'consistency',
+          valid: consistencyResult.valid,
+        });
+        scope.recordProviderLatency(
+          'storageLatencyMs',
+          Date.now() - consistencyStartedAt,
+        );
+        if (!consistencyResult.valid) {
+          scope.recordWarning('MemoryRecord consistency validation failed');
+          return memoryErr(
+            createEngineError(ENGINE_CONSISTENCY, 'MemoryRecord consistency validation failed', {
+              issues: consistencyResult.issues,
+            }),
+          );
+        }
+
+        scope.recordStorageRequest({ recordId: record.id });
+        try {
+          const storageStartedAt = Date.now();
+          await this.storageProvider.store(record);
+          scope.recordStorageResult({ recordId: record.id });
+          scope.recordProviderLatency('storageLatencyMs', Date.now() - storageStartedAt);
+
+          const indexStartedAt = Date.now();
+          await this.indexProvider.updateIndex(record);
+          scope.recordIndexOperation({ recordId: record.id });
+          scope.recordProviderLatency('indexLatencyMs', Date.now() - indexStartedAt);
+        } catch (cause) {
+          scope.recordProviderFailure(ENGINE_STORE, 'StorageProvider.store failed');
+          return memoryErr(createEngineError(ENGINE_STORE, 'StorageProvider.store failed', { cause }));
+        }
+
+        return memoryOk(record);
+      },
+    );
   }
 
   async retrieve(
     request: RetrieveMemoryEngineRequest,
   ): Promise<Result<MemoryRecord, EngineError>> {
-    const identityValidation = validateRetrieveEngineRequest(request.recordId);
-    if (!identityValidation.ok) {
-      return identityValidation;
-    }
+    return this.withMemorySession(
+      {
+        operationName: 'retrieve',
+        namespaceId: 'memory.default',
+        executionKey: request.recordId,
+      },
+      async (scope) => {
+        const identityValidation = validateRetrieveEngineRequest(request.recordId);
+        scope.recordValidationOperation({
+          phase: 'identity',
+          valid: identityValidation.ok,
+        });
+        if (!identityValidation.ok) {
+          return identityValidation;
+        }
 
-    try {
-      const record = await this.retrievalProvider.retrieveById(identityValidation.value);
-      if (record === undefined) {
-        return memoryErr(
-          createEngineError(
-            ENGINE_NOT_FOUND,
-            `Record "${identityValidation.value}" was not found`,
-          ),
-        );
-      }
+        scope.recordRetrievalRequest({ recordId: identityValidation.value });
+        try {
+          const retrievalStartedAt = Date.now();
+          const record = await this.retrievalProvider.retrieveById(identityValidation.value);
+          scope.recordProviderLatency('retrievalLatencyMs', Date.now() - retrievalStartedAt);
 
-      return memoryOk(record);
-    } catch (cause) {
-      return memoryErr(
-        createEngineError(ENGINE_RETRIEVAL, 'MemoryEngine.retrieve failed', { cause }),
-      );
-    }
+          if (record === undefined) {
+            scope.recordWarning(`Record "${identityValidation.value}" was not found`);
+            return memoryErr(
+              createEngineError(
+                ENGINE_NOT_FOUND,
+                `Record "${identityValidation.value}" was not found`,
+              ),
+            );
+          }
+
+          scope.recordRetrievalResult({ recordId: record.id });
+          return memoryOk(record);
+        } catch (cause) {
+          scope.recordProviderFailure(ENGINE_RETRIEVAL, 'MemoryEngine.retrieve failed');
+          return memoryErr(
+            createEngineError(ENGINE_RETRIEVAL, 'MemoryEngine.retrieve failed', { cause }),
+          );
+        }
+      },
+    );
   }
 
   async search(query: MemoryQuery): Promise<Result<SearchResult, EngineError>> {
-    const queryValidation = validateEngineMemoryQuery(query);
-    if (!queryValidation.ok) {
-      return queryValidation;
-    }
+    return this.withMemorySession(
+      {
+        operationName: 'search',
+        namespaceId: resolveMemoryEngineNamespaceId(undefined, query.namespaceId),
+        executionKey: JSON.stringify(query),
+      },
+      async (scope) => {
+        const queryValidation = validateEngineMemoryQuery(query);
+        scope.recordValidationOperation({ phase: 'query', valid: queryValidation.ok });
+        if (!queryValidation.ok) {
+          return queryValidation;
+        }
 
-    try {
-      const result = await this.retrievalProvider.search(queryValidation.value);
-      return memoryOk(result);
-    } catch (cause) {
-      return memoryErr(createEngineError(ENGINE_RETRIEVAL, 'MemoryEngine.search failed', { cause }));
-    }
+        scope.recordRetrievalRequest({ query: queryValidation.value });
+        try {
+          const retrievalStartedAt = Date.now();
+          const result = await this.retrievalProvider.search(queryValidation.value);
+          scope.recordProviderLatency('retrievalLatencyMs', Date.now() - retrievalStartedAt);
+          scope.recordRetrievalResult({ total: result.total });
+          return memoryOk(result);
+        } catch (cause) {
+          scope.recordProviderFailure(ENGINE_RETRIEVAL, 'MemoryEngine.search failed');
+          return memoryErr(createEngineError(ENGINE_RETRIEVAL, 'MemoryEngine.search failed', { cause }));
+        }
+      },
+    );
   }
 
   async update(record: MemoryRecord): Promise<Result<MemoryRecord, EngineError>> {
-    const domainIssues = validateMemoryRecord(record);
-    if (!isValid(domainIssues)) {
-      return memoryErr(
-        createEngineError(ENGINE_DOMAIN_VALIDATION, 'MemoryRecord domain validation failed', {
-          issues: domainIssues,
-        }),
-      );
-    }
+    return this.withMemorySession(
+      {
+        operationName: 'update',
+        namespaceId: resolveMemoryEngineNamespaceId(record.metadata),
+        executionKey: record.id,
+      },
+      async (scope) => {
+        const domainIssues = validateMemoryRecord(record);
+        scope.recordValidationOperation({ phase: 'domain', valid: isValid(domainIssues) });
+        if (!isValid(domainIssues)) {
+          return memoryErr(
+            createEngineError(ENGINE_DOMAIN_VALIDATION, 'MemoryRecord domain validation failed', {
+              issues: domainIssues,
+            }),
+          );
+        }
 
-    const updatedRecord = buildUpdatedMemoryRecord(record);
+        const updatedRecord = buildUpdatedMemoryRecord(record);
 
-    const consistencyResult = await this.consistencyProvider.validateRecord(updatedRecord);
-    if (!consistencyResult.valid) {
-      return memoryErr(
-        createEngineError(ENGINE_CONSISTENCY, 'MemoryRecord consistency validation failed', {
-          issues: consistencyResult.issues,
-        }),
-      );
-    }
+        const consistencyResult = await this.consistencyProvider.validateRecord(updatedRecord);
+        scope.recordValidationOperation({
+          phase: 'consistency',
+          valid: consistencyResult.valid,
+        });
+        if (!consistencyResult.valid) {
+          scope.recordWarning('MemoryRecord consistency validation failed');
+          return memoryErr(
+            createEngineError(ENGINE_CONSISTENCY, 'MemoryRecord consistency validation failed', {
+              issues: consistencyResult.issues,
+            }),
+          );
+        }
 
-    try {
-      await this.storageProvider.update(updatedRecord);
-      await this.indexProvider.updateIndex(updatedRecord);
-    } catch (cause) {
-      return memoryErr(createEngineError(ENGINE_STORE, 'StorageProvider.update failed', { cause }));
-    }
+        scope.recordStorageRequest({ recordId: updatedRecord.id });
+        try {
+          await this.storageProvider.update(updatedRecord);
+          scope.recordStorageResult({ recordId: updatedRecord.id });
+          await this.indexProvider.updateIndex(updatedRecord);
+          scope.recordIndexOperation({ recordId: updatedRecord.id });
+        } catch (cause) {
+          scope.recordProviderFailure(ENGINE_STORE, 'StorageProvider.update failed');
+          return memoryErr(createEngineError(ENGINE_STORE, 'StorageProvider.update failed', { cause }));
+        }
 
-    return memoryOk(updatedRecord);
+        return memoryOk(updatedRecord);
+      },
+    );
   }
 
   async delete(record: MemoryRecord): Promise<Result<void, EngineError>> {
-    const domainIssues = validateMemoryRecord(record);
-    if (!isValid(domainIssues)) {
-      return memoryErr(
-        createEngineError(ENGINE_DOMAIN_VALIDATION, 'MemoryRecord domain validation failed', {
-          issues: domainIssues,
-        }),
-      );
-    }
+    return this.withMemorySession(
+      {
+        operationName: 'delete',
+        namespaceId: resolveMemoryEngineNamespaceId(record.metadata),
+        executionKey: record.id,
+      },
+      async (scope) => {
+        const domainIssues = validateMemoryRecord(record);
+        scope.recordValidationOperation({ phase: 'domain', valid: isValid(domainIssues) });
+        if (!isValid(domainIssues)) {
+          return memoryErr(
+            createEngineError(ENGINE_DOMAIN_VALIDATION, 'MemoryRecord domain validation failed', {
+              issues: domainIssues,
+            }),
+          );
+        }
 
-    const consistencyResult = await this.consistencyProvider.validateRecord(record);
-    if (!consistencyResult.valid) {
-      return memoryErr(
-        createEngineError(ENGINE_CONSISTENCY, 'MemoryRecord consistency validation failed', {
-          issues: consistencyResult.issues,
-        }),
-      );
-    }
+        const consistencyResult = await this.consistencyProvider.validateRecord(record);
+        scope.recordValidationOperation({
+          phase: 'consistency',
+          valid: consistencyResult.valid,
+        });
+        if (!consistencyResult.valid) {
+          scope.recordWarning('MemoryRecord consistency validation failed');
+          return memoryErr(
+            createEngineError(ENGINE_CONSISTENCY, 'MemoryRecord consistency validation failed', {
+              issues: consistencyResult.issues,
+            }),
+          );
+        }
 
-    try {
-      await this.storageProvider.delete(record.id);
-      await this.indexProvider.deleteIndexEntry(record.id);
-    } catch (cause) {
-      return memoryErr(createEngineError(ENGINE_STORE, 'StorageProvider.delete failed', { cause }));
-    }
+        scope.recordStorageRequest({ recordId: record.id });
+        try {
+          await this.storageProvider.delete(record.id);
+          scope.recordStorageResult({ recordId: record.id });
+          await this.indexProvider.deleteIndexEntry(record.id);
+          scope.recordIndexOperation({ recordId: record.id });
+        } catch (cause) {
+          scope.recordProviderFailure(ENGINE_STORE, 'StorageProvider.delete failed');
+          return memoryErr(createEngineError(ENGINE_STORE, 'StorageProvider.delete failed', { cause }));
+        }
 
-    return memoryOk(undefined);
+        return memoryOk(undefined);
+      },
+    );
   }
 }

@@ -1,5 +1,7 @@
 import type { ConsistencyProvider } from '../domain/interfaces/consistency-provider.js';
 import type { MemoryStore } from '../domain/interfaces/memory-store.js';
+import { validateRegisteredMemorySessions } from '../engine/memory-engine-session-validation.js';
+import type { MemoryEngineSessionRegistry } from '../engine/memory-engine-session-registry.js';
 import { InMemoryIndexProvider } from './index/in-memory-index-provider.js';
 import { InMemoryRetrievalProvider } from './retrieval/in-memory-retrieval-provider.js';
 import {
@@ -50,12 +52,17 @@ export function resolveProviderStack(store: MemoryStore): MemoryProviderStack {
   });
 }
 
-export function createDefaultConsistencyProvider(): ConsistencyProvider {
+export function createDefaultConsistencyProvider(
+  sessionRegistry?: MemoryEngineSessionRegistry,
+): ConsistencyProvider {
   return {
     validateRecord: async () => ({ valid: true, issues: [] }),
     validateStore: async () => ({ valid: true, issues: [] }),
     validateIndexes: async () => ({ valid: true, issues: [] }),
-    validateSessions: async () => ({ valid: true, issues: [] }),
+    validateSessions: async () =>
+      sessionRegistry === undefined
+        ? { valid: true, issues: [] }
+        : validateRegisteredMemorySessions(sessionRegistry.getSessionsForValidation()),
     repair: async () => ({ repaired: 0, skipped: 0, failed: 0 }),
   };
 }

@@ -43,7 +43,7 @@ export function validateMemorySession(session: MemorySession): readonly Validati
       continue;
     }
 
-    if (!isAllowedMemorySessionTransition(previous.toStatus, current.fromStatus)) {
+    if (previous.toStatus !== current.fromStatus) {
       issues.push(
         createValidationIssue(
           MEMORY_INVALID_SESSION,
