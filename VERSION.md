@@ -1,9 +1,9 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.6.0
+version: 1.7.0
 status: active
-last_updated: 2026-07-28
+last_updated: 2026-07-29
 ---
 
 # VERSION.md
@@ -23,6 +23,7 @@ last_updated: 2026-07-28
 | **Memory Engine Operations Tag** | `memory-engine-operations-certified` |
 | **Memory Providers Tag** | `memory-providers-certified` |
 | **Memory Session Domain Tag** | `memory-session-domain-certified` |
+| **Memory Session Engine Tag** | `memory-session-engine-certified` |
 | **Memory Architecture ADR** | [`adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md`](./adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md) |
 | **Execution Model ADR** | [`adr/ADR-0004-EXECUTION-MODEL-AND-RUNTIME-OWNERSHIP.md`](./adr/ADR-0004-EXECUTION-MODEL-AND-RUNTIME-OWNERSHIP.md) — **Accepted** |
 | **Foundation Phase** | **Completed** |
@@ -57,7 +58,7 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/knowledge` | 0.2.0 | Knowledge Capability — metamodel, domain core, projection adapter (Sprint 8–9) | **Stable** |
 | `@atlas/workflow` | 0.1.0 | Workflow Definition System — graph model, WorkflowCompiler (Sprint 10E) | **Frozen** |
 | `@atlas/intelligence` | 0.1.0 | Cognitive Planning Engine — Goal → WorkflowDefinition (Sprint 10F) | **Frozen** |
-| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application, providers, session domain (Sprint 11A–11E.1) | **Session Domain Certified** |
+| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application, providers, session domain + engine integration (Sprint 11A–11E.2) | **Session Engine Certified** |
 
 ---
 
@@ -152,7 +153,23 @@ Baseline congelada: dominio puro sin Engine/Providers/Repositories; sin cambios 
 9. **Cadena de lifecycle coherente:** `validateMemorySession` verifica encadenamiento `toStatus`/`fromStatus` en `lifecycleHistory`.
 10. **Sin lógica de infraestructura:** el aggregate no referencia Storage, Retrieval, Index, Engine, Runtime, Workflow ni Agent.
 
-**Próximo sprint:** 11E.2 — integración MemorySession ↔ MemoryEngine (pendiente autorización Owner).
+**Próximo sprint:** Pendiente autorización Owner.
+
+---
+
+## Memory session engine certification (Sprint 11E.2)
+
+Integración `MemorySession` ↔ `MemoryEngine` certificada sobre **CONTRACT-001 §15**, **CONTRACT-005 §5** y baseline **ADR-0003** / **ADR-0004**.
+
+| Sprint | Componente | Tag | Status |
+|--------|------------|-----|--------|
+| 11E.2 | Memory Session — Engine Integration (CONTRACT-001 §15) | `memory-session-engine-certified` | **Certified** |
+
+Implementado: MemoryEngine como único creador/owner de MemorySession, `MemoryEngineSessionOrchestrator` y `MemoryEngineSessionRegistry` (internos, no exportados), `ConsistencyProvider.validateSessions()` con implementación real, integración en `store`/`retrieve`/`search`/`update`/`delete`.
+
+Baseline congelada: Application nunca referencia Orchestrator/Registry; `validateSessions()` compone (no duplica) `validateMemorySession()` del dominio; API pública MEMORY-008 sin cambios.
+
+**Próximo sprint:** Pendiente autorización Owner.
 
 ---
 
@@ -202,17 +219,18 @@ Migración pendiente (no bloquea Sprint 11E): retirar `packages/runtime/src/agen
 
 Open Issues activos derivados de este ADR: `OI-0007` (promover `ATLAS-DOM-008-AGENT_DOMAIN` a `approved`), `OI-0008` (actualizar `CONTRACT-007` con la composición de Pipeline Runtime), `OI-0009` (gates de CI para las Reglas A–F, disparador antes de Fase 3).
 
-**Nota de alcance:** ADR-0004 resuelve exclusivamente la propiedad de Runtime/Workflow/Agent. La reconciliación CONTRACT-005 ↔ Sprint 11E quedó resuelta en 11E.1 (dominio implementado bajo CONTRACT-005); la integración Engine ↔ Session permanece pendiente (11E.2).
+**Nota de alcance:** ADR-0004 resuelve exclusivamente la propiedad de Runtime/Workflow/Agent. La reconciliación CONTRACT-005 ↔ Sprint 11E quedó resuelta en 11E.1 (dominio) y 11E.2 (integración Engine ↔ Session).
 
 ---
 
 ## Accepted Technical Debt
 
-Deuda técnica aceptada por auditoría independiente. No bloquea certificación ni Sprint 11E. Debe resolverse antes del primer StorageProvider productivo.
+Deuda técnica aceptada por auditoría independiente. No bloquea certificaciones de Sprint 11D ni 11E.2.
 
 | ID | Título | Estado | Prioridad |
 |----|--------|--------|-----------|
 | **TD-11D-001** | StorageProvider contract still relies on optional listAll() through internal type casts. | **Accepted Technical Debt** | Resolve before first production StorageProvider implementation. |
+| **TD-11E-001** | MemoryEngineSessionOrchestrator supports only one active session per engine instance. | **Accepted Technical Debt** | Resolve before any capability invokes MemoryEngine from parallel executions. |
 
 ### TD-11D-001 — StorageProvider contract still relies on optional listAll() through internal type casts.
 
@@ -238,6 +256,31 @@ Future production providers (SQLite/PostgreSQL/Redis) must eliminate this depend
 - Does not break the Engine → Providers → MemoryStore pipeline.
 - Does not break Single Entry Point.
 - Does not block Sprint 11E.
+
+---
+
+### TD-11E-001 — MemoryEngineSessionOrchestrator supports only one active session per engine instance.
+
+| Field | Value |
+|-------|-------|
+| **ID** | TD-11E-001 |
+| **Title** | MemoryEngineSessionOrchestrator supports only one active session per engine instance. |
+| **Status** | Accepted Technical Debt |
+| **Priority** | Resolve before any capability (Retrieval, Agent, etc.) invokes MemoryEngine from parallel executions. |
+| **Sprint** | 11E.2 — Memory Session Engine Integration |
+| **Audit** | Owner review — non-blocking observation |
+
+**Description:**
+
+`MemoryEngineSessionOrchestrator` supports a single active session per instance (throws `Error` if `beginExecution()` is invoked while a session is already active). CONTRACT-005 §14 specifies "Concurrent executions always use different sessions", which implies concurrent executions with isolated sessions. The current implementation is correct for sequential use but does not yet support real concurrency.
+
+**Impact:**
+
+- Does not affect sequential MemoryEngine operations.
+- Does not break ADR-0003 or ADR-0004.
+- Does not break CONTRACT-001 §15 single-owner session model.
+- Does not break Single Entry Point or API pública MEMORY-008.
+- Does not block Sprint 11E.2 certification.
 
 ---
 
