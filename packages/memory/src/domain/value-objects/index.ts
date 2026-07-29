@@ -17,3 +17,19 @@ export {
   isRelationshipType,
 } from './relationship-type.js';
 export { MemoryMetadata, type MemoryMetadataData } from './memory-metadata.js';
+export { MemorySessionId, isMemorySessionId } from './memory-session-id.js';
+export { createExecutionId, type ExecutionId } from './execution-id.js';
+export {
+  MemorySessionStatus,
+  MEMORY_SESSION_STATUSES,
+  isMemorySessionStatus,
+} from './memory-session-status.js';
+export { MemorySessionRevision } from './memory-session-revision.js';
+export { MemorySessionMetadata, type MemorySessionMetadataData } from './memory-session-metadata.js';
+export { MemorySessionContext, type MemorySessionContextData } from './memory-session-context.js';
+export {
+  MemoryOperationType,
+  MEMORY_OPERATION_TYPES,
+  isMemoryOperationType,
+} from './memory-operation-type.js';
+export { MemoryOperationId, isMemoryOperationId } from './memory-operation-id.js';

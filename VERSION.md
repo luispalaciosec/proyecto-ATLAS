@@ -1,9 +1,9 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.5.0
+version: 1.6.0
 status: active
-last_updated: 2026-07-26
+last_updated: 2026-07-28
 ---
 
 # VERSION.md
@@ -22,7 +22,9 @@ last_updated: 2026-07-26
 | **Memory Application Tag** | `memory-application-certified` |
 | **Memory Engine Operations Tag** | `memory-engine-operations-certified` |
 | **Memory Providers Tag** | `memory-providers-certified` |
+| **Memory Session Domain Tag** | `memory-session-domain-certified` |
 | **Memory Architecture ADR** | [`adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md`](./adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md) |
+| **Execution Model ADR** | [`adr/ADR-0004-EXECUTION-MODEL-AND-RUNTIME-OWNERSHIP.md`](./adr/ADR-0004-EXECUTION-MODEL-AND-RUNTIME-OWNERSHIP.md) — **Accepted** |
 | **Foundation Phase** | **Completed** |
 | **Repository Stabilization (Milestone 2)** | **Completed** |
 | **Release document** | [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/ATLAS-RELEASE-001-KERNEL_v0.1.md) |
@@ -55,7 +57,7 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/knowledge` | 0.2.0 | Knowledge Capability — metamodel, domain core, projection adapter (Sprint 8–9) | **Stable** |
 | `@atlas/workflow` | 0.1.0 | Workflow Definition System — graph model, WorkflowCompiler (Sprint 10E) | **Frozen** |
 | `@atlas/intelligence` | 0.1.0 | Cognitive Planning Engine — Goal → WorkflowDefinition (Sprint 10F) | **Frozen** |
-| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application layer, providers (Sprint 11A–11D) | **Providers Certified** |
+| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application, providers, session domain (Sprint 11A–11E.1) | **Session Domain Certified** |
 
 ---
 
@@ -104,7 +106,53 @@ Implementado: `InMemoryStorageProvider`, `InMemoryIndexProvider`, `InMemoryRetri
 
 Baseline congelada: MemoryEngine orquesta Storage, Index y Retrieval Providers; ConsistencyProvider exclusivo del Engine; InternalStoreGateway subordinado al Storage Provider; API pública MEMORY-008 sin cambios; Providers no exportados en `index.ts`.
 
-**Próximo sprint:** pendiente de autorización del Owner. Sprint 11E no iniciado.
+---
+
+## Memory session domain certification (Sprint 11E.1)
+
+Dominio `MemorySession` certificado sobre **CONTRACT-005** (Frozen) y baseline **ADR-0003** / **ADR-0004**.
+
+| Sprint | Componente | Tag | Status |
+|--------|------------|-----|--------|
+| 11E.1 | Memory Session — Domain Layer (CONTRACT-005) | `memory-session-domain-certified` | **Certified** |
+
+Implementado: Aggregate Root `MemorySession`, Value Objects, historiales append-only (`OperationRecord`, `DiagnosticEntry`, `LifecycleRecord`), factories de ciclo de vida, validadores, estadísticas derivadas; dependencia autorizada `@atlas/events` (`CorrelationId`); 112 tests PASS (`@atlas/memory`).
+
+Baseline congelada: dominio puro sin Engine/Providers/Repositories; sin cambios en API pública MEMORY-008; sin imports prohibidos CONTRACT-005 §16.
+
+**Nota OI-0007:** `ATLAS-DOM-008-AGENT_DOMAIN` permanece en `Draft`; OI-0007 no afecta Sprint 11E.1 — este sprint implementa exclusivamente el dominio Memory Session bajo CONTRACT-005, sin dependencia del modelo Agent.
+
+### CONTRACT-005 §6–§17 → cobertura de tests
+
+| Sección CONTRACT-005 | Cobertura | Test (`memory-session.test.ts`) |
+|----------------------|-----------|----------------------------------|
+| §6 Session Lifecycle | Transiciones `Created→Initialized→Running→Completed\|Failed→Disposed` | `initialization`, `completion`, `failure handling`, `disposal`, `contract compliance` |
+| §7 Session Identity | Session ID, Execution ID, Correlation ID, Namespace, timestamps, revision, status, metadata | `session creation` |
+| §8 Session State | Status, counters, diagnostics, errors, execution metadata | `operation tracking`, `diagnostic recording`, `failure handling`, `statistics generation` |
+| §9 Session Context | tenant, workspace, environment, variables, custom metadata | `session creation` (fixture con `MemorySessionContext`) |
+| §10 Operation Tracking | 6 tipos canónicos, timestamped | `operation tracking` |
+| §11 Diagnostics | warnings, failures, timings, counts, health snapshots (append-only) | `diagnostic recording` |
+| §12 Error Handling | Errores canónicos Memory | `failure handling` (`MEMORY_RETRIEVAL_ERROR`) |
+| §13 Statistics | counts, duration, latency (read-only) | `statistics generation` |
+| §14 Concurrency | Una sesión por contexto de ejecución | Verificado por diseño (identidad única por aggregate); sin test de integración en 11E.1 |
+| §15 Events | Lifecycle records internos (append-only) | `initialization`, `completion`, `failure handling`, `disposal` |
+| §16 Dependency Rules | Sin referencias prohibidas | Verificado en código (`domain/` sin imports Runtime/Workflow/Agent/Providers) |
+| §17 Testing Requirements | 9 casos obligatorios | Los 9 `it(...)` del describe §17 |
+
+### Invariantes del Aggregate (verificados en código)
+
+1. **Transiciones deterministas:** solo transiciones permitidas en `MEMORY_SESSION_TRANSITIONS`; violaciones lanzan `MEMORY_INVALID_SESSION_TRANSITION`.
+2. **Identidad inmutable:** `memorySessionId`, `executionId`, `correlationId`, `namespaceId`, `createdAt` no mutan tras `createMemorySession`.
+3. **Revisión monotónica:** cada evolución incrementa `MemorySessionRevision`.
+4. **Historial append-only:** `operationHistory`, `diagnosticHistory`, `lifecycleHistory` y `errors` solo crecen por append; entradas previas no se modifican.
+5. **Operaciones solo en Running:** `recordMemoryOperation` rechaza estados distintos de `Running`.
+6. **Diagnósticos hasta Disposed:** `recordMemorySessionDiagnostic` rechaza sesiones en estado `Disposed`.
+7. **Estadísticas derivadas:** `MemorySessionStatistics` se calcula vía `computeMemorySessionStatistics()`; no se almacena como estado mutable.
+8. **Errores canónicos:** `failMemorySession` registra `MemorySessionErrorRecord` con código Memory canónico.
+9. **Cadena de lifecycle coherente:** `validateMemorySession` verifica encadenamiento `toStatus`/`fromStatus` en `lifecycleHistory`.
+10. **Sin lógica de infraestructura:** el aggregate no referencia Storage, Retrieval, Index, Engine, Runtime, Workflow ni Agent.
+
+**Próximo sprint:** 11E.2 — integración MemorySession ↔ MemoryEngine (pendiente autorización Owner).
 
 ---
 
@@ -135,6 +183,26 @@ Application Layer de `@atlas/memory` certificada sobre baseline ADR-0003.
 Implementado: 5 Use Cases (`Store`, `Retrieve`, `Delete`, `Search`, `Update`), contratos Request/Response, `ApplicationError`, 32 tests de aplicación.
 
 Baseline congelada: Use Cases orquestan exclusivamente `MemoryEngine`; sin acceso a MemoryStore, Providers ni Repositories.
+
+---
+
+## Execution Model Resolution (ADR-0004)
+
+Contradicción resuelta entre `ATLAS-RUNTIME-009-RUNTIME_ARCHITECTURE` y `ATLAS-INTELLIGENCE-CONTRACT-006/007` respecto a la propiedad de Workflow Engine y Agent Runtime.
+
+| Field | Value |
+|-------|-------|
+| **ADR** | [`adr/ADR-0004-EXECUTION-MODEL-AND-RUNTIME-OWNERSHIP.md`](./adr/ADR-0004-EXECUTION-MODEL-AND-RUNTIME-OWNERSHIP.md) |
+| **Status** | **Accepted** — 2026-07-27 |
+| **Approved by** | Owner |
+
+Taxonomía oficial establecida: **Pipeline Runtime** (Kernel, `@atlas/runtime`, ejecución determinista) y **Agent Runtime** (Capability, `@atlas/agent`, ejecución cognitiva no determinista). Workflow Engine pertenece exclusivamente a `@atlas/workflow`. El término genérico "Runtime" queda desambiguado — ver ADR-0004 §7.
+
+Migración pendiente (no bloquea Sprint 11E): retirar `packages/runtime/src/agents/` y `packages/runtime/src/workflow/` del Kernel antes de iniciar la implementación de Agent Runtime (Fase 2 del ADR).
+
+Open Issues activos derivados de este ADR: `OI-0007` (promover `ATLAS-DOM-008-AGENT_DOMAIN` a `approved`), `OI-0008` (actualizar `CONTRACT-007` con la composición de Pipeline Runtime), `OI-0009` (gates de CI para las Reglas A–F, disparador antes de Fase 3).
+
+**Nota de alcance:** ADR-0004 resuelve exclusivamente la propiedad de Runtime/Workflow/Agent. La reconciliación CONTRACT-005 ↔ Sprint 11E quedó resuelta en 11E.1 (dominio implementado bajo CONTRACT-005); la integración Engine ↔ Session permanece pendiente (11E.2).
 
 ---
 

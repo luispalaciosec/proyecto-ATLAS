@@ -23,6 +23,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@atlas/core": "workspace:*"
+    "@atlas/core": "workspace:*",
+    "@atlas/events": "workspace:*"
   }
 }
