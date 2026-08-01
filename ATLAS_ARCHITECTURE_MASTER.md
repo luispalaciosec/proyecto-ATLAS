@@ -3,7 +3,7 @@
 **Document ID:** ATLAS-000  
 **Version:** 1.0.0-draft  
 **Status:** Master Architecture Reference  
-**Last Updated:** 2026-07-25  
+**Last Updated:** 2026-08-01  
 **Owner:** ATLAS Architecture Board
 
 ---
@@ -838,7 +838,7 @@ The following capabilities are fully specified but not yet implemented.
 
 | Capability | Planned Package | Status |
 |------------|----------------|--------|
-| Memory | @atlas/memory | **Engine Operations Certified** (ADR-0003, tags `memory-architecture-certified`, `memory-application-certified`, `memory-engine-operations-certified`) |
+| Memory | @atlas/memory | **Session Engine Certified** (ADR-0003, tags `memory-architecture-certified`, `memory-application-certified`, `memory-engine-operations-certified`, `memory-providers-certified`, `memory-session-domain-certified`, `memory-session-engine-certified`) — **Phase 5 Complete** |
 | Retrieval | @atlas/retrieval | Architecture Complete |
 | Context | @atlas/context | Architecture Complete |
 | Reasoning | @atlas/reasoning | Architecture Complete |
@@ -938,7 +938,7 @@ These capabilities have architectural specifications and implementation.
 | @atlas/knowledge | 0.2.0 | Stable |
 | @atlas/workflow | 0.1.0 | Frozen |
 | @atlas/intelligence | 0.1.0 | Frozen (Sprint 10F) |
-| @atlas/memory | 0.0.0 | Engine Operations Certified (Sprint 11A–11C, ADR-0003) |
+| @atlas/memory | 0.0.0 | **Session Engine Certified** (Sprint 11A–11E.2, ADR-0003) |
 
 ---
 
@@ -1034,7 +1034,7 @@ Specifications always precede implementation.
 | Knowledge | Complete | Complete | Complete | Stable |
 | Workflow | Complete | Complete | Complete | Frozen |
 | Planning | Complete | Complete | Complete | Frozen (ADR-0002) |
-| Memory | Complete | Complete | Complete | **Engine Operations Certified** |
+| Memory | Complete | Complete | Complete | **Session Engine Certified** (Phase 5 Complete) |
 | Retrieval | Complete | None | None | Planned |
 | Context | Complete | None | None | Planned |
 | Reasoning | Complete | None | None | Planned |
@@ -1055,7 +1055,7 @@ Current maturity of each subsystem.
 | Workflow | Production Ready |
 | Knowledge | Stable |
 | Planning | Stable (Frozen) |
-| Memory | **Engine Operations Certified** (ADR-0003) |
+| Memory | **Session Engine Certified** (Phase 5 Complete, ADR-0003) |
 | Retrieval | Architecture Complete |
 | Context | Architecture Complete |
 | Reasoning | Architecture Complete |
@@ -1410,6 +1410,8 @@ This transition is intentionally postponed by ADR-0002.
 
 Status:
 
+**Phase 5 — Complete** (officially closed after Sprint 11E.2).
+
 **Architecture Certified** — Sprint 11A (tag `memory-architecture-certified`, ADR-0003).
 
 **Application Certified** — Sprint 11B (tag `memory-application-certified`).
@@ -1417,6 +1419,10 @@ Status:
 **Engine Operations Certified** — Sprint 11C (tag `memory-engine-operations-certified`).
 
 **Providers Certified** — Sprint 11D (tag `memory-providers-certified`).
+
+**Session Domain Certified** — Sprint 11E.1 (tag `memory-session-domain-certified`, CONTRACT-005).
+
+**Session Engine Certified** — Sprint 11E.2 (tag `memory-session-engine-certified`, CONTRACT-001 §15, CONTRACT-005 §5).
 
 Implemented (Sprint 11A):
 
@@ -1447,12 +1453,24 @@ Implemented (Sprint 11D):
 - Pipeline Application → MemoryEngine → Providers → MemoryStore
 - Explicit provider stack requirement (no silent Legacy fallback)
 
-Deferred (post-11D):
+Implemented (Sprint 11E.1):
 
-- Session Management
+- Memory Session domain (CONTRACT-005)
+- Aggregate Root `MemorySession`, Value Objects, append-only histories
+- Lifecycle factories, validators, derived statistics
+
+Implemented (Sprint 11E.2):
+
+- MemoryEngine as sole owner of MemorySession
+- `MemoryEngineSessionOrchestrator` and `MemoryEngineSessionRegistry` (internal)
+- `ConsistencyProvider.validateSessions()` with real implementation
+- Session integration in `store` / `retrieve` / `search` / `update` / `delete`
+
+Deferred (post-11E):
+
 - Event Bus
 
-Memory becomes the first capability responsible for persistent experience.
+Memory Session is now part of the base Memory architecture. Memory becomes the first capability responsible for persistent experience.
 
 ---
 
@@ -1738,7 +1756,7 @@ The implementation status of ATLAS at the end of the Architecture Phase is:
 | Knowledge | Complete |
 | Workflow | Complete |
 | Planning | Complete (Frozen) |
-| Memory | **Engine Operations Certified** (ADR-0003) |
+| Memory | **Session Engine Certified** (Phase 5 Complete, ADR-0003) |
 | Retrieval | Architecture Complete |
 | Context | Architecture Complete |
 | Reasoning | Architecture Complete |
@@ -1772,11 +1790,9 @@ The comprehension corridor will be implemented next.
 
 # 28. Next Approved Phase
 
-Memory Providers are certified (Sprint 11D complete, tag `memory-providers-certified`).
+Phase 5 — Memory is complete (Sprint 11E.2 certified, tag `memory-session-engine-certified`).
 
-The next implementation sprint is pending owner authorization.
-
-Sprint 11E has not started.
+The next implementation phase is **Phase 6 — Retrieval**, pending owner authorization.
 
 ---
 
@@ -1861,15 +1877,27 @@ Certified — Sprint 11C (tag `memory-engine-operations-certified`)
 
 Certified — Sprint 11D (tag `memory-providers-certified`)
 
-**Next Implementation Sprint**
+**Memory Session Domain Status**
 
-Pending owner authorization. Sprint 11E has not started.
+Certified — Sprint 11E.1 (tag `memory-session-domain-certified`, CONTRACT-005)
+
+**Memory Session Engine Status**
+
+Certified — Sprint 11E.2 (tag `memory-session-engine-certified`, CONTRACT-001 §15, CONTRACT-005 §5)
+
+**Phase 5 — Memory Status**
+
+**Complete** — officially closed after Sprint 11E.2.
+
+**Next Implementation Phase**
+
+Pending owner authorization. **Phase 6 — Retrieval**.
 
 ---
 
 # 31. Accepted Technical Debt
 
-Technical debt explicitly accepted by independent audit. Does not block Sprint 11D certification or Sprint 11E. Must be resolved before the first production StorageProvider implementation.
+Technical debt explicitly accepted by independent audit. Does not block Sprint 11D, Sprint 11E.1, or Sprint 11E.2 certification.
 
 ## TD-11D-001 — StorageProvider contract still relies on optional listAll() through internal type casts.
 
@@ -1895,8 +1923,32 @@ Future production providers (SQLite/PostgreSQL/Redis) must eliminate this depend
 - Does not break ADR-0003.
 - Does not break the Engine → Providers → MemoryStore pipeline.
 - Does not break Single Entry Point.
-- Does not block Sprint 11E.
+- Does not block Sprint 11E.1 or Sprint 11E.2.
 
 **Resolution trigger:**
 
 Formalize StorageProvider contract capabilities before implementing SQLite, PostgreSQL, or Redis providers. Do not rely on optional internal type casts to undocumented methods such as `listAll()`.
+
+## TD-11E-001 — MemoryEngineSessionOrchestrator supports only one active session per engine instance.
+
+| Field | Value |
+|-------|-------|
+| **ID** | TD-11E-001 |
+| **Title** | MemoryEngineSessionOrchestrator supports only one active session per engine instance. |
+| **Status** | Accepted Technical Debt |
+| **Priority** | Resolve before any capability (Retrieval, Agent, etc.) invokes MemoryEngine from parallel executions. |
+| **Sprint** | 11E.2 — Memory Session Engine Integration |
+| **Package** | `@atlas/memory` |
+| **Audit** | Owner review — non-blocking observation |
+
+**Description:**
+
+`MemoryEngineSessionOrchestrator` supports a single active session per instance (throws `Error` if `beginExecution()` is invoked while a session is already active). CONTRACT-005 §14 specifies "Concurrent executions always use different sessions", which implies concurrent executions with isolated sessions. The current implementation is correct for sequential use but does not yet support real concurrency.
+
+**Impact:**
+
+- Does not affect sequential MemoryEngine operations.
+- Does not break ADR-0003 or ADR-0004.
+- Does not break CONTRACT-001 §15 single-owner session model.
+- Does not break Single Entry Point or public API MEMORY-008.
+- Does not block Sprint 11E.2 certification.
