@@ -228,6 +228,9 @@ importers:
       '@atlas/events':
         specifier: workspace:*
         version: link:../events
+      '@atlas/intelligence':
+        specifier: workspace:*
+        version: link:../intelligence
       '@atlas/knowledge':
         specifier: workspace:*
         version: link:../knowledge
@@ -237,6 +240,9 @@ importers:
       '@atlas/runtime':
         specifier: workspace:*
         version: link:../runtime
+      '@atlas/workflow':
+        specifier: workspace:*
+        version: link:../workflow
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^3.0.8

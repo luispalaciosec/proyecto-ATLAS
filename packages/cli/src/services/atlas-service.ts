@@ -9,7 +9,12 @@ import {
 } from '@atlas/sdk';
 
 import type { WorkspaceConfig } from '../configuration/workspace-config.js';
-import { CliExitError, EXIT_COMPILATION_ERROR, EXIT_RUNTIME_ERROR } from '../output/exit-codes.js';
+import {
+  CliExitError,
+  EXIT_COMPILATION_ERROR,
+  EXIT_RUNTIME_ERROR,
+  EXIT_VALIDATION_ERROR,
+} from '../output/exit-codes.js';
 
 /**
  * Thin SDK adapter — no business logic, only composition.
@@ -70,6 +75,32 @@ export class AtlasService {
     }
 
     return { compile, execute };
+  }
+
+  async planAndExecute(
+    client: Atlas,
+    goalText: string,
+  ): Promise<{
+    planning: ReturnType<Atlas['planning']['planFromGoal']>;
+    compile: CompilationResult;
+    execute: ExecutionResult;
+  }> {
+    const planning = client.planning.planFromGoal(goalText);
+
+    if (!planning.success || !planning.workflow) {
+      throw new CliExitError(EXIT_VALIDATION_ERROR, 'Planning failed');
+    }
+
+    const workflowResult = client.workflow.compileDefinition(planning.workflow);
+
+    if (!workflowResult.success || !workflowResult.pipeline) {
+      throw new CliExitError(EXIT_VALIDATION_ERROR, 'Workflow compilation failed');
+    }
+
+    const units = client.workflow.projectForCompilation(workflowResult.pipeline, planning.workflow);
+    const { compile, execute } = await this.compileAndExecute(client, units);
+
+    return { planning, compile, execute };
   }
 
   #createSummaryGenerator(): Generator {

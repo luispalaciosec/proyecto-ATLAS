@@ -4,7 +4,9 @@ export type {
   AtlasCompilerOptions,
   AtlasMemoryOptions,
   AtlasOptions,
+  AtlasPlanningOptions,
   AtlasRuntimeOptions,
+  AtlasWorkflowOptions,
   AtlasWorkspaceOptions,
 } from './atlas/options.js';
 
@@ -17,6 +19,7 @@ export type {
   StoreMemoryContentOptions,
   StoreMemoryContentResult,
 } from './modules/memory-module.js';
+export type { PlanFromGoalOptions } from './modules/planning-module.js';
 
 // Kernel re-exports for stable public API (passthrough, no duplication)
 export type {

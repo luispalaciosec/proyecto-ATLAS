@@ -51,11 +51,11 @@ async function run(argv: string[]): Promise<number> {
 }
 
 describe('@atlas/cli command registry', () => {
-  it('registers compile, run, memory, doctor, and version commands', () => {
+  it('registers compile, run, plan, memory, doctor, and version commands', () => {
     const container = createContainer();
     const names = container.commandRegistry.list().map((command) => command.name);
 
-    expect(names).toEqual(['compile', 'run', 'memory', 'doctor', 'version']);
+    expect(names).toEqual(['compile', 'run', 'plan', 'memory', 'doctor', 'version']);
   });
 });
 
@@ -112,6 +112,32 @@ describe('atlas run', () => {
     const code = await run(['run', '--workspace', workspace]);
 
     expect(code).toBe(EXIT_SUCCESS);
+  });
+});
+
+describe('atlas plan', () => {
+  it('plans, compiles, and executes a goal without requiring a workspace file', async () => {
+    const code = await run(['plan', '--goal', 'hacer X', '--json']);
+    expect(code).toBe(EXIT_SUCCESS);
+  });
+
+  it('plans, compiles, and executes a goal with an explicit workspace', async () => {
+    const workspace = createWorkspaceDir();
+    const code = await run(['plan', '--goal', 'hacer X', '--workspace', workspace, '--json']);
+
+    expect(code).toBe(EXIT_SUCCESS);
+  });
+
+  it('prints human-readable output', async () => {
+    const workspace = createWorkspaceDir();
+    const code = await run(['plan', '--goal', 'hacer X', '--workspace', workspace]);
+
+    expect(code).toBe(EXIT_SUCCESS);
+  });
+
+  it('rejects empty goals', async () => {
+    const code = await run(['plan', '--goal', '   ']);
+    expect(code).toBe(EXIT_INVALID_ARGUMENTS);
   });
 });
 

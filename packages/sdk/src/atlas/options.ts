@@ -22,10 +22,20 @@ export interface AtlasMemoryOptions {
   readonly [key: string]: unknown;
 }
 
+export interface AtlasPlanningOptions {
+  readonly [key: string]: unknown;
+}
+
+export interface AtlasWorkflowOptions {
+  readonly [key: string]: unknown;
+}
+
 export interface AtlasOptions {
   readonly workspace?: AtlasWorkspaceOptions;
   readonly eventBus?: EventBus;
   readonly compiler?: AtlasCompilerOptions;
   readonly runtime?: AtlasRuntimeOptions;
   readonly memory?: AtlasMemoryOptions;
+  readonly planning?: AtlasPlanningOptions;
+  readonly workflow?: AtlasWorkflowOptions;
 }
