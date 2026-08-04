@@ -20,10 +20,10 @@ export class PlanCommand implements CliCommand {
         }
 
         const client = options.workspace
-          ? container.atlasService.createClient(
+          ? container.atlasService.createMemoryClient(
               container.workspaceLoader.load(options.workspace),
             )
-          : container.atlasService.createClient();
+          : container.atlasService.createMemoryClient();
         const { planning, compile, execute } = await container.atlasService.planAndExecute(
           client,
           options.goal,

@@ -1,11 +1,13 @@
 import {
   createArtifact,
   createAtlas,
+  planExecuteAndRemember,
   type Atlas,
   type CompilationResult,
   type CreateCompilationUnitParams,
   type ExecutionResult,
   type Generator,
+  type PlanExecuteAndRememberResult,
 } from '@atlas/sdk';
 
 import type { WorkspaceConfig } from '../configuration/workspace-config.js';
@@ -20,7 +22,7 @@ import {
  * Thin SDK adapter — no business logic, only composition.
  */
 export class AtlasService {
-  #memoryClient: Atlas | undefined;
+  #sessionClient: Atlas | undefined;
 
   createClient(workspace?: WorkspaceConfig): Atlas {
     return createAtlas({
@@ -39,12 +41,12 @@ export class AtlasService {
     });
   }
 
-  createMemoryClient(): Atlas {
-    if (this.#memoryClient === undefined) {
-      this.#memoryClient = this.createClient();
+  createMemoryClient(workspace?: WorkspaceConfig): Atlas {
+    if (this.#sessionClient === undefined) {
+      this.#sessionClient = this.createClient(workspace);
     }
 
-    return this.#memoryClient;
+    return this.#sessionClient;
   }
 
   async compile(
@@ -80,27 +82,36 @@ export class AtlasService {
   async planAndExecute(
     client: Atlas,
     goalText: string,
-  ): Promise<{
-    planning: ReturnType<Atlas['planning']['planFromGoal']>;
-    compile: CompilationResult;
-    execute: ExecutionResult;
-  }> {
-    const planning = client.planning.planFromGoal(goalText);
+  ): Promise<Omit<PlanExecuteAndRememberResult, 'memory'>> {
+    try {
+      const result = await planExecuteAndRemember(client, goalText);
 
-    if (!planning.success || !planning.workflow) {
-      throw new CliExitError(EXIT_VALIDATION_ERROR, 'Planning failed');
+      return {
+        planning: result.planning,
+        compile: result.compile,
+        execute: result.execute,
+      };
+    } catch (error) {
+      if (error instanceof CliExitError) {
+        throw error;
+      }
+
+      const message = error instanceof Error ? error.message : String(error);
+
+      if (message === 'Planning failed' || message === 'Workflow compilation failed') {
+        throw new CliExitError(EXIT_VALIDATION_ERROR, message);
+      }
+
+      if (message === 'Compilation failed') {
+        throw new CliExitError(EXIT_COMPILATION_ERROR, message);
+      }
+
+      if (message === 'Execution failed') {
+        throw new CliExitError(EXIT_RUNTIME_ERROR, message);
+      }
+
+      throw error;
     }
-
-    const workflowResult = client.workflow.compileDefinition(planning.workflow);
-
-    if (!workflowResult.success || !workflowResult.pipeline) {
-      throw new CliExitError(EXIT_VALIDATION_ERROR, 'Workflow compilation failed');
-    }
-
-    const units = client.workflow.projectForCompilation(workflowResult.pipeline, planning.workflow);
-    const { compile, execute } = await this.compileAndExecute(client, units);
-
-    return { planning, compile, execute };
   }
 
   #createSummaryGenerator(): Generator {

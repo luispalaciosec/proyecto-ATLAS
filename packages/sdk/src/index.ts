@@ -18,8 +18,11 @@ export type {
   SearchMemoryContentResult,
   StoreMemoryContentOptions,
   StoreMemoryContentResult,
+  StorePlanExecutionOptions,
 } from './modules/memory-module.js';
 export type { PlanFromGoalOptions } from './modules/planning-module.js';
+export { planExecuteAndRemember } from './plan/plan-execution-memory.js';
+export type { PlanExecuteAndRememberResult } from './plan/plan-execution-memory.js';
 
 // Kernel re-exports for stable public API (passthrough, no duplication)
 export type {

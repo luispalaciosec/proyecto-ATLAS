@@ -19,6 +19,16 @@ export interface StoreMemoryContentResult {
   readonly record: MemoryRecord;
 }
 
+export interface StorePlanExecutionOptions {
+  readonly goal: string;
+  readonly goalId: string;
+  readonly workflowId: string;
+  readonly strategyId: string;
+  readonly sessionId: string;
+  readonly outputCount: number;
+  readonly artifactCount: number;
+}
+
 export interface SearchMemoryContentOptions {
   readonly query: string;
   readonly recordType?: string;
@@ -31,6 +41,7 @@ export interface SearchMemoryContentResult {
 }
 
 const DEFAULT_RECORD_TYPE = 'CliMemory';
+const PLAN_EXECUTION_RECORD_TYPE = 'PlanExecution';
 const DEFAULT_NAMESPACE_ID = 'cli.default';
 
 function createInlineConsistencyProvider() {
@@ -121,11 +132,26 @@ export class MemoryModule {
     });
   }
 
+  async storePlanExecution(options: StorePlanExecutionOptions): Promise<StoreMemoryContentResult> {
+    return this.storeContent({
+      content: options.goal,
+      recordType: PLAN_EXECUTION_RECORD_TYPE,
+      metadata: Object.freeze({
+        goalId: options.goalId,
+        workflowId: options.workflowId,
+        strategyId: options.strategyId,
+        sessionId: options.sessionId,
+        outputCount: options.outputCount,
+        artifactCount: options.artifactCount,
+        source: 'atlas-plan',
+      }),
+    });
+  }
+
   async searchContent(options: SearchMemoryContentOptions): Promise<SearchMemoryContentResult> {
-    const recordType = options.recordType ?? DEFAULT_RECORD_TYPE;
     const query: MemoryQuery = Object.freeze({
-      recordType,
       namespaceId: DEFAULT_NAMESPACE_ID,
+      ...(options.recordType !== undefined ? { recordType: options.recordType } : {}),
     });
 
     const result = await this.#engine.search(query);

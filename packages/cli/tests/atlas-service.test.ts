@@ -98,6 +98,9 @@ describe('AtlasService', () => {
     expect(result.planning.workflow?.identity.workflow_id).toMatch(/^workflow\./);
     expect(result.compile.success).toBe(true);
     expect(result.execute.success).toBe(true);
+
+    const search = await client.memory.searchContent({ query: 'hacer X' });
+    expect(search.total).toBe(1);
   });
 
   it('throws validation exit code when planning fails', async () => {

@@ -141,6 +141,36 @@ describe('atlas plan', () => {
   });
 });
 
+describe('atlas plan memory integration', () => {
+  it('stores plan executions that are searchable via atlas memory search', async () => {
+    const app = new CliApp();
+
+    const planCode = await app.run(['node', 'atlas', 'plan', '--goal', 'hacer X', '--json']);
+    expect(planCode).toBe(EXIT_SUCCESS);
+
+    const searchCode = await app.run(['node', 'atlas', 'memory', 'search', '--query', 'hacer X', '--json']);
+    expect(searchCode).toBe(EXIT_SUCCESS);
+  });
+
+  it('keeps distinct plan executions searchable separately', async () => {
+    const app = new CliApp();
+
+    expect(await app.run(['node', 'atlas', 'plan', '--goal', 'procesar pedido A', '--json'])).toBe(
+      EXIT_SUCCESS,
+    );
+    expect(await app.run(['node', 'atlas', 'plan', '--goal', 'analizar dataset B', '--json'])).toBe(
+      EXIT_SUCCESS,
+    );
+
+    expect(await app.run(['node', 'atlas', 'memory', 'search', '--query', 'pedido A', '--json'])).toBe(
+      EXIT_SUCCESS,
+    );
+    expect(await app.run(['node', 'atlas', 'memory', 'search', '--query', 'dataset B', '--json'])).toBe(
+      EXIT_SUCCESS,
+    );
+  });
+});
+
 describe('atlas memory', () => {
   it('stores content and returns a record id', async () => {
     const app = new CliApp();
