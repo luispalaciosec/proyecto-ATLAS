@@ -199,7 +199,11 @@ importers:
 
   packages/publisher: {}
 
-  packages/retrieval: {}
+  packages/retrieval:
+    dependencies:
+      '@atlas/memory':
+        specifier: workspace:*
+        version: link:../memory
 
   packages/runtime:
     dependencies:
@@ -237,6 +241,9 @@ importers:
       '@atlas/memory':
         specifier: workspace:*
         version: link:../memory
+      '@atlas/retrieval':
+        specifier: workspace:*
+        version: link:../retrieval
       '@atlas/runtime':
         specifier: workspace:*
         version: link:../runtime

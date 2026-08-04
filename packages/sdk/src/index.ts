@@ -5,6 +5,7 @@ export type {
   AtlasMemoryOptions,
   AtlasOptions,
   AtlasPlanningOptions,
+  AtlasRetrievalOptions,
   AtlasRuntimeOptions,
   AtlasWorkflowOptions,
   AtlasWorkspaceOptions,
@@ -21,6 +22,12 @@ export type {
   StorePlanExecutionOptions,
 } from './modules/memory-module.js';
 export type { PlanFromGoalOptions } from './modules/planning-module.js';
+export type { RetrieveForGoalOptions } from './modules/retrieval-module.js';
+export type {
+  RetrievalContext,
+  RetrievalResult,
+  RetrievedMemoryItem,
+} from './modules/retrieval-module.js';
 export { planExecuteAndRemember } from './plan/plan-execution-memory.js';
 export type { PlanExecuteAndRememberResult } from './plan/plan-execution-memory.js';
 

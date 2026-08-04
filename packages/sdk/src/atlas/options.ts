@@ -23,6 +23,11 @@ export interface AtlasMemoryOptions {
   readonly [key: string]: unknown;
 }
 
+export interface AtlasRetrievalOptions {
+  readonly namespaceId?: string;
+  readonly [key: string]: unknown;
+}
+
 export interface AtlasPlanningOptions {
   readonly [key: string]: unknown;
 }
@@ -37,6 +42,7 @@ export interface AtlasOptions {
   readonly compiler?: AtlasCompilerOptions;
   readonly runtime?: AtlasRuntimeOptions;
   readonly memory?: AtlasMemoryOptions;
+  readonly retrieval?: AtlasRetrievalOptions;
   readonly planning?: AtlasPlanningOptions;
   readonly workflow?: AtlasWorkflowOptions;
 }

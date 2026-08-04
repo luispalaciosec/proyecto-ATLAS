@@ -162,6 +162,41 @@ describe('atlas plan', () => {
   });
 });
 
+describe('atlas plan retrieval integration', () => {
+  it(
+    'shows retrieved memory in plan json output for similar goals',
+    () => {
+      const memoryFile = join(tmpdir(), `atlas-retrieval-plan-${Date.now()}.json`);
+      const env = { ...process.env, ATLAS_MEMORY_FILE: memoryFile };
+
+      const first = spawnSync(
+        process.execPath,
+        [atlasBinPath, 'plan', '--goal', 'procesar pedido cliente', '--json'],
+        { env, encoding: 'utf8', timeout: 30_000 },
+      );
+      expect(first.status).toBe(EXIT_SUCCESS);
+
+      const second = spawnSync(
+        process.execPath,
+        [atlasBinPath, 'plan', '--goal', 'procesar pedido urgente', '--json'],
+        { env, encoding: 'utf8', timeout: 30_000 },
+      );
+      expect(second.status).toBe(EXIT_SUCCESS);
+
+      const payload = JSON.parse(second.stdout) as {
+        retrieval: { selected: number; prior_goals: string[] };
+      };
+      expect(payload.retrieval.selected).toBeGreaterThan(0);
+      expect(payload.retrieval.prior_goals.some((goal) => goal.includes('procesar pedido'))).toBe(
+        true,
+      );
+
+      rmSync(memoryFile, { force: true });
+    },
+    60_000,
+  );
+});
+
 describe('atlas plan memory integration', () => {
   it('stores plan executions that are searchable via atlas memory search', async () => {
     const app = new CliApp();

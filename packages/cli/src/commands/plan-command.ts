@@ -24,7 +24,7 @@ export class PlanCommand implements CliCommand {
               container.workspaceLoader.load(options.workspace),
             )
           : container.atlasService.createMemoryClient();
-        const { planning, compile, execute } = await container.atlasService.planAndExecute(
+        const { retrieval, planning, compile, execute } = await container.atlasService.planAndExecute(
           client,
           options.goal,
         );
@@ -35,6 +35,11 @@ export class PlanCommand implements CliCommand {
             success: execute.success,
             goal: options.goal,
             workflow_id: planning.workflow?.identity.workflow_id,
+            retrieval: {
+              selected: retrieval.context.items.length,
+              total_candidates: retrieval.context.totalCandidates,
+              prior_goals: retrieval.context.items.map((item) => item.text),
+            },
             compilation: {
               lifecycle: compile.context.lifecycle,
               artifacts: compile.context.artifacts.length,
@@ -47,6 +52,14 @@ export class PlanCommand implements CliCommand {
           });
         } else {
           container.renderer.info(`Goal:       ${options.goal}`);
+          container.renderer.info(
+            `Retrieval:  ${retrieval.context.items.length} memory item(s) from ${retrieval.context.totalCandidates} candidate(s)`,
+          );
+          if (retrieval.context.items.length > 0) {
+            container.renderer.info(
+              `Prior:      ${retrieval.context.items.map((item) => item.text).join(' | ')}`,
+            );
+          }
           container.renderer.info(`Workflow:   ${planning.workflow?.identity.workflow_id ?? 'n/a'}`);
           container.renderer.info(`Compilation: ${compile.success ? 'SUCCESS' : 'FAILED'}`);
           container.renderer.info(`Execution:   ${execute.success ? 'SUCCESS' : 'FAILED'}`);

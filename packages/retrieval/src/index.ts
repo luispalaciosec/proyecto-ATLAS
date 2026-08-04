@@ -1,5 +1,12 @@
 /**
- * @atlas/retrieval — bootstrap stub
- * Implementation pending authorization.
+ * @atlas/retrieval — Capability Retrieval (ADR-0005 D8 MVP)
  */
-export {};
+
+export type {
+  RetrievalContext,
+  RetrievalRequest,
+  RetrievalResult,
+  RetrievedMemoryItem,
+} from './retrieval-pipeline.js';
+
+export { runRetrievalPipeline } from './retrieval-pipeline.js';

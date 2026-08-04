@@ -101,6 +101,7 @@ export class AtlasService {
       const result = await planExecuteAndRemember(client, goalText);
 
       return {
+        retrieval: result.retrieval,
         planning: result.planning,
         compile: result.compile,
         execute: result.execute,
