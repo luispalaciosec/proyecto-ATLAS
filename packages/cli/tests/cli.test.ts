@@ -76,7 +76,7 @@ describe('@atlas/cli command registry', () => {
     const container = createContainer();
     const names = container.commandRegistry.list().map((command) => command.name);
 
-    expect(names).toEqual(['compile', 'run', 'plan', 'memory', 'doctor', 'version']);
+    expect(names).toEqual(['compile', 'run', 'plan', 'chat', 'memory', 'doctor', 'version']);
   });
 });
 

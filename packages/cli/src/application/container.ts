@@ -1,4 +1,5 @@
 import { WorkspaceLoader } from '../configuration/workspace-loader.js';
+import { ChatCommand } from '../commands/chat-command.js';
 import { CompileCommand } from '../commands/compile-command.js';
 import { DoctorCommand } from '../commands/doctor-command.js';
 import { MemoryCommand } from '../commands/memory-command.js';
@@ -22,6 +23,7 @@ export function createContainer(): Container {
   commandRegistry.register(new CompileCommand());
   commandRegistry.register(new RunCommand());
   commandRegistry.register(new PlanCommand());
+  commandRegistry.register(new ChatCommand());
   commandRegistry.register(new MemoryCommand());
   commandRegistry.register(new DoctorCommand());
   commandRegistry.register(new VersionCommand());
