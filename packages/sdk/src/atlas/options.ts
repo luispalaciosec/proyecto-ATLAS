@@ -18,9 +18,14 @@ export interface AtlasRuntimeOptions {
   readonly executors?: readonly ArtifactExecutor[];
 }
 
+export interface AtlasMemoryOptions {
+  readonly [key: string]: unknown;
+}
+
 export interface AtlasOptions {
   readonly workspace?: AtlasWorkspaceOptions;
   readonly eventBus?: EventBus;
   readonly compiler?: AtlasCompilerOptions;
   readonly runtime?: AtlasRuntimeOptions;
+  readonly memory?: AtlasMemoryOptions;
 }

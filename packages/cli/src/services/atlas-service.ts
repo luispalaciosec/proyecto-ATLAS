@@ -15,16 +15,31 @@ import { CliExitError, EXIT_COMPILATION_ERROR, EXIT_RUNTIME_ERROR } from '../out
  * Thin SDK adapter — no business logic, only composition.
  */
 export class AtlasService {
-  createClient(workspace: WorkspaceConfig): Atlas {
+  #memoryClient: Atlas | undefined;
+
+  createClient(workspace?: WorkspaceConfig): Atlas {
     return createAtlas({
-      workspace: {
-        name: workspace.name,
-        environment: workspace.environment ?? 'memory',
-      },
+      workspace: workspace
+        ? {
+            name: workspace.name,
+            environment: workspace.environment ?? 'memory',
+          }
+        : {
+            name: 'atlas-cli',
+            environment: 'memory',
+          },
       compiler: {
         generators: () => [this.#createSummaryGenerator()],
       },
     });
+  }
+
+  createMemoryClient(): Atlas {
+    if (this.#memoryClient === undefined) {
+      this.#memoryClient = this.createClient();
+    }
+
+    return this.#memoryClient;
   }
 
   async compile(

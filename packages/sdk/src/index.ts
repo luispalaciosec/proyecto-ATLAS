@@ -2,6 +2,7 @@
 export { Atlas, createAtlas } from './atlas/atlas.js';
 export type {
   AtlasCompilerOptions,
+  AtlasMemoryOptions,
   AtlasOptions,
   AtlasRuntimeOptions,
   AtlasWorkspaceOptions,
@@ -10,6 +11,12 @@ export type {
 // Modules
 export type { CompileOptions } from './modules/compiler-module.js';
 export type { ExecuteOptions } from './modules/runtime-module.js';
+export type {
+  SearchMemoryContentOptions,
+  SearchMemoryContentResult,
+  StoreMemoryContentOptions,
+  StoreMemoryContentResult,
+} from './modules/memory-module.js';
 
 // Kernel re-exports for stable public API (passthrough, no duplication)
 export type {

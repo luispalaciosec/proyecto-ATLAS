@@ -51,11 +51,11 @@ async function run(argv: string[]): Promise<number> {
 }
 
 describe('@atlas/cli command registry', () => {
-  it('registers compile, run, doctor, and version commands', () => {
+  it('registers compile, run, memory, doctor, and version commands', () => {
     const container = createContainer();
     const names = container.commandRegistry.list().map((command) => command.name);
 
-    expect(names).toEqual(['compile', 'run', 'doctor', 'version']);
+    expect(names).toEqual(['compile', 'run', 'memory', 'doctor', 'version']);
   });
 });
 
@@ -112,6 +112,38 @@ describe('atlas run', () => {
     const code = await run(['run', '--workspace', workspace]);
 
     expect(code).toBe(EXIT_SUCCESS);
+  });
+});
+
+describe('atlas memory', () => {
+  it('stores content and returns a record id', async () => {
+    const app = new CliApp();
+    const code = await app.run(['node', 'atlas', 'memory', 'store', '--content', 'hola mundo', '--json']);
+    expect(code).toBe(EXIT_SUCCESS);
+  });
+
+  it('searches stored content in the same CLI process session', async () => {
+    const app = new CliApp();
+
+    const storeCode = await app.run([
+      'node',
+      'atlas',
+      'memory',
+      'store',
+      '--content',
+      'hola mundo',
+      '--json',
+    ]);
+    expect(storeCode).toBe(EXIT_SUCCESS);
+
+    const searchCode = await app.run(['node', 'atlas', 'memory', 'search', '--query', 'hola', '--json']);
+    expect(searchCode).toBe(EXIT_SUCCESS);
+  });
+
+  it('rejects empty content', async () => {
+    const app = new CliApp();
+    const code = await app.run(['node', 'atlas', 'memory', 'store', '--content', '   ']);
+    expect(code).toBe(EXIT_INVALID_ARGUMENTS);
   });
 });
 

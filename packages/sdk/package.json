@@ -28,6 +28,7 @@
     "@atlas/compiler": "workspace:*",
     "@atlas/events": "workspace:*",
     "@atlas/knowledge": "workspace:*",
+    "@atlas/memory": "workspace:*",
     "@atlas/runtime": "workspace:*"
   },
   "devDependencies": {

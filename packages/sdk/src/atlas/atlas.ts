@@ -2,6 +2,7 @@ import { createInMemoryEventBus } from '@atlas/events';
 
 import { CompilerModule } from '../modules/compiler-module.js';
 import { EventsModule } from '../modules/events-module.js';
+import { MemoryModule } from '../modules/memory-module.js';
 import { RuntimeModule } from '../modules/runtime-module.js';
 import type { AtlasOptions } from './options.js';
 
@@ -12,6 +13,7 @@ import type { AtlasOptions } from './options.js';
 export class Atlas {
   readonly compiler: CompilerModule;
   readonly runtime: RuntimeModule;
+  readonly memory: MemoryModule;
   readonly events: EventsModule;
 
   constructor(options: AtlasOptions = {}) {
@@ -20,6 +22,7 @@ export class Atlas {
     this.events = new EventsModule(bus);
     this.compiler = new CompilerModule(bus, options.compiler, options.workspace);
     this.runtime = new RuntimeModule(bus, options.runtime, options.workspace);
+    this.memory = new MemoryModule(bus, options.memory, options.workspace);
   }
 }
 

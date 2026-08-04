@@ -231,6 +231,9 @@ importers:
       '@atlas/knowledge':
         specifier: workspace:*
         version: link:../knowledge
+      '@atlas/memory':
+        specifier: workspace:*
+        version: link:../memory
       '@atlas/runtime':
         specifier: workspace:*
         version: link:../runtime
