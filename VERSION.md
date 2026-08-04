@@ -1,9 +1,9 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.7.0
+version: 1.8.0
 status: active
-last_updated: 2026-07-29
+last_updated: 2026-08-04
 ---
 
 # VERSION.md
@@ -16,8 +16,8 @@ last_updated: 2026-07-29
 | **Kernel Version** | `0.1` |
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
-| **Current Phase** | **Implementation** |
-| **Next Sprint** | **Pending owner authorization** |
+| **Current Phase** | **MVP Delivered** |
+| **Next Sprint** | **Pending owner authorization (post-MVP)** |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
 | **Memory Application Tag** | `memory-application-certified` |
 | **Memory Engine Operations Tag** | `memory-engine-operations-certified` |
@@ -26,6 +26,7 @@ last_updated: 2026-07-29
 | **Memory Session Engine Tag** | `memory-session-engine-certified` |
 | **Memory Architecture ADR** | [`adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md`](./adr/ADR-0003-MEMORY_ARCHITECTURE_RESOLUTION.md) |
 | **Execution Model ADR** | [`adr/ADR-0004-EXECUTION-MODEL-AND-RUNTIME-OWNERSHIP.md`](./adr/ADR-0004-EXECUTION-MODEL-AND-RUNTIME-OWNERSHIP.md) — **Accepted** |
+| **Retrieval Architecture ADR** | [`adr/ADR-0005-RETRIEVAL_ARCHITECTURE_RECONCILIATION.md`](./adr/ADR-0005-RETRIEVAL_ARCHITECTURE_RECONCILIATION.md) — **Accepted** |
 | **Foundation Phase** | **Completed** |
 | **Repository Stabilization (Milestone 2)** | **Completed** |
 | **Release document** | [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/ATLAS-RELEASE-001-KERNEL_v0.1.md) |
@@ -44,8 +45,8 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/compiler` | 0.1.1 | Pipeline de compilación | **Frozen** |
 | `@atlas/events` | 0.1.0 | Eventos de dominio | **Frozen** |
 | `@atlas/runtime` | 0.1.0 | Ejecución de artifacts + Pipeline Engine (Sprint 10D) | **Frozen** |
-| `@atlas/sdk` | 0.3.0 | Fachada pública del Kernel (+ integración Knowledge, Sprint 9) | **Frozen** |
-| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos | **Frozen** |
+| `@atlas/sdk` | 0.3.0 | Fachada pública del Kernel (+ Memory, Planning, Workflow, Retrieval MVP) | **MVP** |
+| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos (+ memory, plan, chat MVP) | **MVP** |
 
 > **Nota de versionado:** La versión de producto Atlas es `0.1.0-alpha` (Kernel v0.1 congelado). Los paquetes npm mantienen semver independiente por componente.
 
@@ -58,7 +59,8 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/knowledge` | 0.2.0 | Knowledge Capability — metamodel, domain core, projection adapter (Sprint 8–9) | **Stable** |
 | `@atlas/workflow` | 0.1.0 | Workflow Definition System — graph model, WorkflowCompiler (Sprint 10E) | **Frozen** |
 | `@atlas/intelligence` | 0.1.0 | Cognitive Planning Engine — Goal → WorkflowDefinition (Sprint 10F) | **Frozen** |
-| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application, providers, session domain + engine integration (Sprint 11A–11E.2) | **Session Engine Certified** |
+| `@atlas/memory` | 0.0.0 | Memory — domain, engine, application, providers, session domain + engine integration (Sprint 11A–11E.2); JsonFileStorageProvider MVP | **Session Engine Certified** |
+| `@atlas/retrieval` | 0.0.0 | Retrieval Capability — pipeline MVP ADR-0005 D8 (Sprint MVP-5) | **MVP** |
 
 ---
 
@@ -223,6 +225,49 @@ Open Issues activos derivados de este ADR: `OI-0007` (promover `ATLAS-DOM-008-AG
 
 ---
 
+## Retrieval Architecture Resolution (ADR-0005)
+
+Reconciliación arquitectónica de Retrieval (Phase 6) previa a cualquier implementación de `@atlas/retrieval`.
+
+| Field | Value |
+|-------|-------|
+| **ADR** | [`adr/ADR-0005-RETRIEVAL_ARCHITECTURE_RECONCILIATION.md`](./adr/ADR-0005-RETRIEVAL_ARCHITECTURE_RECONCILIATION.md) |
+| **Status** | **Accepted** — 2026-08-04 |
+| **Approved by** | Owner |
+
+Cierra formalmente **OI-0005** de ADR-0004 (colisión Retrieval Provider vs. RetrievalProvider interno de Memory): se declaran componentes no equivalentes y no relacionados; `@atlas/retrieval` tiene prohibido depender de `packages/memory/src/providers/retrieval/`; todo consumo de Memory ocurre exclusivamente vía la interfaz pública de Memory Engine (`MEMORY-CONTRACT-001`).
+
+`DOM-005` queda establecida como la referencia arquitectónica interna canónica de Retrieval. La arquitectura interna de `ATLAS-104`/`ATLAS-105` queda no autoritativa (Superseded parcial), preservando su valor conceptual. Pipeline canónico único adoptado: Retrieval Request → Memory Access → Candidate Retrieval → Ranking → Filtering/Selection → Retrieval Result → Context.
+
+Open Issues activos derivados de este ADR: `OI-0001` (relación Memory Provider `INTELLIGENCE-CONTRACT-002` vs. Memory Engine — no determinada), `OI-0002` (posible recurrencia del patrón en Context/Reasoning/Planning), `OI-0003` (relación `ATLAS-104` vs. `@atlas/search`), `OI-0004` (ejecución de correcciones documentales M1–M3), `OI-0005` (futuro de la distinción Search→Retrieval en `@atlas/search`).
+
+**Nota de alcance:** ADR-0005 no modifica ningún contrato, código o certificación de Memory. No define Sprint 12A–D — la descomposición operativa de Phase 6 queda como Future Work, pendiente de autorización del Owner.
+
+---
+
+## MVP Implementation (Sprints MVP-1–MVP-6)
+
+Primer MVP funcional de ATLAS entregado sobre arquitectura congelada (ADR-0001–ADR-0005). Plan de referencia: [`releases/MVP_IMPLEMENTATION_PLAN.md`](./releases/MVP_IMPLEMENTATION_PLAN.md).
+
+| Sprint | Entregable | Commit | Status |
+|--------|------------|--------|--------|
+| MVP-1 | `atlas memory store/search` — MemoryModule + CLI | `f7eab86` | **Complete** |
+| MVP-2 | `atlas plan --goal` — Planning + Workflow + compile + execute | `7c575a6` | **Complete** |
+| MVP-3 | Plan recuerda ejecuciones automáticamente en Memory | `35aa602` | **Complete** |
+| MVP-4 | Memoria persistente JSON (`JsonFileStorageProvider`, `.atlas/memory.json`) | `51843b3` | **Complete** |
+| MVP-5 | Retrieval pipeline MVP (ADR-0005 D8) antes de planificar | `ee8a04c` | **Complete** |
+| MVP-6 | `atlas chat` — REPL multi-turno con sesión compartida | `2daefce` | **Complete** |
+
+**Comandos CLI MVP:** `atlas memory`, `atlas plan`, `atlas chat` (más `compile`, `run`, `doctor`, `version` existentes).
+
+**Módulos SDK añadidos:** `memory`, `planning`, `workflow`, `retrieval`.
+
+**Restricciones respetadas:** sin nuevos ADR; sin modificar contratos Frozen de Memory; `@atlas/retrieval` consume Memory exclusivamente vía API pública de `MemoryEngine`; prohibido tocar `packages/memory/src/providers/retrieval/`.
+
+**Deuda parcialmente abordada:** TD-11D-001 — `JsonFileStorageProvider` (MVP Sprint 4) implementa persistencia JSON; la dependencia interna opcional de `listAll()` permanece como deuda aceptada hasta un Storage Provider de producción completo.
+
+---
+
 ## Accepted Technical Debt
 
 Deuda técnica aceptada por auditoría independiente. No bloquea certificaciones de Sprint 11D ni 11E.2.
@@ -288,7 +333,9 @@ Future production providers (SQLite/PostgreSQL/Redis) must eliminate this depend
 
 Los siguientes paquetes permanecen en `0.0.0` (bootstrap):
 
-`agent`, `context`, `context-planner`, `graph`, `ontology`, `plugin`, `prompt`, `publisher`, `retrieval`, `search`, `validation`
+`agent`, `context`, `context-planner`, `graph`, `ontology`, `plugin`, `prompt`, `publisher`, `search`, `validation`
+
+> `@atlas/retrieval` salió de bootstrap con el pipeline MVP (ADR-0005 D8) en Sprint MVP-5.
 
 ---
 
