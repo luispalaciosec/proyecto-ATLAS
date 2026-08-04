@@ -4,6 +4,7 @@
  * @see ATLAS-MEMORY-008 — Public API
  */
 export { MemoryEngine, createMemoryEngine } from './engine/index.js';
+export { createJsonFileMemoryEngine } from './providers/storage/create-json-file-memory-engine.js';
 
 export type {
   MemoryRecord,

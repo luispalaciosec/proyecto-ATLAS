@@ -40,7 +40,14 @@ export function requireMemoryStoreWithProvider(
 
 export function createInMemoryMemoryStore(): MemoryStoreWithProvider {
   const storageProvider = new InMemoryStorageProvider();
-  const indexProvider = new InMemoryIndexProvider();
+
+  return createMemoryStoreFromStorageProvider(storageProvider);
+}
+
+export function createMemoryStoreFromStorageProvider(
+  storageProvider: StorageProvider,
+  indexProvider: InMemoryIndexProvider = new InMemoryIndexProvider(),
+): MemoryStoreWithProvider {
   const retrievalProvider = new InMemoryRetrievalProvider(storageProvider, indexProvider);
 
   const store: MemoryStoreWithProvider = {
@@ -48,11 +55,33 @@ export function createInMemoryMemoryStore(): MemoryStoreWithProvider {
     __indexProvider: indexProvider,
     __retrievalProvider: retrievalProvider,
     put: async () => undefined,
-    get: async (): Promise<MemoryRecord | undefined> => storageProvider.listAll()[0],
+    get: async (): Promise<MemoryRecord | undefined> => {
+      if (isInMemoryStorageProvider(storageProvider)) {
+        return storageProvider.listAll()[0];
+      }
+
+      const listable = storageProvider as StorageProvider & {
+        listAll?: () => readonly MemoryRecord[];
+      };
+
+      if (typeof listable.listAll === 'function') {
+        return listable.listAll()[0];
+      }
+
+      return undefined;
+    },
     remove: async () => undefined,
     search: async (): Promise<SearchResult> => {
-      const records = storageProvider.listAll();
-      return Object.freeze({ records, total: records.length });
+      const listable = storageProvider as StorageProvider & {
+        listAll?: () => readonly MemoryRecord[];
+      };
+
+      if (typeof listable.listAll === 'function') {
+        const records = listable.listAll();
+        return Object.freeze({ records, total: records.length });
+      }
+
+      return Object.freeze({ records: [], total: 0 });
     },
   };
 

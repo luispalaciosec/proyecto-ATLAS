@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createJsonFileMemoryEngine,
   createMemoryEngine,
   INVALID_MEMORY_RECORD,
   INVALID_QUERY,
@@ -24,6 +25,7 @@ describe('@atlas/memory public API', () => {
   it('exports MemoryEngine and createMemoryEngine', () => {
     expect(MemoryEngine).toBeDefined();
     expect(createMemoryEngine).toBeTypeOf('function');
+    expect(createJsonFileMemoryEngine).toBeTypeOf('function');
   });
 
   it('exports public error codes from MEMORY-008', () => {

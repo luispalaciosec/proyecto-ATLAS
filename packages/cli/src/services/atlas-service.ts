@@ -9,6 +9,7 @@ import {
   type Generator,
   type PlanExecuteAndRememberResult,
 } from '@atlas/sdk';
+import { join } from 'node:path';
 
 import type { WorkspaceConfig } from '../configuration/workspace-config.js';
 import {
@@ -24,6 +25,16 @@ import {
 export class AtlasService {
   #sessionClient: Atlas | undefined;
 
+  #resolveMemoryFilePath(): string {
+    const fromEnv = process.env.ATLAS_MEMORY_FILE;
+
+    if (typeof fromEnv === 'string' && fromEnv.trim().length > 0) {
+      return fromEnv;
+    }
+
+    return join(process.cwd(), '.atlas', 'memory.json');
+  }
+
   createClient(workspace?: WorkspaceConfig): Atlas {
     return createAtlas({
       workspace: workspace
@@ -37,6 +48,9 @@ export class AtlasService {
           },
       compiler: {
         generators: () => [this.#createSummaryGenerator()],
+      },
+      memory: {
+        storageFilePath: this.#resolveMemoryFilePath(),
       },
     });
   }

@@ -19,6 +19,7 @@ export interface AtlasRuntimeOptions {
 }
 
 export interface AtlasMemoryOptions {
+  readonly storageFilePath?: string;
   readonly [key: string]: unknown;
 }
 

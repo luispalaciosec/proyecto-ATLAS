@@ -1,8 +1,10 @@
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CliApp } from '../src/application/cli-app.js';
 import { createContainer } from '../src/application/container.js';
@@ -15,6 +17,25 @@ import {
   EXIT_VALIDATION_ERROR,
 } from '../src/output/exit-codes.js';
 import { AtlasService } from '../src/services/atlas-service.js';
+
+const memorySuiteDir = mkdtempSync(join(tmpdir(), 'atlas-cli-memory-suite-'));
+const memoryFilePath = join(memorySuiteDir, 'memory.json');
+const atlasBinPath = fileURLToPath(new URL('../dist/atlas.js', import.meta.url));
+
+beforeAll(() => {
+  process.env.ATLAS_MEMORY_FILE = memoryFilePath;
+});
+
+afterAll(() => {
+  delete process.env.ATLAS_MEMORY_FILE;
+  rmSync(memorySuiteDir, { recursive: true, force: true });
+});
+
+beforeEach(() => {
+  if (existsSync(memoryFilePath)) {
+    rmSync(memoryFilePath, { force: true });
+  }
+});
 
 function createWorkspaceDir(): string {
   const dir = mkdtempSync(join(tmpdir(), 'atlas-cli-test-'));
@@ -247,6 +268,40 @@ describe('atlas help', () => {
     const code = await run(['help']);
     expect(code).toBe(EXIT_SUCCESS);
   });
+});
+
+describe('atlas memory persistence', () => {
+  it(
+    'survives separate CLI process restarts',
+    () => {
+      const memoryFile = join(tmpdir(), `atlas-cli-persist-${Date.now()}.json`);
+      const env = { ...process.env, ATLAS_MEMORY_FILE: memoryFile };
+
+      const store = spawnSync(
+        process.execPath,
+        [atlasBinPath, 'memory', 'store', '--content', 'persist across restart', '--json'],
+        { env, encoding: 'utf8', timeout: 30_000 },
+      );
+      expect(store.status).toBe(EXIT_SUCCESS);
+
+      const search = spawnSync(
+        process.execPath,
+        [atlasBinPath, 'memory', 'search', '--query', 'persist', '--json'],
+        { env, encoding: 'utf8', timeout: 30_000 },
+      );
+      expect(search.status).toBe(EXIT_SUCCESS);
+
+      const payload = JSON.parse(search.stdout) as {
+        total: number;
+        records: Array<{ content: { text: string } }>;
+      };
+      expect(payload.total).toBe(1);
+      expect(payload.records[0]?.content.text).toBe('persist across restart');
+
+      rmSync(memoryFile, { force: true });
+    },
+    60_000,
+  );
 });
 
 describe('kernel dependency boundary', () => {

@@ -1,5 +1,6 @@
 import type { EventBus } from '@atlas/events';
 import {
+  createJsonFileMemoryEngine,
   createMemoryEngine,
   type MemoryEngine,
   type MemoryRecord,
@@ -85,6 +86,18 @@ function createRecordId(): string {
   return `record.cli.${Date.now()}.${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function createMemoryEngineForOptions(memoryOptions: AtlasMemoryOptions): MemoryEngine {
+  const consistencyProvider = createInlineConsistencyProvider();
+  const storageFilePath =
+    typeof memoryOptions.storageFilePath === 'string' ? memoryOptions.storageFilePath : undefined;
+
+  if (storageFilePath !== undefined && storageFilePath.trim().length > 0) {
+    return createJsonFileMemoryEngine(storageFilePath, consistencyProvider);
+  }
+
+  return createMemoryEngine(consistencyProvider);
+}
+
 /**
  * Public memory facade — wraps @atlas/memory MemoryEngine via its public API only.
  */
@@ -94,11 +107,11 @@ export class MemoryModule {
 
   constructor(
     _bus: EventBus,
-    _memoryOptions: AtlasMemoryOptions = {},
+    memoryOptions: AtlasMemoryOptions = {},
     workspace: AtlasWorkspaceOptions = {},
   ) {
     this.#defaultWorkspace = workspace;
-    this.#engine = createMemoryEngine(createInlineConsistencyProvider());
+    this.#engine = createMemoryEngineForOptions(memoryOptions);
   }
 
   getEngine(): MemoryEngine {
