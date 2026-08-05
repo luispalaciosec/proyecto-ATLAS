@@ -42,6 +42,7 @@ export interface AtlasLlmOptions {
   readonly apiKey?: string;
   readonly model?: string;
   readonly budget?: LlmBudget;
+  readonly contextPrompt?: string;
   readonly [key: string]: unknown;
 }
 

@@ -16,8 +16,8 @@ last_updated: 2026-08-05
 | **Kernel Version** | `0.1` |
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
-| **Current Phase** | **Phase 2 — Product (P2.2 Delivered)** |
-| **Next Sprint** | **P2.3 — Brands** — pending Owner authorization ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
+| **Current Phase** | **Phase 2 — Product (P2.3 Delivered)** |
+| **Next Sprint** | **P2.4 — Feedback Loop** — pending Owner authorization ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
 | **Product Vision** | [`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md) |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
 | **Memory Application Tag** | `memory-application-certified` |
@@ -47,7 +47,7 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/events` | 0.1.0 | Eventos de dominio | **Frozen** |
 | `@atlas/runtime` | 0.1.0 | Ejecución de artifacts + Pipeline Engine (Sprint 10D) | **Frozen** |
 | `@atlas/sdk` | 0.3.0 | Fachada pública del Kernel (+ Memory, Planning, Workflow, Retrieval MVP, LLM P2.1–P2.2) | **MVP+** |
-| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos (+ memory, plan, chat MVP; `ask` P2.1; chat LLM + `atlas` default P2.2) | **MVP+** |
+| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos (+ memory, plan, chat MVP; `ask` P2.1; chat LLM + `atlas` default P2.2; `brand` P2.3) | **MVP+** |
 
 > **Nota de versionado:** La versión de producto Atlas es `0.1.0-alpha` (Kernel v0.1 congelado). Los paquetes npm mantienen semver independiente por componente.
 
@@ -333,6 +333,27 @@ Segundo entregable de Phase 2: `atlas chat` conversacional con LLM cuando está 
 **Tests automatizados (sin red):** `@atlas/llm` 10/10, `@atlas/sdk` 31/31, `@atlas/cli` 45/45.
 
 **Deuda aceptada:** TD-P2.2-001 — historial conversacional sin truncado ni resumen; crece y se reenvía completo en cada turno LLM.
+
+---
+
+## P2.3 — Brands & Workspaces (Phase 2)
+
+Tercer entregable de Phase 2: workspaces de marca con memoria físicamente aislada (`.atlas/workspaces/<slug>/memory.json`) y perfil de contexto inyectado al LLM vía `contextPrompt`. Plan: [`releases/P2_3_BRANDS_WORKSPACES_IMPLEMENTATION_PLAN.md`](./releases/P2_3_BRANDS_WORKSPACES_IMPLEMENTATION_PLAN.md).
+
+| Sprint | Entregable | Status |
+|--------|------------|--------|
+| BRAND-1 | `WorkspaceProfile`, slug sanitization, load/create profile | **Complete** |
+| BRAND-2 | `AtlasLlmOptions.contextPrompt` concatenado al system prompt | **Complete** |
+| BRAND-3 | `atlas brand <name>`, `createBrandClient`, `runChatRepl({ client })` | **Complete** |
+| BRAND-4 | Cierre documental en `VERSION.md` | **Complete** |
+
+**Comando CLI nuevo:** `atlas brand <name>` — carga/crea perfil, abre conversación con memoria aislada.
+
+**Sin cambios en:** `atlas chat`, `atlas ask`, `atlas` (default), `atlas plan`, `atlas memory` — siguen en `cli.default`.
+
+**Edición de perfil:** manual vía `.atlas/workspaces/<slug>/profile.json` (`atlas brand edit` fuera de alcance).
+
+**Tests automatizados (sin red):** `@atlas/cli` incluye aislamiento cruzado geeks/revital + contexto de marca en system prompt.
 
 ---
 

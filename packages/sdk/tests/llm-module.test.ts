@@ -209,4 +209,30 @@ describe('LlmModule', () => {
 
     rmSync(dir, { recursive: true, force: true });
   });
+
+  it('includes contextPrompt in the system message sent to the provider', async () => {
+    const fake = createFakeLlmProviderWithRequests([
+      Object.freeze({
+        message: Object.freeze({ role: 'assistant' as const, content: 'Brand-aware reply.' }),
+        usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+        stopReason: 'end_turn' as const,
+      }),
+    ]);
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-llm-context-prompt-'));
+    const atlas = createAtlas({
+      memory: { storageFilePath: join(dir, 'memory.json') },
+      llm: {
+        provider: fake.provider,
+        contextPrompt: 'Purpose: Electronics retail for enthusiasts',
+      },
+    });
+
+    await atlas.llm.ask('Hello brand');
+
+    const systemMessage = fake.requests[0]?.messages.find((message) => message.role === 'system');
+    expect(systemMessage?.content).toContain('Purpose: Electronics retail for enthusiasts');
+    expect(systemMessage?.content).toContain('certified ATLAS capabilities');
+
+    rmSync(dir, { recursive: true, force: true });
+  });
 });

@@ -78,7 +78,7 @@ describe('@atlas/cli command registry', () => {
     const container = createContainer();
     const names = container.commandRegistry.list().map((command) => command.name);
 
-    expect(names).toEqual(['compile', 'run', 'plan', 'ask', 'chat', 'memory', 'doctor', 'version']);
+    expect(names).toEqual(['compile', 'run', 'plan', 'ask', 'brand', 'chat', 'memory', 'doctor', 'version']);
   });
 
   it('enters chat mode when invoked without a subcommand', async () => {

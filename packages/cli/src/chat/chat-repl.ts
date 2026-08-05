@@ -1,5 +1,7 @@
 import * as readline from 'node:readline/promises';
 
+import type { Atlas } from '@atlas/sdk';
+
 import type { Container } from '../application/container.js';
 import { CliExitError, EXIT_INVALID_ARGUMENTS } from '../output/exit-codes.js';
 import {
@@ -41,6 +43,7 @@ export interface RunChatReplOptions {
   readonly json?: boolean;
   readonly reader?: ChatLineReader;
   readonly onTurn?: (payload: ChatTurnPayload) => void;
+  readonly client?: Atlas;
 }
 
 function createReadlineReader(
@@ -174,7 +177,7 @@ async function executeChatTurn(
 }
 
 export async function runChatRepl(container: Container, options: RunChatReplOptions = {}): Promise<void> {
-  const client = container.atlasService.createMemoryClient();
+  const client = options.client ?? container.atlasService.createMemoryClient();
   const session = createChatSession(client);
   const reader = options.reader ?? createReadlineReader();
   const json = options.json ?? false;

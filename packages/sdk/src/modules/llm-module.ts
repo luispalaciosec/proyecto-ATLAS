@@ -22,6 +22,14 @@ const SYSTEM_PROMPT = [
   'Prefer tools over guessing when memory or execution is relevant.',
 ].join(' ');
 
+function buildSystemPrompt(contextPrompt?: string): string {
+  if (typeof contextPrompt === 'string' && contextPrompt.trim().length > 0) {
+    return `${SYSTEM_PROMPT}\n\n---\n\n${contextPrompt.trim()}`;
+  }
+
+  return SYSTEM_PROMPT;
+}
+
 function asString(value: unknown, fieldName: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new Error(`${fieldName} must be a non-empty string`);
@@ -208,7 +216,7 @@ export class LlmModule {
 
     return runToolLoop({
       provider: this.#resolveProvider(),
-      systemPrompt: SYSTEM_PROMPT,
+      systemPrompt: buildSystemPrompt(this.#llmOptions.contextPrompt),
       userMessage: normalizedGoal,
       tools: createAtlasToolExecutors(this.#atlas),
       budget: options.budget ?? this.#defaultBudget,

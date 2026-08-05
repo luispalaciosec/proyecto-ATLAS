@@ -13,6 +13,7 @@ import {
 import { join } from 'node:path';
 
 import type { WorkspaceConfig } from '../configuration/workspace-config.js';
+import type { WorkspacePaths } from '../workspace/brand-profile.js';
 import {
   CliExitError,
   EXIT_COMPILATION_ERROR,
@@ -73,6 +74,25 @@ export class AtlasService {
     }
 
     return this.#sessionClient;
+  }
+
+  createBrandClient(paths: WorkspacePaths, contextPrompt: string): Atlas {
+    return createAtlas({
+      workspace: {
+        name: `brand-${paths.slug}`,
+        environment: 'memory',
+      },
+      compiler: {
+        generators: () => [this.#createSummaryGenerator()],
+      },
+      memory: {
+        storageFilePath: paths.memoryFilePath,
+      },
+      llm: Object.freeze({
+        ...this.#resolveLlmOptions(),
+        contextPrompt,
+      }),
+    });
   }
 
   async compile(
