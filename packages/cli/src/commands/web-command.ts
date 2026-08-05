@@ -1,6 +1,4 @@
-import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
-import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { Command } from 'commander';
@@ -39,17 +37,7 @@ function formatWebUrl(host: string, port: number): string {
 }
 
 export function resolveWebServerPath(): string {
-  const require = createRequire(import.meta.url);
-
-  try {
-    const packageJsonPath = require.resolve('@atlas/web/package.json');
-
-    return join(dirname(packageJsonPath), 'dist', 'server.js');
-  } catch {
-    return join(
-      fileURLToPath(new URL('../../../../apps/web/dist/server.js', import.meta.url)),
-    );
-  }
+  return fileURLToPath(new URL('../../../apps/web/dist/server.js', import.meta.url));
 }
 
 export class WebCommand implements CliCommand {

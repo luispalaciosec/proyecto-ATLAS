@@ -14,9 +14,9 @@
     "public"
   ],
   "scripts": {
-    "build": "pnpm --filter @atlas/cli build && tsup src/server.ts --format esm --clean --sourcemap && node --input-type=module -e \"import { cpSync } from 'node:fs'; cpSync('public', 'dist/public', { recursive: true });\"",
+    "build": "tsup src/server.ts --format esm --clean --sourcemap && node --input-type=module -e \"import { cpSync } from 'node:fs'; cpSync('public', 'dist/public', { recursive: true });\"",
     "start": "node dist/server.js",
-    "test": "pnpm --filter @atlas/cli build && vitest run",
+    "test": "vitest run",
     "lint": "eslint src tests",
     "typecheck": "tsc --noEmit"
   },

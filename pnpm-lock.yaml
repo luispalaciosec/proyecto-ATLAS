@@ -136,9 +136,6 @@ importers:
       '@atlas/sdk':
         specifier: workspace:*
         version: link:../sdk
-      '@atlas/web':
-        specifier: workspace:*
-        version: link:../../apps/web
       commander:
         specifier: ^13.1.0
         version: 13.1.0

@@ -449,16 +449,12 @@ describe('atlas memory persistence', () => {
 });
 
 describe('kernel dependency boundary', () => {
-  it('depends only on @atlas/sdk, @atlas/web, and commander', () => {
+  it('depends only on @atlas/sdk and commander', () => {
     const packageJson = JSON.parse(
       readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
     ) as { dependencies?: Record<string, string> };
 
-    expect(Object.keys(packageJson.dependencies ?? {}).sort()).toEqual([
-      '@atlas/sdk',
-      '@atlas/web',
-      'commander',
-    ]);
+    expect(Object.keys(packageJson.dependencies ?? {}).sort()).toEqual(['@atlas/sdk', 'commander']);
   });
 });
 
