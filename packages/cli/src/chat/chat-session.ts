@@ -1,11 +1,14 @@
 import type { Atlas, LlmMessage } from '@atlas/sdk';
 
+import type { LastTurn } from './feedback.js';
+
 export interface ChatSessionState {
   readonly sessionId: string;
   readonly client: Atlas;
   turnCount: number;
   lastMemorySessionId?: string;
   history: LlmMessage[];
+  lastTurn?: LastTurn;
 }
 
 export function createChatSessionId(): string {

@@ -13,6 +13,10 @@ import {
   renderProfileAsContext,
   resolveWorkspacePaths,
 } from '../src/workspace/brand-profile.js';
+import {
+  combineBrandContextPrompt,
+  loadRecentFeedbackContext,
+} from '../src/workspace/feedback-context.js';
 
 class ScriptLineReader implements ChatLineReader {
   readonly #lines: string[];
@@ -261,5 +265,100 @@ describe('atlas brand command registry', () => {
     const names = container.commandRegistry.list().map((command) => command.name);
 
     expect(names).toContain('brand');
+  });
+});
+
+describe('atlas brand proactive feedback context', () => {
+  const savedApiKey = process.env.ATLAS_LLM_API_KEY;
+  const savedModel = process.env.ATLAS_LLM_MODEL;
+
+  beforeEach(() => {
+    process.env.ATLAS_LLM_API_KEY = 'test-key';
+    process.env.ATLAS_LLM_MODEL = 'claude-test-model';
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+
+    if (savedApiKey !== undefined) {
+      process.env.ATLAS_LLM_API_KEY = savedApiKey;
+    } else {
+      delete process.env.ATLAS_LLM_API_KEY;
+    }
+
+    if (savedModel !== undefined) {
+      process.env.ATLAS_LLM_MODEL = savedModel;
+    } else {
+      delete process.env.ATLAS_LLM_MODEL;
+    }
+  });
+
+  it('injects prior /correct feedback into the system prompt on a new brand session', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'atlas-brand-feedback-context-'));
+    const geeksPaths = resolveWorkspacePaths('geeks', join(root, 'workspaces'));
+    const profile = loadOrCreateBrandProfile(geeksPaths, 'Geeks');
+    const profileContext = renderProfileAsContext(profile);
+    const container = createContainer();
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            content: [{ type: 'text', text: 'Draft campaign copy.' }],
+            stop_reason: 'end_turn',
+            usage: { input_tokens: 1, output_tokens: 1 },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      ),
+    );
+
+    const firstClient = container.atlasService.createBrandClient(geeksPaths, profileContext);
+
+    await runChatRepl(container, {
+      client: firstClient,
+      json: true,
+      reader: new ScriptLineReader([
+        'draft campaign',
+        '/correct mention free shipping',
+        '/exit',
+      ]),
+    });
+
+    const feedbackContext = await loadRecentFeedbackContext(geeksPaths.memoryFilePath);
+    const secondClient = container.atlasService.createBrandClient(
+      geeksPaths,
+      combineBrandContextPrompt(profileContext, feedbackContext),
+    );
+
+    const fetchBodies: unknown[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        fetchBodies.push(JSON.parse(String(init?.body)));
+
+        return new Response(
+          JSON.stringify({
+            content: [{ type: 'text', text: 'Acknowledged.' }],
+            stop_reason: 'end_turn',
+            usage: { input_tokens: 1, output_tokens: 1 },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }),
+    );
+
+    await runChatRepl(container, {
+      client: secondClient,
+      json: true,
+      reader: new ScriptLineReader(['new campaign', '/exit']),
+    });
+
+    const firstFetch = fetchBodies[0] as { system?: string };
+    expect(firstFetch.system).toContain('mention free shipping');
+    expect(firstFetch.system).toContain('Known corrections from previous sessions');
+
+    rmSync(root, { recursive: true, force: true });
   });
 });

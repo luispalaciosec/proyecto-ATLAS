@@ -16,8 +16,8 @@ last_updated: 2026-08-05
 | **Kernel Version** | `0.1` |
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
-| **Current Phase** | **Phase 2 — Product (P2.3 Delivered)** |
-| **Next Sprint** | **P2.4 — Feedback Loop** — pending Owner authorization ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
+| **Current Phase** | **Phase 2 — Product (P2.4 Delivered)** |
+| **Next Sprint** | **P2.5 — Web UI** — pending Owner authorization and Vision §10 checkpoint ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
 | **Product Vision** | [`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md) |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
 | **Memory Application Tag** | `memory-application-certified` |
@@ -354,6 +354,26 @@ Tercer entregable de Phase 2: workspaces de marca con memoria físicamente aisla
 **Edición de perfil:** manual vía `.atlas/workspaces/<slug>/profile.json` (`atlas brand edit` fuera de alcance).
 
 **Tests automatizados (sin red):** `@atlas/cli` incluye aislamiento cruzado geeks/revital + contexto de marca en system prompt.
+
+---
+
+## P2.4 — Feedback Loop (Phase 2)
+
+Cuarto entregable del núcleo conversacional Phase 2: comando `/correct` en el REPL (modo LLM) persiste correcciones como `recordType: 'Feedback'`, y `atlas brand` carga proactivamente correcciones previas en el `contextPrompt`. Plan: [`releases/P2_4_FEEDBACK_LOOP_IMPLEMENTATION_PLAN.md`](./releases/P2_4_FEEDBACK_LOOP_IMPLEMENTATION_PLAN.md).
+
+| Sprint | Entregable | Status |
+|--------|------------|--------|
+| FEED-1 | `/correct` en REPL + `recordFeedback` | **Complete** |
+| FEED-2 | Recuperación proactiva en `atlas brand` | **Complete** |
+| FEED-3 | Cierre documental en `VERSION.md` | **Complete** |
+
+**Comando REPL nuevo:** `/correct <texto>` — solo en modo LLM, no cuenta como turno.
+
+**Sin cambios en:** `atlas ask`, `atlas plan`, `atlas memory`, `atlas chat`/`atlas` genérico (sin feedback proactivo).
+
+**Deuda aceptada (mismo tipo que TD-P2.2-001):** feedback acumulado sin poda ni límite en P2.4.
+
+**Checkpoint Phase 2:** con P2.1–P2.4 entregados, corresponde evaluar el criterio de éxito de ATLAS_PRODUCT_VISION §10 con uso real antes de avanzar a P2.5 (Web UI).
 
 ---
 

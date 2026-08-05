@@ -9,6 +9,7 @@ import {
   createChatSession,
   type ChatSessionState,
 } from './chat-session.js';
+import { parseCorrectCommand, recordFeedback } from './feedback.js';
 
 export interface ChatLineReader {
   readLine(prompt: string): Promise<string | null>;
@@ -141,6 +142,11 @@ async function executeLlmChatTurn(
   session.history.push(Object.freeze({ role: 'user', content: goal }));
   session.history.push(...result.transcript);
 
+  session.lastTurn = Object.freeze({
+    goal,
+    output: result.finalMessage,
+  });
+
   return Object.freeze({
     command: 'chat',
     session_id: session.sessionId,
@@ -176,6 +182,61 @@ async function executeChatTurn(
   return executeDeterministicChatTurn(container, session, goal);
 }
 
+function renderFeedbackNotice(
+  container: Container,
+  json: boolean,
+  message: string,
+  recordId?: string,
+): void {
+  if (json) {
+    container.renderer.json(
+      Object.freeze({
+        command: 'chat',
+        event: recordId !== undefined ? 'feedback_recorded' : 'feedback_skipped',
+        message,
+        ...(recordId !== undefined ? { record_id: recordId } : {}),
+      }),
+    );
+    return;
+  }
+
+  container.renderer.info(message);
+}
+
+async function handleCorrectCommand(
+  container: Container,
+  session: ChatSessionState,
+  correctionText: string,
+  json: boolean,
+): Promise<void> {
+  if (correctionText.length === 0) {
+    renderFeedbackNotice(container, json, 'Usage: /correct <what should have been different>');
+    return;
+  }
+
+  if (!session.client.llm.isConfigured()) {
+    renderFeedbackNotice(
+      container,
+      json,
+      'Correction requires LLM mode (set ATLAS_LLM_API_KEY and ATLAS_LLM_MODEL).',
+    );
+    return;
+  }
+
+  if (session.lastTurn === undefined) {
+    renderFeedbackNotice(container, json, 'Nothing to correct yet — ask something first.');
+    return;
+  }
+
+  const result = await recordFeedback(session.client, session.lastTurn, correctionText);
+  renderFeedbackNotice(
+    container,
+    json,
+    `Feedback recorded (${result.recordId}).`,
+    result.recordId,
+  );
+}
+
 export async function runChatRepl(container: Container, options: RunChatReplOptions = {}): Promise<void> {
   const client = options.client ?? container.atlasService.createMemoryClient();
   const session = createChatSession(client);
@@ -209,6 +270,23 @@ export async function runChatRepl(container: Container, options: RunChatReplOpti
 
       if (isExitCommand(goal)) {
         break;
+      }
+
+      const correctionText = parseCorrectCommand(goal);
+
+      if (correctionText !== null) {
+        try {
+          await handleCorrectCommand(container, session, correctionText, json);
+        } catch (error) {
+          if (error instanceof CliExitError) {
+            throw error;
+          }
+
+          const message = error instanceof Error ? error.message : String(error);
+          throw new CliExitError(EXIT_INVALID_ARGUMENTS, message);
+        }
+
+        continue;
       }
 
       try {

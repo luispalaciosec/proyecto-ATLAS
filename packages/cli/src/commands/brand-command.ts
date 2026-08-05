@@ -9,6 +9,10 @@ import {
   renderProfileAsContext,
   resolveWorkspacePaths,
 } from '../workspace/brand-profile.js';
+import {
+  combineBrandContextPrompt,
+  loadRecentFeedbackContext,
+} from '../workspace/feedback-context.js';
 
 export class BrandCommand implements CliCommand {
   readonly name = 'brand';
@@ -26,10 +30,10 @@ export class BrandCommand implements CliCommand {
         try {
           const paths = resolveWorkspacePaths(name);
           const profile = loadOrCreateBrandProfile(paths, name.trim());
-          const client = container.atlasService.createBrandClient(
-            paths,
-            renderProfileAsContext(profile),
-          );
+          const profileContext = renderProfileAsContext(profile);
+          const feedbackContext = await loadRecentFeedbackContext(paths.memoryFilePath);
+          const contextPrompt = combineBrandContextPrompt(profileContext, feedbackContext);
+          const client = container.atlasService.createBrandClient(paths, contextPrompt);
 
           if (!options.json) {
             container.renderer.info(`Atlas Brand — ${profile.name} (${paths.slug})`);
