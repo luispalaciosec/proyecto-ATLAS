@@ -8,6 +8,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 import { createArtifact, createAtlas } from '@atlas/sdk';
 import { CliApp } from '../src/application/cli-app.js';
+import * as chatRepl from '../src/chat/chat-repl.js';
 import { createContainer } from '../src/application/container.js';
 import { WORKSPACE_FILE_NAME } from '../src/configuration/workspace-loader.js';
 import {
@@ -78,6 +79,18 @@ describe('@atlas/cli command registry', () => {
     const names = container.commandRegistry.list().map((command) => command.name);
 
     expect(names).toEqual(['compile', 'run', 'plan', 'ask', 'chat', 'memory', 'doctor', 'version']);
+  });
+
+  it('enters chat mode when invoked without a subcommand', async () => {
+    const app = new CliApp();
+    const runChatReplSpy = vi.spyOn(chatRepl, 'runChatRepl').mockResolvedValue(undefined);
+
+    const code = await app.run(['node', 'atlas']);
+
+    expect(code).toBe(EXIT_SUCCESS);
+    expect(runChatReplSpy).toHaveBeenCalledWith(app.container);
+
+    runChatReplSpy.mockRestore();
   });
 });
 

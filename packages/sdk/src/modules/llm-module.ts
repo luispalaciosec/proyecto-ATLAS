@@ -3,6 +3,7 @@ import {
   createAnthropicProvider,
   runToolLoop,
   type LlmBudget,
+  type LlmMessage,
   type LlmProvider,
   type ToolExecutor,
   type ToolLoopResult,
@@ -129,6 +130,7 @@ function createAtlasToolExecutors(atlas: Atlas): readonly ToolExecutor[] {
 
 export interface AskOptions {
   readonly budget?: LlmBudget;
+  readonly history?: readonly LlmMessage[];
 }
 
 /**
@@ -181,6 +183,22 @@ export class LlmModule {
     return this.#resolvedProvider;
   }
 
+  isConfigured(): boolean {
+    if (this.#injectedProvider !== undefined) {
+      return true;
+    }
+
+    const apiKey = this.#llmOptions.apiKey;
+    const model = this.#llmOptions.model;
+
+    return (
+      typeof apiKey === 'string' &&
+      apiKey.trim().length > 0 &&
+      typeof model === 'string' &&
+      model.trim().length > 0
+    );
+  }
+
   ask(goalText: string, options: AskOptions = {}): Promise<ToolLoopResult> {
     const normalizedGoal = goalText.trim();
 
@@ -194,8 +212,9 @@ export class LlmModule {
       userMessage: normalizedGoal,
       tools: createAtlasToolExecutors(this.#atlas),
       budget: options.budget ?? this.#defaultBudget,
+      ...(options.history !== undefined ? { history: options.history } : {}),
     });
   }
 }
 
-export type { LlmBudget, LlmProvider, ToolLoopResult } from '@atlas/llm';
+export type { LlmBudget, LlmMessage, LlmProvider, ToolLoopResult } from '@atlas/llm';

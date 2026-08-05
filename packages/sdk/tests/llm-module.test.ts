@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createFakeLlmProvider } from '@atlas/llm';
+import { createFakeLlmProvider, createFakeLlmProviderWithRequests } from '@atlas/llm';
 import { describe, expect, it } from 'vitest';
 
 import { createArtifact, createAtlas, planExecuteAndRemember } from '../src/index.js';
@@ -147,6 +147,65 @@ describe('LlmModule', () => {
     expect(search.total).toBeGreaterThanOrEqual(1);
     expect(direct.execute.success).toBe(true);
     expect(direct.planning.workflow?.identity.workflow_id).toMatch(/^workflow\./);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('isConfigured() is true with an injected provider', () => {
+    const { atlas, dir } = createTestAtlas();
+    expect(atlas.llm.isConfigured()).toBe(true);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('isConfigured() reflects apiKey and model options without making network calls', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-llm-configured-'));
+
+    const configured = createAtlas({
+      memory: { storageFilePath: join(dir, 'memory.json') },
+      llm: { apiKey: 'secret', model: 'claude-test' },
+    });
+    expect(configured.llm.isConfigured()).toBe(true);
+
+    const missingModel = createAtlas({
+      memory: { storageFilePath: join(dir, 'memory-missing-model.json') },
+      llm: { apiKey: 'secret' },
+    });
+    expect(missingModel.llm.isConfigured()).toBe(false);
+
+    const missingKey = createAtlas({
+      memory: { storageFilePath: join(dir, 'memory-missing-key.json') },
+      llm: { model: 'claude-test' },
+    });
+    expect(missingKey.llm.isConfigured()).toBe(false);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('ask() forwards history to the tool loop', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-llm-history-'));
+    const fake = createFakeLlmProviderWithRequests([
+      Object.freeze({
+        message: Object.freeze({ role: 'assistant' as const, content: 'Continued.' }),
+        usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+        stopReason: 'end_turn' as const,
+      }),
+    ]);
+    const atlas = createAtlas({
+      memory: { storageFilePath: join(dir, 'memory.json') },
+      llm: { provider: fake.provider },
+    });
+    const history = Object.freeze([
+      Object.freeze({ role: 'user' as const, content: 'First' }),
+      Object.freeze({ role: 'assistant' as const, content: 'First reply' }),
+    ]);
+
+    await atlas.llm.ask('Second', { history });
+
+    expect(fake.requests[0]?.messages.some((message) => message.content === 'First')).toBe(true);
+    expect(fake.requests[0]?.messages.some((message) => message.content === 'First reply')).toBe(
+      true,
+    );
+    expect(fake.requests[0]?.messages.some((message) => message.content === 'Second')).toBe(true);
 
     rmSync(dir, { recursive: true, force: true });
   });

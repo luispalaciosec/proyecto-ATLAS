@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createFakeLlmProvider } from '../src/providers/fake-provider.js';
+import { createFakeLlmProvider, createFakeLlmProviderWithRequests } from '../src/providers/fake-provider.js';
 import type { LlmCompletionResult } from '../src/provider.js';
 import { runToolLoop } from '../src/tool-loop.js';
 
@@ -210,5 +210,34 @@ describe('runToolLoop', () => {
     expect(result.finalMessage).toBe('Recovered after tool error.');
     const toolMessage = result.transcript.find((message) => message.role === 'tool');
     expect(toolMessage?.content).toContain('storage unavailable');
+  });
+
+  it('includes prior history in the provider request', async () => {
+    const priorHistory = Object.freeze([
+      Object.freeze({ role: 'user' as const, content: 'Earlier question' }),
+      Object.freeze({ role: 'assistant' as const, content: 'Earlier answer' }),
+    ]);
+    const fake = createFakeLlmProviderWithRequests([
+      Object.freeze({
+        message: Object.freeze({ role: 'assistant' as const, content: 'Follow-up answer' }),
+        usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+        stopReason: 'end_turn' as const,
+      }),
+    ]);
+
+    const result = await runToolLoop({
+      provider: fake.provider,
+      systemPrompt,
+      userMessage: 'Follow-up question',
+      tools: [],
+      history: priorHistory,
+    });
+
+    expect(result.finalMessage).toBe('Follow-up answer');
+    expect(fake.requests[0]?.messages).toEqual([
+      { role: 'system', content: systemPrompt },
+      ...priorHistory,
+      { role: 'user', content: 'Follow-up question' },
+    ]);
   });
 });

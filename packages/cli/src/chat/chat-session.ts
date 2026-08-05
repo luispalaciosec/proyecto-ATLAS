@@ -1,10 +1,11 @@
-import type { Atlas } from '@atlas/sdk';
+import type { Atlas, LlmMessage } from '@atlas/sdk';
 
 export interface ChatSessionState {
   readonly sessionId: string;
   readonly client: Atlas;
   turnCount: number;
   lastMemorySessionId?: string;
+  history: LlmMessage[];
 }
 
 export function createChatSessionId(): string {
@@ -16,6 +17,7 @@ export function createChatSession(client: Atlas, sessionId = createChatSessionId
     sessionId,
     client,
     turnCount: 0,
+    history: [],
   };
 }
 

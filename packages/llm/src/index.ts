@@ -19,4 +19,5 @@ export { runToolLoop } from './tool-loop.js';
 
 export type { AnthropicProviderOptions } from './providers/anthropic-provider.js';
 export { createAnthropicProvider } from './providers/anthropic-provider.js';
-export { createFakeLlmProvider } from './providers/fake-provider.js';
+export { createFakeLlmProvider, createFakeLlmProviderWithRequests } from './providers/fake-provider.js';
+export type { FakeLlmProviderHandle } from './providers/fake-provider.js';

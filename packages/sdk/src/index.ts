@@ -25,7 +25,7 @@ export type {
 export type { PlanFromGoalOptions } from './modules/planning-module.js';
 export type { RetrieveForGoalOptions } from './modules/retrieval-module.js';
 export type { AskOptions } from './modules/llm-module.js';
-export type { LlmBudget, LlmProvider, ToolLoopResult } from './modules/llm-module.js';
+export type { LlmBudget, LlmMessage, LlmProvider, ToolLoopResult } from './modules/llm-module.js';
 export type {
   RetrievalContext,
   RetrievalResult,

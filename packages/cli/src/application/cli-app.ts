@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 
 import { createContainer, type Container } from './container.js';
+import { runChatRepl } from '../chat/chat-repl.js';
 import {
   CliExitError,
   EXIT_GENERAL_ERROR,
@@ -29,6 +30,13 @@ export class CliApp {
   }
 
   async run(argv: string[] = process.argv): Promise<number> {
+    const args = argv.slice(2);
+
+    if (args.length === 0) {
+      await runChatRepl(this.container);
+      return EXIT_SUCCESS;
+    }
+
     this.program.exitOverride();
 
     try {

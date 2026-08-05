@@ -17,6 +17,7 @@ export interface RunToolLoopOptions {
   readonly userMessage: string;
   readonly tools: readonly ToolExecutor[];
   readonly budget?: LlmBudget;
+  readonly history?: readonly LlmMessage[];
 }
 
 export interface ToolLoopResult {
@@ -48,7 +49,10 @@ export async function runToolLoop(options: RunToolLoopOptions): Promise<ToolLoop
   const budget = options.budget ?? { maxTurns: 6 };
   const tracker = createBudgetTracker(budget);
   const transcript: LlmMessage[] = [];
-  const messages: LlmMessage[] = [{ role: 'user', content: options.userMessage }];
+  const messages: LlmMessage[] = [
+    ...(options.history ?? []),
+    { role: 'user', content: options.userMessage },
+  ];
   const systemMessage: LlmMessage = { role: 'system', content: options.systemPrompt };
   const toolDefinitions = Object.freeze(options.tools.map((tool) => tool.definition));
   const toolMap = new Map(options.tools.map((tool) => [tool.definition.name, tool]));

@@ -16,8 +16,8 @@ last_updated: 2026-08-05
 | **Kernel Version** | `0.1` |
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
-| **Current Phase** | **Phase 2 — Product (P2.1 Delivered)** |
-| **Next Sprint** | **P2.2 — Conversación** — pending Owner authorization ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
+| **Current Phase** | **Phase 2 — Product (P2.2 Delivered)** |
+| **Next Sprint** | **P2.3 — Brands** — pending Owner authorization ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
 | **Product Vision** | [`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md) |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
 | **Memory Application Tag** | `memory-application-certified` |
@@ -46,8 +46,8 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/compiler` | 0.1.1 | Pipeline de compilación | **Frozen** |
 | `@atlas/events` | 0.1.0 | Eventos de dominio | **Frozen** |
 | `@atlas/runtime` | 0.1.0 | Ejecución de artifacts + Pipeline Engine (Sprint 10D) | **Frozen** |
-| `@atlas/sdk` | 0.3.0 | Fachada pública del Kernel (+ Memory, Planning, Workflow, Retrieval MVP, LLM P2.1) | **MVP+** |
-| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos (+ memory, plan, chat MVP; `ask` P2.1) | **MVP+** |
+| `@atlas/sdk` | 0.3.0 | Fachada pública del Kernel (+ Memory, Planning, Workflow, Retrieval MVP, LLM P2.1–P2.2) | **MVP+** |
+| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos (+ memory, plan, chat MVP; `ask` P2.1; chat LLM + `atlas` default P2.2) | **MVP+** |
 
 > **Nota de versionado:** La versión de producto Atlas es `0.1.0-alpha` (Kernel v0.1 congelado). Los paquetes npm mantienen semver independiente por componente.
 
@@ -62,7 +62,7 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/intelligence` | 0.1.0 | Cognitive Planning Engine — Goal → WorkflowDefinition (Sprint 10F) | **Frozen** |
 | `@atlas/memory` | 0.0.0 | Memory — domain, engine, application, providers, session domain + engine integration (Sprint 11A–11E.2); JsonFileStorageProvider MVP | **Session Engine Certified** |
 | `@atlas/retrieval` | 0.0.0 | Retrieval Capability — pipeline MVP ADR-0005 D8 (Sprint MVP-5) | **MVP** |
-| `@atlas/llm` | 0.0.0 | LLM Adapter — provider abstraction, tool-calling loop, Anthropic provider (P2.1) | **P2.1** |
+| `@atlas/llm` | 0.0.0 | LLM Adapter — provider abstraction, tool-calling loop, conversation history (P2.1–P2.2) | **P2.2** |
 
 ---
 
@@ -315,6 +315,27 @@ Primer entregable de Phase 2 — Product: capacidad generativa con tool-calling 
 
 ---
 
+## P2.2 — Conversación (Phase 2)
+
+Segundo entregable de Phase 2: `atlas chat` conversacional con LLM cuando está configurado, fallback determinista idéntico al MVP cuando no lo está; `atlas` sin subcomando entra en chat. Plan: [`releases/P2_2_CONVERSACION_IMPLEMENTATION_PLAN.md`](./releases/P2_2_CONVERSACION_IMPLEMENTATION_PLAN.md).
+
+| Sprint | Entregable | Status |
+|--------|------------|--------|
+| CONV-1 | Historial en `runToolLoop` + `LlmModule.ask({ history })` + `isConfigured()` | **Complete** |
+| CONV-2 | `atlas chat` bifurcado LLM/determinista con memoria conversacional | **Complete** |
+| CONV-3 | `atlas` sin subcomando → `runChatRepl` (sin interceptar subcomandos) | **Complete** |
+| CONV-4 | Cierre documental en `VERSION.md` | **Complete** |
+
+**Comportamiento:** con `ATLAS_LLM_API_KEY` + `ATLAS_LLM_MODEL`, cada turno usa `atlas.llm.ask` con historial acumulado; presupuesto `maxTurns` se resetea por mensaje. Sin LLM configurado, `planExecuteAndRemember` vía `planAndExecute` — igual que MVP.
+
+**Sin cambios en:** `atlas ask` (single-shot), capabilities certificadas por dentro, test determinista preexistente de `chat-repl.test.ts`.
+
+**Tests automatizados (sin red):** `@atlas/llm` 10/10, `@atlas/sdk` 31/31, `@atlas/cli` 45/45.
+
+**Deuda aceptada:** TD-P2.2-001 — historial conversacional sin truncado ni resumen; crece y se reenvía completo en cada turno LLM.
+
+---
+
 ## Accepted Technical Debt
 
 Deuda técnica aceptada por auditoría independiente. No bloquea certificaciones de Sprint 11D ni 11E.2.
@@ -323,6 +344,7 @@ Deuda técnica aceptada por auditoría independiente. No bloquea certificaciones
 |----|--------|--------|-----------|
 | **TD-11D-001** | StorageProvider contract still relies on optional listAll() through internal type casts. | **Accepted Technical Debt** | Resolve before first production StorageProvider implementation. |
 | **TD-11E-001** | MemoryEngineSessionOrchestrator supports only one active session per engine instance. | **Accepted Technical Debt** | Resolve before any capability invokes MemoryEngine from parallel executions. |
+| **TD-P2.2-001** | Chat LLM conversation history grows unbounded and is resent in full on every turn. | **Accepted Technical Debt** | Resolve before long-running production chat sessions (truncation/summary strategy). |
 
 ### TD-11D-001 — StorageProvider contract still relies on optional listAll() through internal type casts.
 
@@ -373,6 +395,30 @@ Future production providers (SQLite/PostgreSQL/Redis) must eliminate this depend
 - Does not break CONTRACT-001 §15 single-owner session model.
 - Does not break Single Entry Point or API pública MEMORY-008.
 - Does not block Sprint 11E.2 certification.
+
+---
+
+### TD-P2.2-001 — Chat LLM conversation history grows unbounded and is resent in full on every turn.
+
+| Field | Value |
+|-------|-------|
+| **ID** | TD-P2.2-001 |
+| **Title** | Chat LLM conversation history grows unbounded and is resent in full on every turn. |
+| **Status** | Accepted Technical Debt |
+| **Priority** | Resolve before long-running production chat sessions. |
+| **Sprint** | P2.2 — Conversación |
+| **Audit** | Design decision — non-blocking for P2.2 delivery |
+
+**Description:**
+
+In LLM chat mode, `ChatSessionState.history` accumulates every user/assistant/tool message for the session and is passed wholesale to `runToolLoop` on each new user message. There is no truncation, summarization, or token-budget-aware windowing.
+
+**Impact:**
+
+- Does not affect deterministic fallback mode.
+- Does not affect `atlas ask` (single-shot, no session history).
+- Increases token cost and latency as conversations lengthen.
+- Does not block P2.2 certification or P2.3.
 
 ---
 
