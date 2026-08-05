@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createArtifact, createAtlas } from '@atlas/sdk';
 import { CliApp } from '../src/application/cli-app.js';
 import { createContainer } from '../src/application/container.js';
 import { WORKSPACE_FILE_NAME } from '../src/configuration/workspace-loader.js';
@@ -72,11 +73,11 @@ async function run(argv: string[]): Promise<number> {
 }
 
 describe('@atlas/cli command registry', () => {
-  it('registers compile, run, plan, memory, doctor, and version commands', () => {
+  it('registers compile, run, plan, ask, memory, doctor, and version commands', () => {
     const container = createContainer();
     const names = container.commandRegistry.list().map((command) => command.name);
 
-    expect(names).toEqual(['compile', 'run', 'plan', 'chat', 'memory', 'doctor', 'version']);
+    expect(names).toEqual(['compile', 'run', 'plan', 'ask', 'chat', 'memory', 'doctor', 'version']);
   });
 });
 
@@ -227,6 +228,68 @@ describe('atlas plan memory integration', () => {
   });
 });
 
+describe('atlas ask', () => {
+  it('fails with a clear message when ATLAS_LLM_API_KEY is missing', async () => {
+    const savedKey = process.env.ATLAS_LLM_API_KEY;
+    const savedModel = process.env.ATLAS_LLM_MODEL;
+    delete process.env.ATLAS_LLM_API_KEY;
+    delete process.env.ATLAS_LLM_MODEL;
+
+    const app = new CliApp();
+    const code = await app.run(['node', 'atlas', 'ask', '--goal', 'hello']);
+
+    expect(code).toBe(EXIT_CONFIGURATION_ERROR);
+
+    if (savedKey !== undefined) {
+      process.env.ATLAS_LLM_API_KEY = savedKey;
+    }
+
+    if (savedModel !== undefined) {
+      process.env.ATLAS_LLM_MODEL = savedModel;
+    }
+  });
+
+  it('returns a fake LLM response when a provider is injected', async () => {
+    vi.spyOn(AtlasService.prototype, 'createMemoryClient').mockImplementation(() =>
+      createAtlas({
+        memory: { storageFilePath: memoryFilePath },
+        llm: {
+          provider: Object.freeze({
+            id: 'inline-fake',
+            complete: async () =>
+              Object.freeze({
+                message: Object.freeze({ role: 'assistant' as const, content: 'Injected answer' }),
+                usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+                stopReason: 'end_turn' as const,
+              }),
+          }),
+        },
+        compiler: {
+          generators: () => [
+            {
+              id: 'summary-generator',
+              supported_formats: ['summary'],
+              generate: (graph) => [
+                createArtifact({
+                  id: 'artifact.cli-ask',
+                  kind: 'summary',
+                  content: { nodes: graph.nodes.length },
+                  source_graph_id: graph.id,
+                }),
+              ],
+            },
+          ],
+        },
+      }),
+    );
+
+    const code = await run(['ask', '--goal', 'hello', '--json']);
+    expect(code).toBe(EXIT_SUCCESS);
+
+    vi.restoreAllMocks();
+  });
+});
+
 describe('atlas memory', () => {
   it('stores content and returns a record id', async () => {
     const app = new CliApp();
@@ -263,6 +326,28 @@ describe('atlas doctor', () => {
   it('reports healthy status without workspace', async () => {
     const code = await run(['doctor']);
     expect(code).toBe(EXIT_SUCCESS);
+  });
+
+  it('includes a non-blocking llm configuration check', async () => {
+    const savedKey = process.env.ATLAS_LLM_API_KEY;
+    delete process.env.ATLAS_LLM_API_KEY;
+
+    const app = new CliApp();
+    const output: string[] = [];
+    vi.spyOn(app.container.renderer, 'info').mockImplementation((message: string) => {
+      output.push(message);
+    });
+
+    const code = await app.run(['node', 'atlas', 'doctor']);
+    expect(code).toBe(EXIT_SUCCESS);
+    expect(output.some((line) => line.includes('llm: not configured'))).toBe(true);
+    expect(output.some((line) => line.includes('ATLAS_LLM_API_KEY='))).toBe(false);
+
+    if (savedKey !== undefined) {
+      process.env.ATLAS_LLM_API_KEY = savedKey;
+    }
+
+    vi.restoreAllMocks();
   });
 
   it('supports json output', async () => {

@@ -1,6 +1,7 @@
 import type { CompilerPipeline, CompilerStage, Generator, Publisher } from '@atlas/compiler';
 import type { ArtifactExecutor } from '@atlas/runtime';
 import type { EventBus } from '@atlas/events';
+import type { LlmBudget, LlmProvider } from '@atlas/llm';
 
 export interface AtlasWorkspaceOptions {
   readonly name?: string;
@@ -36,6 +37,14 @@ export interface AtlasWorkflowOptions {
   readonly [key: string]: unknown;
 }
 
+export interface AtlasLlmOptions {
+  readonly provider?: LlmProvider;
+  readonly apiKey?: string;
+  readonly model?: string;
+  readonly budget?: LlmBudget;
+  readonly [key: string]: unknown;
+}
+
 export interface AtlasOptions {
   readonly workspace?: AtlasWorkspaceOptions;
   readonly eventBus?: EventBus;
@@ -45,4 +54,5 @@ export interface AtlasOptions {
   readonly retrieval?: AtlasRetrievalOptions;
   readonly planning?: AtlasPlanningOptions;
   readonly workflow?: AtlasWorkflowOptions;
+  readonly llm?: AtlasLlmOptions;
 }

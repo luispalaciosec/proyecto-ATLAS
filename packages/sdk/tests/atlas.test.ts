@@ -13,7 +13,7 @@ import {
 } from '../src/index.js';
 
 describe('Atlas SDK facade', () => {
-  it('creates an Atlas instance with compiler, runtime, memory, retrieval, planning, workflow, and events modules', () => {
+  it('creates an Atlas instance with compiler, runtime, memory, retrieval, planning, workflow, llm, and events modules', () => {
     const atlas = createAtlas({ workspace: { name: 'test-workspace' } });
 
     expect(atlas.compiler).toBeDefined();
@@ -22,6 +22,7 @@ describe('Atlas SDK facade', () => {
     expect(atlas.retrieval).toBeDefined();
     expect(atlas.planning).toBeDefined();
     expect(atlas.workflow).toBeDefined();
+    expect(atlas.llm).toBeDefined();
     expect(atlas.events).toBeDefined();
   });
 

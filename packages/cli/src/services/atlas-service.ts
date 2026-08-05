@@ -3,6 +3,7 @@ import {
   createAtlas,
   planExecuteAndRemember,
   type Atlas,
+  type AtlasLlmOptions,
   type CompilationResult,
   type CreateCompilationUnitParams,
   type ExecutionResult,
@@ -35,6 +36,16 @@ export class AtlasService {
     return join(process.cwd(), '.atlas', 'memory.json');
   }
 
+  #resolveLlmOptions(): AtlasLlmOptions {
+    const apiKey = process.env.ATLAS_LLM_API_KEY;
+    const model = process.env.ATLAS_LLM_MODEL;
+
+    return Object.freeze({
+      ...(typeof apiKey === 'string' && apiKey.trim().length > 0 ? { apiKey } : {}),
+      ...(typeof model === 'string' && model.trim().length > 0 ? { model } : {}),
+    });
+  }
+
   createClient(workspace?: WorkspaceConfig): Atlas {
     return createAtlas({
       workspace: workspace
@@ -52,6 +63,7 @@ export class AtlasService {
       memory: {
         storageFilePath: this.#resolveMemoryFilePath(),
       },
+      llm: this.#resolveLlmOptions(),
     });
   }
 

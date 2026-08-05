@@ -22,6 +22,17 @@ export class DoctorCommand implements CliCommand {
           detail: 'Kernel accessed exclusively through @atlas/sdk',
         });
 
+        const llmProvider = process.env.ATLAS_LLM_PROVIDER ?? 'anthropic';
+        const llmApiKey = process.env.ATLAS_LLM_API_KEY;
+        checks.push({
+          name: 'llm',
+          status: 'ok',
+          detail:
+            typeof llmApiKey === 'string' && llmApiKey.trim().length > 0
+              ? `configured (provider=${llmProvider})`
+              : 'not configured (ATLAS_LLM_API_KEY missing — atlas ask will fail)',
+        });
+
         try {
           const probe = container.atlasService.createClient({
             name: 'doctor-probe',

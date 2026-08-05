@@ -29,6 +29,7 @@
     "@atlas/events": "workspace:*",
     "@atlas/intelligence": "workspace:*",
     "@atlas/knowledge": "workspace:*",
+    "@atlas/llm": "workspace:*",
     "@atlas/memory": "workspace:*",
     "@atlas/retrieval": "workspace:*",
     "@atlas/runtime": "workspace:*",

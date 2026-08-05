@@ -1,0 +1,22 @@
+export type {
+  LlmCompletionRequest,
+  LlmCompletionResult,
+  LlmMessage,
+  LlmMessageRole,
+  LlmProvider,
+  LlmStopReason,
+  LlmToolCall,
+  LlmToolDefinition,
+  LlmToolParameterSchema,
+  LlmUsage,
+} from './provider.js';
+
+export type { BudgetConsumeResult, BudgetTracker, LlmBudget } from './budget.js';
+export { createBudgetTracker } from './budget.js';
+
+export type { RunToolLoopOptions, ToolExecutor, ToolLoopResult } from './tool-loop.js';
+export { runToolLoop } from './tool-loop.js';
+
+export type { AnthropicProviderOptions } from './providers/anthropic-provider.js';
+export { createAnthropicProvider } from './providers/anthropic-provider.js';
+export { createFakeLlmProvider } from './providers/fake-provider.js';

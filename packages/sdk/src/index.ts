@@ -2,6 +2,7 @@
 export { Atlas, createAtlas } from './atlas/atlas.js';
 export type {
   AtlasCompilerOptions,
+  AtlasLlmOptions,
   AtlasMemoryOptions,
   AtlasOptions,
   AtlasPlanningOptions,
@@ -23,6 +24,8 @@ export type {
 } from './modules/memory-module.js';
 export type { PlanFromGoalOptions } from './modules/planning-module.js';
 export type { RetrieveForGoalOptions } from './modules/retrieval-module.js';
+export type { AskOptions } from './modules/llm-module.js';
+export type { LlmBudget, LlmProvider, ToolLoopResult } from './modules/llm-module.js';
 export type {
   RetrievalContext,
   RetrievalResult,

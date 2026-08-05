@@ -1,9 +1,9 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.8.0
+version: 1.9.0
 status: active
-last_updated: 2026-08-04
+last_updated: 2026-08-05
 ---
 
 # VERSION.md
@@ -16,8 +16,9 @@ last_updated: 2026-08-04
 | **Kernel Version** | `0.1` |
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
-| **Current Phase** | **MVP Delivered** |
-| **Next Sprint** | **Pending owner authorization (post-MVP)** |
+| **Current Phase** | **Phase 2 — Product (P2.1 Delivered)** |
+| **Next Sprint** | **P2.2 — Conversación** — pending Owner authorization ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
+| **Product Vision** | [`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md) |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
 | **Memory Application Tag** | `memory-application-certified` |
 | **Memory Engine Operations Tag** | `memory-engine-operations-certified` |
@@ -45,8 +46,8 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/compiler` | 0.1.1 | Pipeline de compilación | **Frozen** |
 | `@atlas/events` | 0.1.0 | Eventos de dominio | **Frozen** |
 | `@atlas/runtime` | 0.1.0 | Ejecución de artifacts + Pipeline Engine (Sprint 10D) | **Frozen** |
-| `@atlas/sdk` | 0.3.0 | Fachada pública del Kernel (+ Memory, Planning, Workflow, Retrieval MVP) | **MVP** |
-| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos (+ memory, plan, chat MVP) | **MVP** |
+| `@atlas/sdk` | 0.3.0 | Fachada pública del Kernel (+ Memory, Planning, Workflow, Retrieval MVP, LLM P2.1) | **MVP+** |
+| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos (+ memory, plan, chat MVP; `ask` P2.1) | **MVP+** |
 
 > **Nota de versionado:** La versión de producto Atlas es `0.1.0-alpha` (Kernel v0.1 congelado). Los paquetes npm mantienen semver independiente por componente.
 
@@ -61,6 +62,7 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/intelligence` | 0.1.0 | Cognitive Planning Engine — Goal → WorkflowDefinition (Sprint 10F) | **Frozen** |
 | `@atlas/memory` | 0.0.0 | Memory — domain, engine, application, providers, session domain + engine integration (Sprint 11A–11E.2); JsonFileStorageProvider MVP | **Session Engine Certified** |
 | `@atlas/retrieval` | 0.0.0 | Retrieval Capability — pipeline MVP ADR-0005 D8 (Sprint MVP-5) | **MVP** |
+| `@atlas/llm` | 0.0.0 | LLM Adapter — provider abstraction, tool-calling loop, Anthropic provider (P2.1) | **P2.1** |
 
 ---
 
@@ -268,6 +270,51 @@ Primer MVP funcional de ATLAS entregado sobre arquitectura congelada (ADR-0001�
 
 ---
 
+## Phase 1 — Foundation & MVP: CLOSED
+
+Status:
+
+**Phase 1 — Complete** (officially closed 2026-08-04, tras verificación independiente de commits y suite de tests completa).
+
+Phase 1 agrupa la fundación arquitectónica (ADR-0001–ADR-0005, Kernel Frozen v0.1) y el primer MVP funcional (Sprints MVP-1–MVP-6). Con este cierre, ATLAS deja de medirse por número de ADRs, contratos o packages, y pasa a medirse por valor entregado a un usuario real. Ver [`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md) para la dirección de Phase 2.
+
+**Verificación de cierre (independiente, no autoreportada):**
+
+| Verificación | Método | Resultado |
+|---|---|---|
+| Commits en `origin/main` | `git status`, `git rev-parse HEAD` vs `git rev-parse origin/main`, `git log` | `HEAD` y `origin/main` apuntan al mismo commit (`c5db504`); working tree limpio; historial local coincide commit-a-commit con los 7 commits reportados (`f7eab86`…`c5db504`) |
+| Suite de tests | Instalación limpia (`pnpm install --frozen-lockfile`) + `vitest run` ejecutado paquete por paquete | **363/363 tests pasando, 0 fallos**, en los 11 paquetes core (`core`, `events`, `compiler`, `runtime`, `knowledge`, `memory`, `workflow`, `intelligence`, `retrieval`, `sdk`, `cli`) |
+| Encapsulamiento Retrieval (ADR-0005 D2/D3/R2) | Grep de `providers/retrieval` sobre `packages/retrieval` y `packages/sdk` | Cero referencias — `@atlas/retrieval` nunca importa el Retrieval Provider interno de Memory |
+| Registro de comandos CLI nuevos | Lectura de `packages/cli/src/application/container.ts` | `memory`, `plan`, `chat` registrados en el `commandRegistry`, no archivos huérfanos |
+| Orquestación real (Retrieval→Planning→Workflow→Compiler→Runtime→Memory) | Lectura de `packages/sdk/src/plan/plan-execution-memory.ts` | Composición real de las 6 capabilities, sin generadores de relleno en la ruta nueva |
+
+**Alcance de la certificación:** esta verificación cubre los 11 paquetes bajo `packages/` al cierre de Phase 1. No cubre `apps/`, `templates/` ni `scripts/`, que no forman parte de la superficie MVP.
+
+---
+
+## P2.1 — LLM Adapter + Tool Calling (Phase 2)
+
+Primer entregable de Phase 2 — Product: capacidad generativa con tool-calling sobre capabilities certificadas, sin modificar Memory, Workflow, Intelligence ni Retrieval por dentro. Plan de referencia: [`releases/P2_1_LLM_ADAPTER_IMPLEMENTATION_PLAN.md`](./releases/P2_1_LLM_ADAPTER_IMPLEMENTATION_PLAN.md).
+
+| Sprint | Entregable | Status |
+|--------|------------|--------|
+| LLM-1 | `@atlas/llm` — `LlmProvider`, `AnthropicProvider`, `FakeLlmProvider`, presupuesto | **Complete** |
+| LLM-2 | `runToolLoop()` — ciclo tool-calling con guardrail `maxTurns` | **Complete** |
+| LLM-3 | `LlmModule` en SDK — `memory_search`, `memory_store`, `plan_and_execute` | **Complete** |
+| LLM-4 | `atlas ask --goal`, check LLM en `atlas doctor`, `.env.example` | **Complete** |
+
+**Comando CLI nuevo:** `atlas ask` (requiere `ATLAS_LLM_API_KEY` + `ATLAS_LLM_MODEL`).
+
+**Tools expuestas al modelo:** `memory_search`, `memory_store`, `plan_and_execute` (wrapper de `planExecuteAndRemember`).
+
+**Sin cambios en:** `atlas plan`, `atlas chat`, `planAndExecute()`, `#createSummaryGenerator()` — siguen deterministas.
+
+**Tests automatizados (sin red):** `@atlas/llm` 9/9, `@atlas/sdk` 28/28, `@atlas/cli` 43/43 — todos con `FakeLlmProvider` o provider inline en tests CLI.
+
+**Variables de entorno:** `ATLAS_LLM_PROVIDER` (default `anthropic`), `ATLAS_LLM_API_KEY`, `ATLAS_LLM_MODEL` (sin default hardcodeado).
+
+---
+
 ## Accepted Technical Debt
 
 Deuda técnica aceptada por auditoría independiente. No bloquea certificaciones de Sprint 11D ni 11E.2.
@@ -336,6 +383,7 @@ Los siguientes paquetes permanecen en `0.0.0` (bootstrap):
 `agent`, `context`, `context-planner`, `graph`, `ontology`, `plugin`, `prompt`, `publisher`, `search`, `validation`
 
 > `@atlas/retrieval` salió de bootstrap con el pipeline MVP (ADR-0005 D8) en Sprint MVP-5.
+> `@atlas/llm` salió de bootstrap con el adapter LLM + tool-calling en P2.1.
 
 ---
 
