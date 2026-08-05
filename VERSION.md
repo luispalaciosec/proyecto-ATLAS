@@ -16,8 +16,8 @@ last_updated: 2026-08-05
 | **Kernel Version** | `0.1` |
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
-| **Current Phase** | **Phase 2 — Product (P2.4 Delivered)** |
-| **Next Sprint** | **P2.5 — Web UI** — pending Owner authorization and Vision §10 checkpoint ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
+| **Current Phase** | **Phase 2 — Product (P2.5 Delivered)** |
+| **Next Sprint** | **P2.6 — Cloud Deployment** — pending Owner authorization ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
 | **Product Vision** | [`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md) |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
 | **Memory Application Tag** | `memory-application-certified` |
@@ -47,7 +47,7 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/events` | 0.1.0 | Eventos de dominio | **Frozen** |
 | `@atlas/runtime` | 0.1.0 | Ejecución de artifacts + Pipeline Engine (Sprint 10D) | **Frozen** |
 | `@atlas/sdk` | 0.3.0 | Fachada pública del Kernel (+ Memory, Planning, Workflow, Retrieval MVP, LLM P2.1–P2.2) | **MVP+** |
-| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos (+ memory, plan, chat MVP; `ask` P2.1; chat LLM + `atlas` default P2.2; `brand` P2.3) | **MVP+** |
+| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos (+ memory, plan, chat MVP; `ask` P2.1; chat LLM + `atlas` default P2.2; `brand` P2.3; `web` P2.5) | **MVP+** |
 
 > **Nota de versionado:** La versión de producto Atlas es `0.1.0-alpha` (Kernel v0.1 congelado). Los paquetes npm mantienen semver independiente por componente.
 
@@ -374,6 +374,26 @@ Cuarto entregable del núcleo conversacional Phase 2: comando `/correct` en el R
 **Deuda aceptada (mismo tipo que TD-P2.2-001):** feedback acumulado sin poda ni límite en P2.4.
 
 **Checkpoint Phase 2:** con P2.1–P2.4 entregados, corresponde evaluar el criterio de éxito de ATLAS_PRODUCT_VISION §10 con uso real antes de avanzar a P2.5 (Web UI).
+
+---
+
+## P2.5 — Web UI (Phase 2)
+
+Quinto entregable Phase 2: interfaz web local (`@atlas/web`) que expone `atlas chat`/`atlas brand`/`/correct` vía HTTP sobre la lógica compartida exportada desde `@atlas/cli`. Plan: [`releases/P2_5_WEB_UI_IMPLEMENTATION_PLAN.md`](./releases/P2_5_WEB_UI_IMPLEMENTATION_PLAN.md).
+
+| Sprint | Entregable | Status |
+|--------|------------|--------|
+| WEB-1 | Extracción `chat-turn.ts` + exports `@atlas/cli` | **Complete** |
+| WEB-2 | Servidor HTTP `apps/web` + tests API | **Complete** |
+| WEB-3 | Frontend estático `public/` | **Complete** |
+| WEB-4 | Comando `atlas web` (spawn subproceso) | **Complete** |
+| WEB-5 | Cierre documental en `VERSION.md` | **Complete** |
+
+**Arranque:** `pnpm --filter @atlas/web build && node apps/web/dist/server.js` o `atlas web`.
+
+**Host/puerto:** `ATLAS_WEB_HOST` (default `127.0.0.1`), `ATLAS_WEB_PORT` (default `4173`).
+
+**Nota checkpoint:** Owner autorizó avanzar a P2.5 sin esperar evaluación formal del criterio Vision §10.
 
 ---
 

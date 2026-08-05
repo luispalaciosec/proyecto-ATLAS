@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
+  listWorkspaces,
   loadOrCreateBrandProfile,
   renderProfileAsContext,
   resolveWorkspacePaths,
@@ -81,5 +82,27 @@ describe('renderProfileAsContext', () => {
     expect(text).toContain('Purpose: Electronics retail');
     expect(text).toContain('Tone: Expert');
     expect(text).toContain('No discounts without approval');
+  });
+});
+
+describe('listWorkspaces', () => {
+  it('returns an empty list when the workspaces directory does not exist', () => {
+    const root = mkdtempSync(join(tmpdir(), 'atlas-list-workspaces-empty-'));
+
+    expect(listWorkspaces(join(root, 'missing-workspaces'))).toEqual([]);
+
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('returns workspace slugs for existing brand directories', () => {
+    const root = mkdtempSync(join(tmpdir(), 'atlas-list-workspaces-'));
+    const workspacesRoot = join(root, 'workspaces');
+
+    loadOrCreateBrandProfile(resolveWorkspacePaths('geeks', workspacesRoot), 'Geeks');
+    loadOrCreateBrandProfile(resolveWorkspacePaths('revital', workspacesRoot), 'Revital');
+
+    expect(listWorkspaces(workspacesRoot)).toEqual(['geeks', 'revital']);
+
+    rmSync(root, { recursive: true, force: true });
   });
 });

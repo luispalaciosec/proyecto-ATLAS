@@ -1,0 +1,31 @@
+{
+  "name": "@atlas/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Atlas Web — local HTTP interface over @atlas/cli (apps/README.md: consumes the platform, never implements it)",
+  "license": "UNLICENSED",
+  "bin": {
+    "atlas-web": "./dist/server.js"
+  },
+  "main": "./dist/server.js",
+  "files": [
+    "dist",
+    "public"
+  ],
+  "scripts": {
+    "build": "pnpm --filter @atlas/cli build && tsup src/server.ts --format esm --clean --sourcemap && node --input-type=module -e \"import { cpSync } from 'node:fs'; cpSync('public', 'dist/public', { recursive: true });\"",
+    "start": "node dist/server.js",
+    "test": "pnpm --filter @atlas/cli build && vitest run",
+    "lint": "eslint src tests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@atlas/cli": "workspace:*",
+    "@atlas/sdk": "workspace:*",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.0"
+  }
+}

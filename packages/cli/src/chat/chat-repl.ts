@@ -4,40 +4,19 @@ import type { Atlas } from '@atlas/sdk';
 
 import type { Container } from '../application/container.js';
 import { CliExitError, EXIT_INVALID_ARGUMENTS } from '../output/exit-codes.js';
+import { createChatSession, type ChatSessionState } from './chat-session.js';
 import {
-  captureLastMemorySessionId,
-  createChatSession,
-  type ChatSessionState,
-} from './chat-session.js';
-import { parseCorrectCommand, recordFeedback } from './feedback.js';
+  applyCorrection,
+  executeChatTurn,
+  type ChatTurnPayload,
+} from './chat-turn.js';
+import { parseCorrectCommand } from './feedback.js';
+
+export type { ChatTurnPayload } from './chat-turn.js';
 
 export interface ChatLineReader {
   readLine(prompt: string): Promise<string | null>;
   close(): Promise<void>;
-}
-
-export interface ChatTurnPayload {
-  readonly command: 'chat';
-  readonly session_id: string;
-  readonly turn: number;
-  readonly goal: string;
-  readonly success: boolean;
-  readonly workflow_id?: string;
-  readonly memory_session_id?: string;
-  readonly mode?: 'llm' | 'deterministic';
-  readonly llm_message?: string;
-  readonly llm_turns?: number;
-  readonly budget_exceeded?: boolean;
-  readonly retrieval: {
-    readonly selected: number;
-    readonly total_candidates: number;
-    readonly prior_goals: readonly string[];
-  };
-  readonly execution: {
-    readonly lifecycle: string;
-    readonly outputs: number;
-    readonly session_id: string;
-  };
 }
 
 export interface RunChatReplOptions {
@@ -99,89 +78,6 @@ function renderTurn(container: Container, payload: ChatTurnPayload, json: boolea
   container.renderer.info(`Runtime:     ${payload.execution.session_id}`);
 }
 
-async function executeDeterministicChatTurn(
-  container: Container,
-  session: ChatSessionState,
-  goal: string,
-): Promise<ChatTurnPayload> {
-  session.turnCount += 1;
-
-  const result = await container.atlasService.planAndExecute(session.client, goal);
-  const memorySessionId = captureLastMemorySessionId(session);
-
-  return Object.freeze({
-    command: 'chat',
-    session_id: session.sessionId,
-    turn: session.turnCount,
-    goal,
-    success: result.execute.success,
-    mode: 'deterministic',
-    workflow_id: result.planning.workflow?.identity.workflow_id,
-    ...(memorySessionId !== undefined ? { memory_session_id: memorySessionId } : {}),
-    retrieval: Object.freeze({
-      selected: result.retrieval.context.items.length,
-      total_candidates: result.retrieval.context.totalCandidates,
-      prior_goals: Object.freeze(result.retrieval.context.items.map((item) => item.text)),
-    }),
-    execution: Object.freeze({
-      lifecycle: result.execute.context.lifecycle,
-      outputs: result.execute.context.outputs.length,
-      session_id: result.execute.context.session_id.toJSON(),
-    }),
-  });
-}
-
-async function executeLlmChatTurn(
-  session: ChatSessionState,
-  goal: string,
-): Promise<ChatTurnPayload> {
-  session.turnCount += 1;
-
-  const result = await session.client.llm.ask(goal, { history: session.history });
-
-  session.history.push(Object.freeze({ role: 'user', content: goal }));
-  session.history.push(...result.transcript);
-
-  session.lastTurn = Object.freeze({
-    goal,
-    output: result.finalMessage,
-  });
-
-  return Object.freeze({
-    command: 'chat',
-    session_id: session.sessionId,
-    turn: session.turnCount,
-    goal,
-    success: result.success,
-    mode: 'llm',
-    llm_message: result.finalMessage,
-    llm_turns: result.turns,
-    budget_exceeded: result.budgetExceeded,
-    retrieval: Object.freeze({
-      selected: 0,
-      total_candidates: 0,
-      prior_goals: Object.freeze([]),
-    }),
-    execution: Object.freeze({
-      lifecycle: result.success ? 'complete' : 'failed',
-      outputs: 0,
-      session_id: session.sessionId,
-    }),
-  });
-}
-
-async function executeChatTurn(
-  container: Container,
-  session: ChatSessionState,
-  goal: string,
-): Promise<ChatTurnPayload> {
-  if (session.client.llm.isConfigured()) {
-    return executeLlmChatTurn(session, goal);
-  }
-
-  return executeDeterministicChatTurn(container, session, goal);
-}
-
 function renderFeedbackNotice(
   container: Container,
   json: boolean,
@@ -209,32 +105,8 @@ async function handleCorrectCommand(
   correctionText: string,
   json: boolean,
 ): Promise<void> {
-  if (correctionText.length === 0) {
-    renderFeedbackNotice(container, json, 'Usage: /correct <what should have been different>');
-    return;
-  }
-
-  if (!session.client.llm.isConfigured()) {
-    renderFeedbackNotice(
-      container,
-      json,
-      'Correction requires LLM mode (set ATLAS_LLM_API_KEY and ATLAS_LLM_MODEL).',
-    );
-    return;
-  }
-
-  if (session.lastTurn === undefined) {
-    renderFeedbackNotice(container, json, 'Nothing to correct yet — ask something first.');
-    return;
-  }
-
-  const result = await recordFeedback(session.client, session.lastTurn, correctionText);
-  renderFeedbackNotice(
-    container,
-    json,
-    `Feedback recorded (${result.recordId}).`,
-    result.recordId,
-  );
+  const outcome = await applyCorrection(session, correctionText);
+  renderFeedbackNotice(container, json, outcome.message, outcome.recordId);
 }
 
 export async function runChatRepl(container: Container, options: RunChatReplOptions = {}): Promise<void> {
@@ -290,7 +162,7 @@ export async function runChatRepl(container: Container, options: RunChatReplOpti
       }
 
       try {
-        const payload = await executeChatTurn(container, session, goal);
+        const payload = await executeChatTurn(container.atlasService, session, goal);
         options.onTurn?.(payload);
         renderTurn(container, payload, json);
       } catch (error) {

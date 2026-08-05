@@ -78,7 +78,18 @@ describe('@atlas/cli command registry', () => {
     const container = createContainer();
     const names = container.commandRegistry.list().map((command) => command.name);
 
-    expect(names).toEqual(['compile', 'run', 'plan', 'ask', 'brand', 'chat', 'memory', 'doctor', 'version']);
+    expect(names).toEqual([
+      'compile',
+      'run',
+      'plan',
+      'ask',
+      'brand',
+      'chat',
+      'memory',
+      'doctor',
+      'version',
+      'web',
+    ]);
   });
 
   it('enters chat mode when invoked without a subcommand', async () => {
@@ -438,12 +449,16 @@ describe('atlas memory persistence', () => {
 });
 
 describe('kernel dependency boundary', () => {
-  it('depends only on @atlas/sdk and commander', () => {
+  it('depends only on @atlas/sdk, @atlas/web, and commander', () => {
     const packageJson = JSON.parse(
       readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
     ) as { dependencies?: Record<string, string> };
 
-    expect(Object.keys(packageJson.dependencies ?? {}).sort()).toEqual(['@atlas/sdk', 'commander']);
+    expect(Object.keys(packageJson.dependencies ?? {}).sort()).toEqual([
+      '@atlas/sdk',
+      '@atlas/web',
+      'commander',
+    ]);
   });
 });
 

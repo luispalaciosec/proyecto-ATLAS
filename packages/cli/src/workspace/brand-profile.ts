@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export interface WorkspaceProfile {
@@ -108,4 +108,19 @@ export function renderProfileAsContext(profile: WorkspaceProfile): string {
   }
 
   return sections.join('\n\n');
+}
+
+export function listWorkspaces(rootDir?: string): readonly string[] {
+  const workspacesRoot = rootDir ?? join(process.cwd(), '.atlas', 'workspaces');
+
+  if (!existsSync(workspacesRoot)) {
+    return Object.freeze([]);
+  }
+
+  return Object.freeze(
+    readdirSync(workspacesRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort(),
+  );
 }

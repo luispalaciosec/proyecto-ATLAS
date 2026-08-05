@@ -8,6 +8,7 @@ import { MemoryCommand } from '../commands/memory-command.js';
 import { PlanCommand } from '../commands/plan-command.js';
 import { RunCommand } from '../commands/run-command.js';
 import { VersionCommand } from '../commands/version-command.js';
+import { WebCommand } from '../commands/web-command.js';
 import { OutputRenderer } from '../output/renderer.js';
 import { CommandRegistry } from '../registry/command-registry.js';
 import { AtlasService } from '../services/atlas-service.js';
@@ -31,6 +32,7 @@ export function createContainer(): Container {
   commandRegistry.register(new MemoryCommand());
   commandRegistry.register(new DoctorCommand());
   commandRegistry.register(new VersionCommand());
+  commandRegistry.register(new WebCommand());
 
   return Object.freeze({
     atlasService: new AtlasService(),

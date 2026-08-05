@@ -20,7 +20,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean --sourcemap && tsup src/bin/atlas.ts --format esm --clean --sourcemap",
+    "build": "tsup src/index.ts --format esm --dts --clean --sourcemap && tsup src/bin/atlas.ts --format esm --sourcemap",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src tests",
@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@atlas/sdk": "workspace:*",
+    "@atlas/web": "workspace:*",
     "commander": "^13.1.0"
   },
   "devDependencies": {

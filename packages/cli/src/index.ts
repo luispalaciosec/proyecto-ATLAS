@@ -14,3 +14,21 @@ export {
   EXIT_SUCCESS,
   EXIT_VALIDATION_ERROR,
 } from './output/exit-codes.js';
+export { createChatSession, type ChatSessionState } from './chat/chat-session.js';
+export {
+  executeChatTurn,
+  applyCorrection,
+  type CorrectionOutcome,
+  type ChatTurnPayload,
+} from './chat/chat-turn.js';
+export type { ChatLineReader, RunChatReplOptions } from './chat/chat-repl.js';
+export { runChatRepl } from './chat/chat-repl.js';
+export {
+  resolveWorkspacePaths,
+  loadOrCreateBrandProfile,
+  renderProfileAsContext,
+  listWorkspaces,
+  type WorkspaceProfile,
+  type WorkspacePaths,
+} from './workspace/brand-profile.js';
+export { loadRecentFeedbackContext, combineBrandContextPrompt } from './workspace/feedback-context.js';
