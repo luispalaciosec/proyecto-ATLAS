@@ -60,9 +60,21 @@ export async function loadRecentFeedbackContext(
     return '';
   }
 
-  const recent = [...result.records]
-    .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
-    .slice(0, limit);
+  const recent = result.records
+    .map((record, index) => ({ record, index }))
+    .sort((left, right) => {
+      const byTimestamp = right.record.timestamp.localeCompare(left.record.timestamp);
+
+      if (byTimestamp !== 0) {
+        return byTimestamp;
+      }
+
+      // Timestamps iguales (colisión de resolución de milisegundo): el insertado
+      // después se considera más reciente.
+      return right.index - left.index;
+    })
+    .slice(0, limit)
+    .map(({ record }) => record);
 
   const lines = recent.map((record) => renderFeedbackRecord(record));
 
