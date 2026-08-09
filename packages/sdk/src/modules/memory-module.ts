@@ -1,3 +1,4 @@
+import { normalizeForSearch } from '@atlas/core';
 import type { EventBus } from '@atlas/events';
 import {
   createJsonFileMemoryEngine,
@@ -73,13 +74,13 @@ function extractSearchableText(record: MemoryRecord): string {
 }
 
 function matchesContentQuery(record: MemoryRecord, query: string): boolean {
-  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedQuery = normalizeForSearch(query.trim());
 
   if (normalizedQuery.length === 0) {
     return true;
   }
 
-  return extractSearchableText(record).toLowerCase().includes(normalizedQuery);
+  return normalizeForSearch(extractSearchableText(record)).includes(normalizedQuery);
 }
 
 function createRecordId(): string {

@@ -77,6 +77,15 @@ describe('PlanningGoal and GoalNormalizer', () => {
     expect(() => normalizer.normalize(42)).toThrow();
     expect(() => normalizer.normalize({})).toThrow();
   });
+
+  it('folds accents when deriving goal_id from text', () => {
+    const normalizer = createGoalNormalizer();
+
+    expect(normalizer.normalize('Seguimiento pedido VIP Ana García')).toMatchObject({
+      goal_id: 'goal.seguimiento.pedido.vip.ana.garcia',
+      objective: 'Seguimiento pedido VIP Ana García',
+    });
+  });
 });
 
 describe('PlanningContext and PlanningStrategy', () => {

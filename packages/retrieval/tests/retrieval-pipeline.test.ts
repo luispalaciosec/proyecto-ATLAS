@@ -41,6 +41,32 @@ describe('@atlas/retrieval pipeline', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
+  it('matches keywords with or without accents', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-retrieval-accent-'));
+    const filePath = join(dir, 'memory.json');
+    const engine = createJsonFileMemoryEngine(filePath);
+
+    await engine.store({
+      id: 'record.accent',
+      type: 'CliMemory',
+      content: { text: 'Cliente VIP Ana García — pedido laptop' },
+      metadata: { namespaceId: 'cli.default' },
+      timestamp: '2026-08-04T10:00:00.000Z',
+    });
+
+    const result = await runRetrievalPipeline(engine, {
+      query: 'Ana Garcia',
+      namespaceId: 'cli.default',
+      limit: 3,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.context.items[0]?.recordId).toBe('record.accent');
+    expect(result.context.items[0]?.score).toBeGreaterThan(0);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
   it('returns an empty context when memory has no candidates', async () => {
     const engine = createJsonFileMemoryEngine(
       join(mkdtempSync(join(tmpdir(), 'atlas-retrieval-empty-')), 'memory.json'),

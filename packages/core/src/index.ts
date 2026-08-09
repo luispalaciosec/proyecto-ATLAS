@@ -28,3 +28,4 @@ export type {
 export type { AtlasTimestamp } from './timestamp.js';
 export type { Result } from './result.js';
 export type { TraceId } from './trace-id.js';
+export { foldDiacritics, normalizeForSearch } from './text/fold-diacritics.js';

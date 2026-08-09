@@ -177,6 +177,9 @@ importers:
 
   packages/intelligence:
     dependencies:
+      '@atlas/core':
+        specifier: workspace:*
+        version: link:../core
       '@atlas/workflow':
         specifier: workspace:*
         version: link:../workflow
@@ -219,6 +222,9 @@ importers:
 
   packages/retrieval:
     dependencies:
+      '@atlas/core':
+        specifier: workspace:*
+        version: link:../core
       '@atlas/memory':
         specifier: workspace:*
         version: link:../memory

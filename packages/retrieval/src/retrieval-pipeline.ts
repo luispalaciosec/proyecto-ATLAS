@@ -1,3 +1,4 @@
+import { normalizeForSearch } from '@atlas/core';
 import type { MemoryEngine, MemoryRecord } from '@atlas/memory';
 
 export interface RetrievalRequest {
@@ -43,12 +44,12 @@ function extractSearchableText(record: MemoryRecord): string {
 }
 
 function scoreRecord(record: MemoryRecord, query: string): number {
-  const text = extractSearchableText(record).toLowerCase();
+  const text = normalizeForSearch(extractSearchableText(record));
   const terms = query
     .trim()
-    .toLowerCase()
     .split(/\s+/)
-    .filter((term) => term.length > 0);
+    .filter((term) => term.length > 0)
+    .map((term) => normalizeForSearch(term));
 
   if (terms.length === 0) {
     return 0;

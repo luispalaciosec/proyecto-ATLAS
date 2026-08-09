@@ -1,3 +1,4 @@
+import { foldDiacritics } from '@atlas/core';
 import type { CompilationResult } from '@atlas/compiler';
 import type { PlanRequest, PlanningResult } from '@atlas/intelligence';
 import type { ExecutionResult } from '@atlas/runtime';
@@ -26,7 +27,9 @@ function buildPlanningContextFromRetrieval(
   goalText: string,
   retrieval: RetrievalResult,
 ): NonNullable<PlanRequest['context']> {
-  const normalized = goalText.trim().toLowerCase().replace(/\s+/g, '.').slice(0, 48);
+  const normalized = foldDiacritics(goalText.trim().toLowerCase())
+    .replace(/\s+/g, '.')
+    .slice(0, 48);
 
   return Object.freeze({
     context_id: normalized.length > 0 ? `context.retrieval.${normalized}` : 'context.retrieval',

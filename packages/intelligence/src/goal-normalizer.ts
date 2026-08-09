@@ -1,3 +1,5 @@
+import { foldDiacritics } from '@atlas/core';
+
 import type { PlanningGoal, PlanningMetadata } from './planning-model.js';
 import { PLANNING_GOAL_EMPTY_OBJECTIVE, PLANNING_GOAL_INVALID, createPlanningIssue } from './planning-errors.js';
 
@@ -25,7 +27,9 @@ function readMetadata(value: unknown): PlanningMetadata | undefined {
 }
 
 function createGoalId(seed: string): string {
-  const normalized = seed.trim().toLowerCase().replace(/\s+/g, '.').slice(0, 64);
+  const normalized = foldDiacritics(seed.trim().toLowerCase())
+    .replace(/\s+/g, '.')
+    .slice(0, 64);
   return normalized.length > 0 ? `goal.${normalized}` : 'goal.unnamed';
 }
 

@@ -108,7 +108,9 @@ describe('Public API surface', () => {
       'Namespace',
       'Version',
       'createAtlasError',
+      'foldDiacritics',
       'isAtlasError',
+      'normalizeForSearch',
     ]);
   });
 });
