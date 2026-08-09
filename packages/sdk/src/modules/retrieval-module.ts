@@ -2,7 +2,6 @@ import type { EventBus } from '@atlas/events';
 import type { MemoryEngine } from '@atlas/memory';
 import {
   runRetrievalPipeline,
-  type RetrievalContext,
   type RetrievalRequest,
   type RetrievalResult,
 } from '@atlas/retrieval';

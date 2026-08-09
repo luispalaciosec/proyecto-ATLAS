@@ -43,7 +43,7 @@ describe('createAnthropicProvider', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    const fetchImpl = vi.fn(async (_url: string, init?: RequestInit) => {
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
       const headers = init?.headers as Record<string, string>;
       expect(headers['x-api-key']).toBe('secret-key');
 

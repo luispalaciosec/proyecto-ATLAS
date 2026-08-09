@@ -26,8 +26,10 @@ describe('createJsonFileMemoryEngine', () => {
     const searchResult = await secondEngine.search({ namespaceId: 'cli.default' });
 
     expect(searchResult.ok).toBe(true);
-    expect(searchResult.value.records).toHaveLength(1);
-    expect(searchResult.value.records[0]?.id).toBe('record.engine.persisted');
+    if (searchResult.ok) {
+      expect(searchResult.value.records).toHaveLength(1);
+      expect(searchResult.value.records[0]?.id).toBe('record.engine.persisted');
+    }
 
     rmSync(dir, { recursive: true, force: true });
   });

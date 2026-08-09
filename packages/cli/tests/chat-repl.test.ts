@@ -4,7 +4,6 @@ import { join } from 'node:path';
 
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CliApp } from '../src/application/cli-app.js';
 import { createContainer } from '../src/application/container.js';
 import type { ChatLineReader, ChatTurnPayload } from '../src/chat/chat-repl.js';
 import { runChatRepl } from '../src/chat/chat-repl.js';
@@ -229,8 +228,8 @@ describe('runChatRepl /correct feedback', () => {
     const payloads: ChatTurnPayload[] = [];
     const events: Array<Record<string, unknown>> = [];
 
-    vi.spyOn(container.renderer, 'json').mockImplementation((payload: Record<string, unknown>) => {
-      events.push(payload);
+    vi.spyOn(container.renderer, 'json').mockImplementation((payload: unknown) => {
+      events.push(payload as Record<string, unknown>);
     });
 
     await runChatRepl(container, {
@@ -276,8 +275,8 @@ describe('runChatRepl /correct feedback', () => {
     const container = createContainer();
     const events: Array<Record<string, unknown>> = [];
 
-    vi.spyOn(container.renderer, 'json').mockImplementation((payload: Record<string, unknown>) => {
-      events.push(payload);
+    vi.spyOn(container.renderer, 'json').mockImplementation((payload: unknown) => {
+      events.push(payload as Record<string, unknown>);
     });
 
     await runChatRepl(container, {
@@ -313,8 +312,8 @@ describe('runChatRepl /correct feedback', () => {
     const container = createContainer();
     const events: Array<Record<string, unknown>> = [];
 
-    vi.spyOn(container.renderer, 'json').mockImplementation((payload: Record<string, unknown>) => {
-      events.push(payload);
+    vi.spyOn(container.renderer, 'json').mockImplementation((payload: unknown) => {
+      events.push(payload as Record<string, unknown>);
     });
 
     await runChatRepl(container, {

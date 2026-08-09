@@ -12,10 +12,7 @@ import {
   ENGINE_NOT_FOUND,
 } from '../../src/engine/engine-errors.js';
 import { createMemoryEngine } from '../../src/engine/index.js';
-import {
-  MemoryEngineSessionOrchestrator,
-  systemMemoryEngineSessionClock,
-} from '../../src/engine/memory-engine-session-orchestrator.js';
+import { MemoryEngineSessionOrchestrator } from '../../src/engine/memory-engine-session-orchestrator.js';
 import { MemoryEngineSessionRegistry } from '../../src/engine/memory-engine-session-registry.js';
 import { validateRegisteredMemorySessions } from '../../src/engine/memory-engine-session-validation.js';
 import {

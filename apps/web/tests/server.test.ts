@@ -7,13 +7,19 @@ import type { Express } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveWebHost } from '../src/config.js';
-import { createWebServer } from '../dist/server.js';
+import { createWebServer } from '../src/server.js';
 import {
   loadOrCreateBrandProfile,
   resolveWorkspacePaths,
-} from '../../../packages/cli/src/workspace/brand-profile.js';
+} from '@atlas/cli';
 
 const originalFetch = globalThis.fetch;
+
+type ChatApiPayload = {
+  mode?: string;
+  success?: boolean;
+  llm_message?: string;
+};
 
 function stubLlmFetch(
   impl: (url: string, init?: RequestInit) => Response | Promise<Response>,
@@ -150,7 +156,7 @@ describe('createWebServer', () => {
       });
 
       expect(response.status).toBe(200);
-      const payload = await response.json();
+      const payload = (await response.json()) as ChatApiPayload;
       expect(payload.mode).toBe('deterministic');
       expect(payload.success).toBe(true);
     });
@@ -181,7 +187,7 @@ describe('createWebServer', () => {
       });
 
       expect(response.status).toBe(200);
-      const payload = await response.json();
+      const payload = (await response.json()) as ChatApiPayload;
       expect(payload.mode).toBe('llm');
       expect(payload.llm_message).toBe('Draft campaign copy.');
     });
@@ -285,7 +291,7 @@ describe('createWebServer', () => {
         }),
       });
       expect(geeksSearch.status).toBe(200);
-      const geeksPayload = await geeksSearch.json();
+      const geeksPayload = (await geeksSearch.json()) as ChatApiPayload;
       expect(geeksPayload.mode).toBe('llm');
 
       const revitalSearch = await fetch(`${baseUrl}/api/chat`, {
@@ -297,7 +303,7 @@ describe('createWebServer', () => {
         }),
       });
       expect(revitalSearch.status).toBe(200);
-      const revitalPayload = await revitalSearch.json();
+      const revitalPayload = (await revitalSearch.json()) as ChatApiPayload;
       expect(revitalPayload.mode).toBe('llm');
 
       const geeksMemory = JSON.parse(readFileSync(geeksPaths.memoryFilePath, 'utf8')) as {

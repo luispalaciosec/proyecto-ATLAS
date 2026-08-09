@@ -237,7 +237,7 @@ describe('LlmModule', () => {
   });
 
   it('resolves openai-compatible provider from providerId options', async () => {
-    const fetchImpl = vi.fn(async () =>
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) =>
       Response.json({
         choices: [
           {
