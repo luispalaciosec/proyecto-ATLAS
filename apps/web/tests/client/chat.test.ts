@@ -1,0 +1,153 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { renderChat } from '../../src/client/pages/chat.js';
+import { getState, setActiveWorkspace } from '../../src/client/state/app-state.js';
+
+const sendChatMessage = vi.fn();
+const fetchHistory = vi.fn();
+
+vi.mock('../../src/client/api/client.js', () => ({
+  fetchHistory: (...args: unknown[]) => fetchHistory(...args),
+  sendChatMessage: (...args: unknown[]) => sendChatMessage(...args),
+  sendCorrection: vi.fn(),
+}));
+
+async function flushUi(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+describe('renderChat', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '<main id="main"></main>';
+    setActiveWorkspace('default', { resetChat: true });
+    fetchHistory.mockReset();
+    sendChatMessage.mockReset();
+    fetchHistory.mockResolvedValue({
+      workspace: 'default',
+      messages: [],
+      canCorrect: false,
+    });
+  });
+
+  it('preloads history and paints messages', async () => {
+    fetchHistory.mockResolvedValue({
+      workspace: 'default',
+      messages: [
+        {
+          id: 'hist.default.0.user',
+          role: 'user',
+          content: 'Hola ATLAS',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'hist.default.1.assistant',
+          role: 'assistant',
+          content: 'Respuesta previa',
+          createdAt: '2026-01-01T00:00:01.000Z',
+        },
+      ],
+      canCorrect: false,
+    });
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderChat(main);
+    await flushUi();
+
+    expect(getState().chatMessages).toHaveLength(2);
+    expect(main.textContent).toContain('Hola ATLAS');
+    expect(main.textContent).toContain('Respuesta previa');
+  });
+
+  it('shows empty state when history is empty', async () => {
+    const main = document.querySelector('#main') as HTMLElement;
+    renderChat(main);
+    await flushUi();
+
+    expect(main.textContent).toContain('Empieza una conversación con ATLAS');
+  });
+
+  it('shows retry button after failure', async () => {
+    sendChatMessage.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderChat(main);
+    await flushUi();
+
+    const input = main.querySelector('#chat-input') as HTMLTextAreaElement;
+    input.value = 'Mi solicitud original';
+    (main.querySelector('#chat-form') as HTMLFormElement).requestSubmit();
+    await flushUi();
+    await flushUi();
+
+    expect(getState().lastFailedGoal).toBe('Mi solicitud original');
+    expect(main.textContent).toContain('Intentar de nuevo');
+    const errorMessage = main.querySelector('.message--error');
+    expect(errorMessage?.textContent).toContain('No hay conexión con ATLAS');
+    const details = main.querySelector('.error-panel__details') as HTMLElement | null;
+    expect(details?.hidden).toBe(true);
+    expect(details?.textContent).toContain('ECONNREFUSED');
+  });
+
+  it('retry reuses the original message without duplicating the user turn', async () => {
+    sendChatMessage
+      .mockRejectedValueOnce(new Error('network error'))
+      .mockResolvedValueOnce({ mode: 'deterministic', success: true });
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderChat(main);
+    await flushUi();
+
+    const input = main.querySelector('#chat-input') as HTMLTextAreaElement;
+    input.value = 'Mi solicitud original';
+    (main.querySelector('#chat-form') as HTMLFormElement).requestSubmit();
+    await flushUi();
+    await flushUi();
+
+    const userMessagesBeforeRetry = getState().chatMessages.filter((message) => message.kind === 'user');
+    expect(userMessagesBeforeRetry).toHaveLength(1);
+
+    const retryButton = main.querySelector('.error-panel .btn--primary') as HTMLButtonElement;
+    retryButton.click();
+    await flushUi();
+    await flushUi();
+
+    const userMessagesAfterRetry = getState().chatMessages.filter((message) => message.kind === 'user');
+    expect(userMessagesAfterRetry).toHaveLength(1);
+    expect(sendChatMessage).toHaveBeenLastCalledWith('default', 'Mi solicitud original');
+    expect(getState().chatMessages.some((message) => message.kind === 'assistant')).toBe(true);
+    expect(getState().lastFailedGoal).toBeUndefined();
+  });
+
+  it('shows a friendly error when retry fails again', async () => {
+    sendChatMessage
+      .mockRejectedValueOnce(new Error('network error'))
+      .mockRejectedValueOnce(new Error('429 rate limit'));
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderChat(main);
+    await flushUi();
+
+    const input = main.querySelector('#chat-input') as HTMLTextAreaElement;
+    input.value = 'Mi solicitud original';
+    (main.querySelector('#chat-form') as HTMLFormElement).requestSubmit();
+    await flushUi();
+    await flushUi();
+
+    const retryButton = main.querySelector('.error-panel .btn--primary') as HTMLButtonElement;
+    retryButton.click();
+    await flushUi();
+    await flushUi();
+
+    expect(getState().lastFailedGoal).toBe('Mi solicitud original');
+    expect(main.textContent).toContain('Intentar de nuevo');
+    const errorMessage = main.querySelector('.message--error');
+    expect(errorMessage?.textContent).toContain('temporalmente ocupado');
+    const details = main.querySelector('.error-panel__details') as HTMLElement | null;
+    expect(details?.hidden).toBe(true);
+    expect(details?.textContent).toContain('429');
+  });
+});

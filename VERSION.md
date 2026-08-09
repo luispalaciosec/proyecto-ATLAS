@@ -1,9 +1,9 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.9.0
+version: 1.10.0
 status: active
-last_updated: 2026-08-05
+last_updated: 2026-08-09
 ---
 
 # VERSION.md
@@ -16,8 +16,8 @@ last_updated: 2026-08-05
 | **Kernel Version** | `0.1` |
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
-| **Current Phase** | **Phase 2 — Product (P2.5 Delivered)** |
-| **Next Sprint** | **P2.6 — Cloud Deployment** — pending Owner authorization ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
+| **Current Phase** | **Phase 2 — Product (P2.5 Delivered, Product Hardening Checkpoint Closed)** |
+| **Next Sprint** | **Piloto de uso real (varias semanas, ≥1 marca real)** — P2.6 Cloud sigue condicional a necesidad real, no autorizado todavía ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
 | **Product Vision** | [`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md) |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
 | **Memory Application Tag** | `memory-application-certified` |
@@ -449,6 +449,132 @@ Quinto entregable Phase 2: interfaz web local (`@atlas/web`) que expone `atlas c
 **Host/puerto:** `ATLAS_WEB_HOST` (default `127.0.0.1`), `ATLAS_WEB_PORT` (default `4173`).
 
 **Nota checkpoint:** Owner autorizó avanzar a P2.5 sin esperar evaluación formal del criterio Vision §10.
+
+**Verificación de cierre (independiente, no autoreportada):** el reporte inicial de P2.5 declaraba `pnpm --filter @atlas/cli test` 69/69 y `pnpm --filter @atlas/web test` 7/7, pero no ejecutaba `turbo run build`/`turbo run test` en la raíz. La verificación independiente detectó una dependencia circular real `@atlas/cli` ↔ `@atlas/web` (el comando estándar `pnpm run build` fallaba con cycle-detection, exit 1) y, tras corregirla, un test flaky en `feedback-context.test.ts` (colisión de timestamp en milisegundo, ~50% de fallos). Ambos corregidos ([`releases/P2_5_FIX_CIRCULAR_DEPENDENCY.md`](./releases/P2_5_FIX_CIRCULAR_DEPENDENCY.md), [`releases/P2_5_FIX_FEEDBACK_ORDER_FLAKY_TEST.md`](./releases/P2_5_FIX_FEEDBACK_ORDER_FLAKY_TEST.md)) y reverificados desde una copia limpia: `pnpm run build` en raíz — 23/23 tareas, sin warning de ciclo; `pnpm run test` en raíz — 46/46; `feedback-context.test.ts` — 0 fallos en 30 corridas repetidas.
+
+---
+
+## Checkpoint — Product Hardening post-P2.5 (validación manual + fixes)
+
+En P2.4 quedó registrado: *"corresponde evaluar el criterio de éxito de ATLAS_PRODUCT_VISION §10 con uso real antes de avanzar a P2.5"*. Esa evaluación no se hizo antes de P2.5 (Owner autorizó avanzar igual), pero se completó ahora, después de P2.5, mediante una batería de 6 ejercicios end-to-end (E1–E6) ejecutados manualmente el 8–9 de agosto de 2026. Informe completo: [`releases/MANUAL_VALIDATION_REPORT_2026-08-09.md`](./releases/MANUAL_VALIDATION_REPORT_2026-08-09.md). Guía de uso resultante: [`USER_MANUAL.md`](./USER_MANUAL.md).
+
+| Ejercicio | Descripción | Resultado |
+|-----------|-------------|-----------|
+| E1 | Memoria + `ask` + `plan` | **PASS** |
+| E2 | Chat multi-turno | **PASS** |
+| E3 | Web UI (`default`) | **PASS** |
+| E4 | Brand CLI (`geeks`) | **PASS** |
+| E5 | Brand Web (`geeks` ↔ `default`) | **PASS** |
+| E6 | Escalamiento cross-brand (bidireccional, CLI + Web, con `/correct` y resumen entre sesiones) | **PASS (12/12)** |
+
+Durante la validación se detectaron y cerraron cuatro hallazgos, además de tres commits fuera de este proceso que también se reverificaron independientemente:
+
+- **Tres commits sin revisión previa** (`39ac12f` bootstrap `pnpm atlas`, `29e39d4` provider OpenAI-compatible, `a63ed06` búsqueda/plan insensible a tildes) — verificados post-hoc: código correcto, pero `a63ed06` modificó `@atlas/core` y `@atlas/intelligence` (Frozen) sin pasar por ADR. Gap de gobernanza señalado, no bloqueante dado el carácter de bug fix aditivo.
+- **Quality gate roto en la raíz** (`pnpm run typecheck` y `pnpm run lint` fallaban, invisibles porque nunca se corrían completos, solo con `--filter`) — corregido y reverificado: `pnpm run typecheck` 35/35, `pnpm run lint` 35/35. Ver [`releases/QUALITY_GATE_FIX_TYPECHECK_LINT.md`](./releases/QUALITY_GATE_FIX_TYPECHECK_LINT.md).
+- **L-01 — Groq (`llama-3.3-70b-versatile`) intermitente en tool-calling** (`tool_use_failed`, rate limits) — diagnosticado con un experimento controlado comparando el mismo flujo en Groq vs. Anthropic (`claude-sonnet-5`): el fallo no se reprodujo con Anthropic. Confirmado como limitación del proveedor, no de ATLAS. `USER_MANUAL.md` actualizado recomendando Anthropic como proveedor por defecto.
+- **L-02 — el LLM podía contradecir un resultado de `memory_search` no vacío** (afirmar "no hay datos" existiendo registros) — corregido extendiendo `SYSTEM_PROMPT` en `llm-module.ts` con una instrucción explícita de precedencia de tool results; test unitario nuevo verifica el mensaje real enviado al provider. Ver [`releases/LLM_TOOL_RESULT_PRECEDENCE_FIX.md`](./releases/LLM_TOOL_RESULT_PRECEDENCE_FIX.md).
+
+**Verificación de cierre (independiente):** cada fix anterior fue reverificado desde una copia limpia del repo (no solo el autoreporte) — `pnpm run build` 23/23, `pnpm run test` 46/46 en cada punto de control.
+
+**Conclusión del checkpoint:** el núcleo funcional de Phase 2 (P2.1–P2.5) es operativo y reproducible con evidencia end-to-end, no solo tests automatizados. El siguiente paso autorizado no es P2.6 (Cloud) — sigue condicional a necesidad real — sino un piloto de uso real de varias semanas con al menos una marca/workspace real, antes de reabrir esa conversación.
+
+---
+
+## P2.5.x — Web UI Fase 3 (Entregables 1–4)
+
+Vertical slice producto sobre `@atlas/web`: SPA Vite + app shell + i18n ES + chat v2. Fuente UX: [`docs/WEB_UI_PRODUCT_UX.md`](./docs/WEB_UI_PRODUCT_UX.md) §20. Informe: [`releases/WEB_UI_PHASE_3_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3_IMPLEMENTATION.md).
+
+| # | Entregable | Status |
+|---|------------|--------|
+| 1 | Scaffold Vite + TS + tokens CSS | **Complete** |
+| 2 | App shell + router + espacio activo | **Complete** |
+| 3 | i18n ES + mappers presentación | **Complete** |
+| 4 | Chat v2 (markdown, corrección, errores humanos) | **Complete** |
+
+**Arranque:** `pnpm --filter @atlas/web build && atlas web` → `http://127.0.0.1:4173`
+
+**Tests `@atlas/web`:** 26/26 (API 7 + frontend/presentation 19).
+
+**Pendiente Fase 3:** ítems 5–12 (historial reload, memoria browse, settings, etc.) — ver plan §20 UX doc.
+
+**Quality gate (2026-08-09):** `pnpm build` 23/23 · `pnpm typecheck` 35/35 · `pnpm lint` 35/35 · `pnpm test` 45/46 (1 flake preexistente `@atlas/cli` dev-bootstrap timeout, no introducido por Fase 3 web).
+
+---
+
+## P2.5.x — Web UI Fase 3D + 3B (Historial + Home accionable)
+
+Incremento UX producto: persistencia de conversación, Home accionable, renaming Conocimiento, retry. Informe: [`releases/WEB_UI_PHASE_3D_B_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3D_B_IMPLEMENTATION.md).
+
+| # | Entregable | Status |
+|---|------------|--------|
+| 3D | `GET /api/history` + preload Chat (F5) | **Complete** |
+| 3B | Home accionable (hero, acciones, ejemplos, reciente) | **Complete** |
+| — | Memoria → Conocimiento + redirect `/memoria` | **Complete** |
+| — | Retry “Intentar de nuevo” | **Complete** |
+
+**Tests `@atlas/web`:** 42/42 (API 11 + frontend/presentation 31).
+
+**Quality gate (2026-08-09):** `pnpm build` 23/23 · `pnpm typecheck` · `pnpm lint` · `pnpm test` 46/46 · `pnpm atlas doctor` HEALTHY.
+
+**Pendiente Fase 3:** browse Conocimiento, Activity real, settings — ver informe §16.
+
+---
+
+## P2.5.x — Web UI Fase 3E (Conocimiento browse/search)
+
+Experiencia producto para consultar conocimiento: búsqueda, resultados, aislamiento por marca, integración Chat. Informe: [`releases/WEB_UI_PHASE_3E_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3E_IMPLEMENTATION.md).
+
+| # | Entregable | Status |
+|---|------------|--------|
+| 3E | `GET/POST /api/knowledge/search` + mapper producto | **Complete** |
+| 3E | Página Conocimiento (search, estados, resultados) | **Complete** |
+| 3E | Conocimiento → Chat (`pendingChatDraft`) | **Complete** |
+| 3E | Tests aislamiento + UI + mapper | **Complete** |
+
+**Tests `@atlas/web`:** 60/60 (API 17 + frontend/presentation 43).
+
+**Quality gate (2026-08-09):** `pnpm build` 23/23 · `pnpm typecheck` · `pnpm lint` · `pnpm test` 46/46 · `pnpm atlas doctor` HEALTHY.
+
+**Pendiente Fase 3:** detalle registro, Marcas UI — ver informe §16.
+
+---
+
+## P2.5.x — Web UI Fase 3F (Actividad)
+
+Timeline de actividad de sesión Web. Design: [`releases/WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md`](./releases/WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md). Informe: [`releases/WEB_UI_PHASE_3F_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3F_IMPLEMENTATION.md).
+
+| # | Entregable | Status |
+|---|------------|--------|
+| 3F | `GET /api/activity` + log in-memory | **Complete** |
+| 3F | Mapper `map-activity.ts` | **Complete** |
+| 3F | Página `/actividad` + filtros + timeline | **Complete** |
+| 3F | Home actividad reciente (mapper compartido) | **Complete** |
+
+**Tests `@atlas/web`:** 74/74.
+
+**Limitación:** actividad in-memory; ADR pendiente para persistencia durable.
+
+---
+
+## P2.5.x — Web UI Fase 3G (Marcas)
+
+API (3G.1): `GET/POST /api/brands`, mapper `map-brand.ts`, errores tipados. UI (3G.2): [`releases/WEB_UI_PHASE_3G2_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3G2_IMPLEMENTATION.md).
+
+| # | Entregable | Status |
+|---|------------|--------|
+| 3G.1 | `GET /api/brands` + `POST /api/brands` | **Complete** |
+| 3G.1 | Mapper `map-brand.ts` + SessionStore | **Complete** |
+| 3G.2 | Página `/marcas` + BrandCard + modal crear | **Complete** |
+| 3G.2 | Cambio de contexto vía `switchWorkspace()` | **Complete** |
+| 3G.3 | Shell selector + confirmación + `GET /api/brands` | **Complete** |
+| 3G.4 | Home polish + coherencia producto | **Complete** |
+| 3H | Pilot polish + honestidad sesión | **Complete** |
+
+**Tests `@atlas/web`:** 134/134.
+
+**Informes:** [`WEB_UI_WORLD_CLASS_FINAL_AUDIT.md`](./releases/WEB_UI_WORLD_CLASS_FINAL_AUDIT.md), [`WEB_UI_PHASE_3H_AUDIT.md`](./releases/WEB_UI_PHASE_3H_AUDIT.md), [`WEB_UI_PHASE_3H_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3H_IMPLEMENTATION.md).
+
+**Limitación:** sin edición/eliminación de marca; historial/actividad in-memory por sesión Web; Configuración sigue «Próximamente».
 
 ---
 
