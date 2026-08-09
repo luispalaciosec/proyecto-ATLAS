@@ -112,6 +112,54 @@ pnpm install
 pnpm build
 ```
 
+### Running ATLAS locally
+
+From the repository root, use the workspace CLI wrapper (recommended for development):
+
+```bash
+pnpm install
+pnpm build
+pnpm atlas --help
+pnpm atlas doctor
+```
+
+Common commands (all via `pnpm atlas …`):
+
+```bash
+pnpm atlas doctor
+pnpm atlas chat
+pnpm atlas plan --help
+pnpm atlas memory --help
+pnpm atlas ask --help
+pnpm atlas brand --help
+pnpm atlas web --help
+```
+
+Notes:
+
+- `pnpm build` is required before the first `pnpm atlas` invocation — the CLI runs from `packages/cli/dist/atlas.js`.
+- `pnpm atlas` is the recommended development invocation; it does not require global installation or `PNPM_HOME` configuration.
+- Global `atlas` on your `PATH` is optional (see below).
+- `ATLAS_LLM_API_KEY` (and `ATLAS_LLM_MODEL`) are required for `pnpm atlas ask` and LLM chat modes; run `pnpm atlas doctor` first when diagnosing local setup.
+
+#### Optional global installation
+
+If you prefer a global `atlas` command:
+
+```bash
+pnpm setup
+pnpm link --global ./packages/cli
+atlas doctor
+```
+
+Global linking is not required for repository development.
+
+Direct invocation (equivalent to `pnpm atlas` after build):
+
+```bash
+node packages/cli/dist/atlas.js doctor
+```
+
 ### Pipeline de calidad
 
 ```bash
@@ -121,13 +169,21 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm build && pnpm test
 ### Flujo oficial del Kernel
 
 ```bash
-# Compilar el CLI
-pnpm --filter @atlas/cli build
+# Build the CLI (included in root pnpm build)
+pnpm build
 
-# Desde un workspace Atlas
-atlas doctor
-atlas compile
-atlas run
+# From the repository root
+pnpm atlas doctor
+pnpm atlas compile --help
+pnpm atlas run --help
+```
+
+From a workspace directory with `atlas.workspace.json`:
+
+```bash
+pnpm atlas doctor --workspace .
+pnpm atlas compile --workspace .
+pnpm atlas run --workspace .
 ```
 
 ---

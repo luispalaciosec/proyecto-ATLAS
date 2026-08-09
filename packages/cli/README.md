@@ -55,12 +55,28 @@ Developer → CLI (Commander) → Command Registry → AtlasService → @atlas/s
 
 ## Usage
 
+From the ATLAS repository root (after `pnpm install` and `pnpm build`):
+
 ```bash
-atlas doctor --workspace .
-atlas compile --workspace .
-atlas run --workspace .
-atlas version
-atlas help
+pnpm atlas doctor --workspace .
+pnpm atlas compile --workspace .
+pnpm atlas run --workspace .
+pnpm atlas version
+pnpm atlas --help
+```
+
+Equivalent direct invocation:
+
+```bash
+node packages/cli/dist/atlas.js doctor
+```
+
+Optional global install (not required for development):
+
+```bash
+pnpm setup
+pnpm link --global ./packages/cli
+atlas doctor
 ```
 
 ## Dependencies
