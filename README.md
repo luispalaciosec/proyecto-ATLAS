@@ -142,6 +142,46 @@ Notes:
 - Global `atlas` on your `PATH` is optional (see below).
 - `ATLAS_LLM_API_KEY` (and `ATLAS_LLM_MODEL`) are required for `pnpm atlas ask` and LLM chat modes; run `pnpm atlas doctor` first when diagnosing local setup.
 
+#### LLM providers (P2.1)
+
+ATLAS uses the `LlmProvider` abstraction in `@atlas/llm`. Concrete vendors are selected by environment variables — not hardcoded into Core, Runtime, Memory, or Retrieval.
+
+| Provider | `ATLAS_LLM_PROVIDER` | Notes |
+|----------|----------------------|-------|
+| Anthropic | `anthropic` (default) | Messages API via `createAnthropicProvider` |
+| OpenAI-compatible | `openai-compatible` | Chat Completions API; first validated target: **Qwen Cloud** |
+
+Qwen is a **technology provider**, not part of ATLAS architecture. Any OpenAI-compatible endpoint can be used by changing configuration.
+
+**Anthropic example:**
+
+```bash
+export ATLAS_LLM_PROVIDER=anthropic
+export ATLAS_LLM_API_KEY="..."
+export ATLAS_LLM_MODEL="..."
+```
+
+**Qwen / OpenAI-compatible example:**
+
+```bash
+export ATLAS_LLM_PROVIDER=openai-compatible
+export ATLAS_LLM_API_KEY="..."
+export ATLAS_LLM_MODEL="..."
+export ATLAS_LLM_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
+```
+
+`ATLAS_LLM_BASE_URL` is optional for `openai-compatible`; when omitted, the Qwen Cloud compatible-mode default applies. Trailing slashes are normalized. The provider calls `{baseUrl}/chat/completions`.
+
+Then:
+
+```bash
+pnpm build
+pnpm atlas doctor
+pnpm atlas ask --goal "..."
+```
+
+Never commit real API keys. `.env` and `.env.*` are gitignored (see `.gitignore`).
+
 #### Optional global installation
 
 If you prefer a global `atlas` command:

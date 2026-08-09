@@ -313,6 +313,61 @@ Primer entregable de Phase 2 — Product: capacidad generativa con tool-calling 
 
 **Variables de entorno:** `ATLAS_LLM_PROVIDER` (default `anthropic`), `ATLAS_LLM_API_KEY`, `ATLAS_LLM_MODEL` (sin default hardcodeado).
 
+### P2.1 Extension — OpenAI-Compatible Provider
+
+Extensión aditiva de P2.1 dentro de la abstracción `LlmProvider` existente — **no** introduce ADR nuevo ni modifica contratos Frozen. Qwen Cloud es el primer target validado como proveedor OpenAI-compatible; Qwen es configuración tecnológica, no parte de la arquitectura ATLAS.
+
+| Componente | Cambio |
+|------------|--------|
+| `@atlas/llm` | `createOpenAICompatibleProvider` — `id: openai-compatible`, `fetch` nativo, `/chat/completions` |
+| `@atlas/sdk` | `LlmModule` resuelve `anthropic` \| `openai-compatible` desde `providerId` / `ATLAS_LLM_PROVIDER` |
+| `@atlas/cli` | `#resolveLlmOptions()` lee `ATLAS_LLM_PROVIDER` y `ATLAS_LLM_BASE_URL` |
+| Anthropic | Sin cambios en `anthropic-provider.ts` ni en semántica existente |
+
+**Providers soportados:**
+
+| `ATLAS_LLM_PROVIDER` | Implementación | Notas |
+|----------------------|----------------|-------|
+| `anthropic` (default) | `createAnthropicProvider` | Sin cambios |
+| `openai-compatible` | `createOpenAICompatibleProvider` | Qwen, DeepSeek u otros APIs compatibles con OpenAI Chat Completions |
+
+**Variables adicionales:**
+
+| Variable | Obligatoria | Default | Uso |
+|----------|-------------|---------|-----|
+| `ATLAS_LLM_BASE_URL` | No | `https://dashscope.aliyuncs.com/compatible-mode/v1` cuando `provider=openai-compatible` | Base URL del API compatible; trailing slash se normaliza; endpoint final: `{baseUrl}/chat/completions` |
+
+**Principio arquitectónico:** `ATLAS → LlmProvider → Provider implementation → External LLM`. Nunca `ATLAS → Qwen` ni `ATLAS → Anthropic` directamente.
+
+**Ejemplo Qwen (sin secretos reales):**
+
+```bash
+export ATLAS_LLM_PROVIDER=openai-compatible
+export ATLAS_LLM_API_KEY="..."
+export ATLAS_LLM_MODEL="..."
+export ATLAS_LLM_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
+pnpm build
+pnpm atlas doctor
+pnpm atlas ask --goal "..."
+```
+
+**Verificación de cierre (extensión P2.1 OpenAI-compatible):**
+
+| Área | Resultado | Evidencia |
+|------|-----------|-----------|
+| LlmProvider contract | PASS | `packages/llm/src/provider.ts` sin diff; provider implementa `complete()` existente |
+| Anthropic | PASS | `anthropic-provider.ts` sin diff; `@atlas/llm` tests anthropic 5/5 |
+| OpenAI-compatible | PASS | `openai-compatible-provider.test.ts` 6/6; mapeo chat/tools/multi-turn |
+| Tool-calling | PASS | `tool-loop.test.ts` 5/5; `llm-module.test.ts` incluye resolución openai-compatible |
+| Qwen configuration | PASS | default base URL + override vía `ATLAS_LLM_BASE_URL`; tests mock HTTP |
+| Build | PASS | `pnpm build` — 23/23 tareas turbo |
+| Tests | PASS | `pnpm test` — 46/46; `@atlas/llm` 16/16, `@atlas/sdk` 34/34, `@atlas/cli` 72/72 |
+| Typecheck | FAIL | `@atlas/llm` TS2322 preexistente en `anthropic-provider.test.ts:71` (commit `ce7816ee`) |
+| Lint | FAIL | `@atlas/llm` unused `init` en `openai-compatible-provider.test.ts:104` — **introducido por esta extensión** |
+| Architecture scope | PASS | Sin cambios en Core, Compiler, Runtime, Memory, Retrieval, Workflow, Planning, Events, ADRs |
+
+**Deuda aceptada:** ninguna nueva introducida por esta extensión. Corregir lint de test antes de commit.
+
 ---
 
 ## P2.2 — Conversación (Phase 2)

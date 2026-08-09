@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { createFakeLlmProvider, createFakeLlmProviderWithRequests } from '@atlas/llm';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createArtifact, createAtlas, planExecuteAndRemember } from '../src/index.js';
 
@@ -232,6 +232,60 @@ describe('LlmModule', () => {
     const systemMessage = fake.requests[0]?.messages.find((message) => message.role === 'system');
     expect(systemMessage?.content).toContain('Purpose: Electronics retail for enthusiasts');
     expect(systemMessage?.content).toContain('certified ATLAS capabilities');
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('resolves openai-compatible provider from providerId options', async () => {
+    const fetchImpl = vi.fn(async () =>
+      Response.json({
+        choices: [
+          {
+            message: { role: 'assistant', content: 'Qwen reply.' },
+            finish_reason: 'stop',
+          },
+        ],
+        usage: { prompt_tokens: 1, completion_tokens: 1 },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchImpl);
+
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-llm-openai-compatible-'));
+    const atlas = createAtlas({
+      memory: { storageFilePath: join(dir, 'memory.json') },
+      llm: {
+        apiKey: 'secret-key',
+        model: 'qwen-test-model',
+        providerId: 'openai-compatible',
+        baseUrl: 'https://custom.example.com/v1',
+      },
+    });
+
+    const result = await atlas.llm.ask('Hello Qwen');
+
+    expect(result.success).toBe(true);
+    expect(result.finalMessage).toBe('Qwen reply.');
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toBe('https://custom.example.com/v1/chat/completions');
+
+    vi.unstubAllGlobals();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('rejects unsupported providerId values', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-llm-unsupported-provider-'));
+    const atlas = createAtlas({
+      memory: { storageFilePath: join(dir, 'memory.json') },
+      llm: {
+        apiKey: 'secret-key',
+        model: 'qwen-test-model',
+        providerId: 'qwen',
+      },
+    });
+
+    expect(() => {
+      void atlas.llm.ask('Hello');
+    }).toThrow(/Unsupported ATLAS_LLM_PROVIDER/);
 
     rmSync(dir, { recursive: true, force: true });
   });

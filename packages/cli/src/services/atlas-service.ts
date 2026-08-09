@@ -40,10 +40,16 @@ export class AtlasService {
   #resolveLlmOptions(): AtlasLlmOptions {
     const apiKey = process.env.ATLAS_LLM_API_KEY;
     const model = process.env.ATLAS_LLM_MODEL;
+    const providerId = process.env.ATLAS_LLM_PROVIDER;
+    const baseUrl = process.env.ATLAS_LLM_BASE_URL;
 
     return Object.freeze({
       ...(typeof apiKey === 'string' && apiKey.trim().length > 0 ? { apiKey } : {}),
       ...(typeof model === 'string' && model.trim().length > 0 ? { model } : {}),
+      ...(typeof providerId === 'string' && providerId.trim().length > 0
+        ? { providerId: providerId.trim() }
+        : {}),
+      ...(typeof baseUrl === 'string' && baseUrl.trim().length > 0 ? { baseUrl: baseUrl.trim() } : {}),
     });
   }
 

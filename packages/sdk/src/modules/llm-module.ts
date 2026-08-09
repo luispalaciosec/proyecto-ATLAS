@@ -1,6 +1,7 @@
 import type { EventBus } from '@atlas/events';
 import {
   createAnthropicProvider,
+  createOpenAICompatibleProvider,
   runToolLoop,
   type LlmBudget,
   type LlmMessage,
@@ -21,6 +22,23 @@ const SYSTEM_PROMPT = [
   'and plan_and_execute when the user wants to plan and run a goal through the Atlas kernel.',
   'Prefer tools over guessing when memory or execution is relevant.',
 ].join(' ');
+
+function readOptionalStringOption(
+  options: AtlasLlmOptions,
+  key: string,
+): string | undefined {
+  const raw = options[key];
+
+  if (typeof raw === 'string' && raw.trim().length > 0) {
+    return raw.trim();
+  }
+
+  return undefined;
+}
+
+function resolveConfiguredProviderId(options: AtlasLlmOptions): string {
+  return (readOptionalStringOption(options, 'providerId') ?? 'anthropic').toLowerCase();
+}
 
 function buildSystemPrompt(contextPrompt?: string): string {
   if (typeof contextPrompt === 'string' && contextPrompt.trim().length > 0) {
@@ -183,10 +201,28 @@ export class LlmModule {
       throw new Error('ATLAS_LLM_MODEL is required for atlas ask');
     }
 
-    this.#resolvedProvider = createAnthropicProvider({
-      apiKey: apiKey.trim(),
-      model: model.trim(),
-    });
+    const providerId = resolveConfiguredProviderId(this.#llmOptions);
+    const normalizedApiKey = apiKey.trim();
+    const normalizedModel = model.trim();
+
+    if (providerId === 'anthropic') {
+      this.#resolvedProvider = createAnthropicProvider({
+        apiKey: normalizedApiKey,
+        model: normalizedModel,
+      });
+    } else if (providerId === 'openai-compatible') {
+      const baseUrl = readOptionalStringOption(this.#llmOptions, 'baseUrl');
+
+      this.#resolvedProvider = createOpenAICompatibleProvider({
+        apiKey: normalizedApiKey,
+        model: normalizedModel,
+        ...(baseUrl !== undefined ? { baseUrl } : {}),
+      });
+    } else {
+      throw new Error(
+        `Unsupported ATLAS_LLM_PROVIDER "${providerId}" (supported: anthropic, openai-compatible)`,
+      );
+    }
 
     return this.#resolvedProvider;
   }

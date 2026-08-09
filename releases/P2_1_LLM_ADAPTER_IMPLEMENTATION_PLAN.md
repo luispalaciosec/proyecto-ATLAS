@@ -285,6 +285,17 @@ Esto es una verificación humana, no un test automatizado. El objetivo es confir
 - No hay streaming de respuesta — `complete()` devuelve la respuesta completa, no tokens incrementales.
 - No hay UI — esto es CLI únicamente (`atlas ask`), consistente con P2.5 (Web UI) siendo posterior.
 
+## 5.1 P2.1 Extension — OpenAI-Compatible Provider (post-close)
+
+Extensión documentada en [`VERSION.md`](../VERSION.md) (sección *P2.1 Extension — OpenAI-Compatible Provider*).
+
+- **Decisión arquitectónica:** implementación dentro de la abstracción `LlmProvider` ya establecida en P2.1 — **no requiere ADR nuevo**.
+- **Provider añadido:** `createOpenAICompatibleProvider` (`id: openai-compatible`).
+- **Primer target validado:** Qwen Cloud (OpenAI-compatible API).
+- **Fuera de alcance cumplido:** no se creó `QwenProvider` ni acoplamiento Qwen en Core/SDK/Memory/Retrieval.
+
+La frase de la sección 5 original (“No hay proveedor OpenAI…”) reflejaba el cierre inicial de P2.1; esta extensión añade el segundo provider sin modificar contratos Frozen.
+
 ## 6. Protocolo de reporte por sprint
 
 Al cerrar cada sprint (LLM-1 a LLM-4), reportar:
