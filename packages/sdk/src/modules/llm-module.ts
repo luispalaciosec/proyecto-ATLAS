@@ -21,6 +21,10 @@ const SYSTEM_PROMPT = [
   'Use memory_search to recall prior information, memory_store to persist new facts,',
   'and plan_and_execute when the user wants to plan and run a goal through the Atlas kernel.',
   'Prefer tools over guessing when memory or execution is relevant.',
+  'Tool results are authoritative and must never be contradicted or ignored.',
+  'If a tool result shows total greater than zero or a non-empty records array, you must',
+  'reference that data in your response — never claim no information exists when a tool',
+  'result shows otherwise. If a tool result is genuinely empty, say so plainly instead of guessing.',
 ].join(' ');
 
 function readOptionalStringOption(

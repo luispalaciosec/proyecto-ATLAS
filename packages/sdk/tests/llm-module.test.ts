@@ -236,6 +236,30 @@ describe('LlmModule', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
+  it('includes authoritative tool-result precedence in the system message', async () => {
+    const fake = createFakeLlmProviderWithRequests([
+      Object.freeze({
+        message: Object.freeze({ role: 'assistant' as const, content: 'Acknowledged.' }),
+        usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+        stopReason: 'end_turn' as const,
+      }),
+    ]);
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-llm-system-prompt-'));
+    const atlas = createAtlas({
+      memory: { storageFilePath: join(dir, 'memory.json') },
+      llm: { provider: fake.provider },
+    });
+
+    await atlas.llm.ask('Hello');
+
+    const systemMessage = fake.requests[0]?.messages.find((message) => message.role === 'system');
+    expect(systemMessage?.content).toContain('authoritative');
+    expect(systemMessage?.content).toContain('never be contradicted');
+    expect(systemMessage?.content).toContain('genuinely empty');
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
   it('resolves openai-compatible provider from providerId options', async () => {
     const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) =>
       Response.json({
