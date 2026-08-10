@@ -7,8 +7,11 @@ import type { Express } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveWebHost } from '../src/config.js';
+import * as extractTextModule from '../src/lib/knowledge-upload/extract-text.js';
+import { EMPTY_EXTRACTION_MESSAGE } from '../src/lib/knowledge-upload/constants.js';
 import { createWebServer } from '../src/server.js';
 import { SessionStore } from '../src/session-store.js';
+import { readFixture } from './fixtures/fixture-utils.js';
 import {
   loadOrCreateBrandProfile,
   resolveWorkspacePaths,
@@ -635,6 +638,90 @@ describe('createWebServer', () => {
         error: 'knowledge unavailable',
       });
     });
+  });
+
+  it('uploads txt knowledge and makes it searchable', async () => {
+    const app = createWebServer();
+
+    await withServer(app, async (baseUrl) => {
+      const formData = new FormData();
+      formData.append(
+        'file',
+        new Blob([Uint8Array.from(readFixture('sample.txt'))], { type: 'text/plain' }),
+        'sample.txt',
+      );
+
+      const upload = await fetch(`${baseUrl}/api/knowledge/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      expect(upload.status).toBe(200);
+      const uploadPayload = (await upload.json()) as {
+        fileName: string;
+        chunks: number;
+        recordIds: string[];
+      };
+      expect(uploadPayload.fileName).toBe('sample.txt');
+      expect(uploadPayload.chunks).toBeGreaterThan(0);
+      expect(uploadPayload.recordIds.length).toBe(uploadPayload.chunks);
+
+      const search = await fetch(`${baseUrl}/api/knowledge/search?query=zeta-quantum-7742`);
+      expect(search.status).toBe(200);
+      const searchPayload = (await search.json()) as { total: number };
+      expect(searchPayload.total).toBeGreaterThan(0);
+    });
+  });
+
+  it('rejects unsupported upload formats with 400', async () => {
+    const app = createWebServer();
+
+    await withServer(app, async (baseUrl) => {
+      const formData = new FormData();
+      formData.append(
+        'file',
+        new Blob(['contenido'], { type: 'application/octet-stream' }),
+        'datos.xlsx',
+      );
+
+      const response = await fetch(`${baseUrl}/api/knowledge/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      expect(response.status).toBe(400);
+      const payload = (await response.json()) as { error: string };
+      expect(payload.error).toContain('.xlsx');
+      expect(payload.error).not.toBe('[object Object]');
+    });
+  });
+
+  it('returns 422 when uploaded file has no extractable text', async () => {
+    const extractSpy = vi.spyOn(extractTextModule, 'extractTextFromBuffer').mockResolvedValue('');
+
+    try {
+      const app = createWebServer();
+
+      await withServer(app, async (baseUrl) => {
+        const formData = new FormData();
+        formData.append(
+          'file',
+          new Blob(['%PDF'], { type: 'application/pdf' }),
+          'escaneado.pdf',
+        );
+
+        const response = await fetch(`${baseUrl}/api/knowledge/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        expect(response.status).toBe(422);
+        const payload = (await response.json()) as { error: string };
+        expect(payload.error).toBe(EMPTY_EXTRACTION_MESSAGE);
+      });
+    } finally {
+      extractSpy.mockRestore();
+    }
   });
 
   it('aliases GET /api/memory/search to knowledge search', async () => {

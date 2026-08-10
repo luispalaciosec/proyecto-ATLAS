@@ -8,10 +8,13 @@ import {
   listWorkspaces,
 } from '@atlas/cli';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
+import multer from 'multer';
 
 import { formatWebUrl, resolveWebHost, resolveWebPort } from './config.js';
 import { formatAtlasError } from './lib/format-atlas-error.js';
 import { loadEnvFromFile } from './lib/load-env.js';
+import { MAX_UPLOAD_BYTES } from './lib/knowledge-upload/constants.js';
+import { KnowledgeUploadError } from './lib/knowledge-upload/upload-errors.js';
 import {
   BrandDuplicateError,
   BrandReservedError,
@@ -76,6 +79,31 @@ function resolveActivityType(value: unknown): ActivityItemType | undefined {
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
 const publicDirectory = join(moduleDirectory, 'public');
+const knowledgeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_BYTES },
+});
+
+function handleKnowledgeUploadError(error: unknown, response: Response, _next: NextFunction): boolean {
+  if (error instanceof KnowledgeUploadError) {
+    response.status(error.statusCode).json({ error: error.message });
+    return true;
+  }
+
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      response.status(400).json({
+        error: `El archivo supera el límite de ${Math.floor(MAX_UPLOAD_BYTES / (1024 * 1024))}MB.`,
+      });
+      return true;
+    }
+
+    response.status(400).json({ error: error.message });
+    return true;
+  }
+
+  return false;
+}
 
 export function createWebServer(sessionStore: SessionStore = new SessionStore()): Express {
   const app = express();
@@ -187,6 +215,43 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
       response,
       next,
     );
+  });
+
+  app.post('/api/knowledge/upload', (request, response, next) => {
+    knowledgeUpload.single('file')(request, response, async (multerError) => {
+      if (multerError !== undefined) {
+        if (handleKnowledgeUploadError(multerError, response, next)) {
+          return;
+        }
+
+        next(multerError);
+        return;
+      }
+
+      try {
+        const file = request.file;
+
+        if (file === undefined) {
+          response.status(400).json({ error: 'No se recibió ningún archivo.' });
+          return;
+        }
+
+        const workspace = resolveWorkspaceParam(request.body?.workspace);
+        const payload = await sessionStore.uploadKnowledgeDocument(
+          workspace,
+          file.originalname,
+          file.buffer,
+        );
+
+        response.json(payload);
+      } catch (error) {
+        if (handleKnowledgeUploadError(error, response, next)) {
+          return;
+        }
+
+        next(error);
+      }
+    });
   });
 
   app.post('/api/chat', async (request, response, next) => {

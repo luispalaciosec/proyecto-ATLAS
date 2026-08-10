@@ -22,6 +22,18 @@ import {
   mapKnowledgeSearchToProduct,
   type KnowledgeSearchResponseProduct,
 } from './presentation/map-knowledge.js';
+import type { KnowledgeUploadResponseProduct } from './presentation/map-knowledge-upload.js';
+import { chunkText } from './lib/knowledge-upload/chunk-text.js';
+import {
+  EMPTY_EXTRACTION_MESSAGE,
+  formatUnsupportedExtensionMessage,
+  resolveSupportedExtension,
+} from './lib/knowledge-upload/constants.js';
+import {
+  assertExtractedText,
+  extractTextFromBuffer,
+} from './lib/knowledge-upload/extract-text.js';
+import { KnowledgeUploadError } from './lib/knowledge-upload/upload-errors.js';
 import {
   mapActivityEventsToProduct,
   type ActivityItemType,
@@ -277,6 +289,81 @@ export class SessionStore {
     const result = await session.client.memory.searchContent({ query: query.trim() });
 
     return mapKnowledgeSearchToProduct(key, result);
+  }
+
+  async uploadKnowledgeDocument(
+    workspaceKey: string | undefined,
+    fileName: string,
+    buffer: Buffer,
+  ): Promise<KnowledgeUploadResponseProduct> {
+    const extension = resolveSupportedExtension(fileName);
+
+    if (extension === undefined) {
+      const invalidExtension = fileName.includes('.')
+        ? fileName.slice(fileName.lastIndexOf('.') + 1).toLowerCase()
+        : fileName.toLowerCase();
+
+      throw new KnowledgeUploadError(400, formatUnsupportedExtensionMessage(invalidExtension));
+    }
+
+    const extracted = assertExtractedText(await extractTextFromBuffer(buffer, extension, fileName));
+    const chunks = chunkText(extracted);
+    const session = await this.getOrCreate(workspaceKey);
+    const recordIds: string[] = [];
+    const uploadedAt = new Date().toISOString();
+
+    for (let index = 0; index < chunks.length; index += 1) {
+      const chunkTextValue = chunks[index];
+
+      if (chunkTextValue === undefined || chunkTextValue.length === 0) {
+        continue;
+      }
+
+      const stored = await session.client.memory.storeContent({
+        content: chunkTextValue,
+        recordType: 'document',
+        metadata: Object.freeze({
+          source: 'upload',
+          fileName,
+          fileType: extension,
+          chunkIndex: index,
+          totalChunks: chunks.length,
+          uploadedAt,
+        }),
+      });
+
+      recordIds.push(stored.recordId);
+    }
+
+    if (recordIds.length === 0) {
+      throw new KnowledgeUploadError(422, EMPTY_EXTRACTION_MESSAGE);
+    }
+
+    this.recordKnowledgeUploadActivity(workspaceKey, fileName, recordIds.length);
+
+    return Object.freeze({
+      fileName,
+      chunks: recordIds.length,
+      recordIds: Object.freeze([...recordIds]),
+    });
+  }
+
+  recordKnowledgeUploadActivity(
+    workspaceKey: string | undefined,
+    fileName: string,
+    chunks: number,
+  ): void {
+    const workspace = workspaceKey?.trim() || 'default';
+
+    this.#appendActivity(workspaceKey, {
+      id: this.#createActivityId(),
+      kind: 'knowledge',
+      workspace,
+      occurredAt: new Date().toISOString(),
+      status: 'success',
+      query: `upload:${fileName}`,
+      resultsTotal: chunks,
+    });
   }
 
   #normalizeBrandId(workspaceKey: string | undefined): string {

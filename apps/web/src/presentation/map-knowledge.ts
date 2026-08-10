@@ -85,6 +85,8 @@ function mapRecordTypeLabel(recordType: string | undefined): string {
     case 'CliMemory':
     case 'Note':
       return t('knowledge.typeNote');
+    case 'document':
+      return t('knowledge.typeDocument');
     default:
       return recordType !== undefined && recordType.trim().length > 0
         ? recordType

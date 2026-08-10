@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   applyPendingChatDraftToComposer,
   renderKnowledge,
+  resetKnowledgePageStateForTests,
 } from '../../src/client/pages/knowledge.js';
 import {
   getState,
@@ -15,9 +16,11 @@ import {
 } from '../../src/client/state/app-state.js';
 
 const searchKnowledge = vi.fn();
+const uploadKnowledgeDocument = vi.fn();
 
 vi.mock('../../src/client/api/client.js', () => ({
   searchKnowledge: (...args: unknown[]) => searchKnowledge(...args),
+  uploadKnowledgeDocument: (...args: unknown[]) => uploadKnowledgeDocument(...args),
   fetchHistory: vi.fn(async () => ({ workspace: 'default', messages: [], canCorrect: false })),
   fetchWorkspaces: vi.fn(async () => ({ workspaces: ['default'] })),
   sendChatMessage: vi.fn(),
@@ -35,6 +38,61 @@ describe('renderKnowledge', () => {
     setActiveWorkspace('default', { resetChat: true });
     setRoute('/conocimiento');
     searchKnowledge.mockReset();
+    uploadKnowledgeDocument.mockReset();
+    resetKnowledgePageStateForTests();
+  });
+
+  it('renders upload zone', () => {
+    const main = document.querySelector('#main') as HTMLElement;
+    renderKnowledge(main);
+
+    expect(main.textContent).toContain('Subir documento');
+    expect(main.querySelector('#knowledge-upload-dropzone')).not.toBeNull();
+  });
+
+  it('uploads a supported file and refreshes active search', async () => {
+    uploadKnowledgeDocument.mockResolvedValue({
+      fileName: 'manual.txt',
+      chunks: 2,
+      recordIds: ['a', 'b'],
+    });
+    searchKnowledge.mockResolvedValue({
+      workspace: 'default',
+      query: 'manual',
+      total: 1,
+      records: [
+        {
+          id: 'record.upload',
+          title: 'Manual comercial',
+          snippet: 'Manual comercial de Geeks',
+          typeLabel: 'Documento',
+          contextLabel: 'General',
+          sourceLabel: 'Información almacenada en el conocimiento general.',
+        },
+      ],
+    });
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderKnowledge(main);
+
+    const input = main.querySelector('#knowledge-search-input') as HTMLInputElement;
+    input.value = 'manual';
+    (main.querySelector('#knowledge-search-form') as HTMLFormElement).requestSubmit();
+    await flushUi();
+    await flushUi();
+
+    const fileInput = main.querySelector('#knowledge-upload-input') as HTMLInputElement;
+    const file = new File(['contenido'], 'manual.txt', { type: 'text/plain' });
+    Object.defineProperty(fileInput, 'files', { value: [file] });
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await flushUi();
+    await flushUi();
+
+    expect(uploadKnowledgeDocument).toHaveBeenCalledWith('default', file);
+    expect(getState().statusText).toContain('manual.txt');
+    expect(getState().statusText).toContain('2 fragmentos');
+    expect(searchKnowledge).toHaveBeenLastCalledWith('default', 'manual');
   });
 
   it('renders empty state before searching', () => {

@@ -7,6 +7,7 @@ import type {
 import type { HistoryResponseProduct } from '../../presentation/map-history.js';
 import type { KnowledgeSearchResponseProduct } from '../../presentation/map-knowledge.js';
 import { extractApiErrorMessage } from '../../lib/format-atlas-error.js';
+import type { KnowledgeUploadResponseProduct } from '../../presentation/map-knowledge-upload.js';
 import { getState } from '../state/app-state.js';
 
 export interface CorrectionApiPayload {
@@ -155,6 +156,31 @@ export async function fetchActivity(
 
   if (!response.ok) {
     throw new Error(payload.error ?? 'Activity request failed');
+  }
+
+  return payload;
+}
+
+export async function uploadKnowledgeDocument(
+  slug: string,
+  file: File,
+): Promise<KnowledgeUploadResponseProduct> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  if (slug !== 'default') {
+    formData.append('workspace', slug);
+  }
+
+  const response = await fetch('/api/knowledge/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const payload = (await response.json()) as KnowledgeUploadResponseProduct & { error?: string };
+
+  if (!response.ok) {
+    throw new Error(extractApiErrorMessage(payload, 'Knowledge upload failed'));
   }
 
   return payload;

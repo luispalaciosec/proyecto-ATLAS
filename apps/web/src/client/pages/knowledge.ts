@@ -8,9 +8,10 @@ import { formatUserError } from '../../presentation/format-error.js';
 import { formatWorkingContext } from '../lib/brand-context.js';
 import { appendExpandableDetails } from '../lib/expandable-details.js';
 import { t } from '../../i18n/index.js';
-import { searchKnowledge } from '../api/client.js';
+import { searchKnowledge, uploadKnowledgeDocument } from '../api/client.js';
 import {
   getState,
+  patchState,
   resolveBrandDisplayName,
   setPendingChatDraft,
   setRoute,
@@ -24,6 +25,8 @@ const EXAMPLE_KEYS = [
   'knowledge.example3',
   'knowledge.example4',
 ] as const;
+
+const SUPPORTED_UPLOAD_EXTENSIONS = ['pdf', 'docx', 'pptx', 'txt', 'md'] as const;
 
 type KnowledgeViewState =
   | 'idle'
@@ -42,6 +45,7 @@ interface KnowledgePageState {
 }
 
 let boundMain: HTMLElement | null = null;
+let uploadInProgress = false;
 let pageState: KnowledgePageState = {
   view: 'idle',
   query: '',
@@ -77,6 +81,29 @@ export function renderKnowledge(main: HTMLElement): void {
 
       <div class="banner">${t('workspace.isolationBanner', { name: workspaceName })}</div>
 
+      <section class="knowledge-upload" id="knowledge-upload">
+        <h2 class="knowledge-section__title">${t('knowledge.uploadTitle')}</h2>
+        <p class="knowledge-upload__formats">${t('knowledge.uploadSupported')}</p>
+        <div
+          class="knowledge-upload__dropzone"
+          id="knowledge-upload-dropzone"
+          tabindex="0"
+          role="button"
+          aria-label="${t('knowledge.uploadButton')}"
+        >
+          <p class="knowledge-upload__hint">${t('knowledge.uploadHint')}</p>
+          <button type="button" class="btn btn--secondary" id="knowledge-upload-button">${t('knowledge.uploadButton')}</button>
+          <input
+            type="file"
+            id="knowledge-upload-input"
+            class="knowledge-upload__input"
+            accept=".pdf,.docx,.pptx,.txt,.md"
+            hidden
+          />
+        </div>
+        <p class="knowledge-upload__status" id="knowledge-upload-status" hidden aria-live="polite"></p>
+      </section>
+
       <form id="knowledge-search-form" class="knowledge-search" role="search">
         <label class="knowledge-search__label" for="knowledge-search-input">${t('knowledge.searchLabel')}</label>
         <div class="knowledge-search__row">
@@ -103,6 +130,7 @@ export function renderKnowledge(main: HTMLElement): void {
   `;
 
   bindKnowledgeEvents(main);
+  bindUploadEvents(main);
   renderExamples(main);
 
   const pendingQuery = consumePendingKnowledgeQuery();
@@ -144,6 +172,150 @@ function bindKnowledgeEvents(main: HTMLElement): void {
     event.preventDefault();
     void runSearch(input.value);
   });
+}
+
+function resolveUploadExtension(fileName: string): string | undefined {
+  const trimmed = fileName.trim();
+  const dotIndex = trimmed.lastIndexOf('.');
+
+  if (dotIndex <= 0) {
+    return undefined;
+  }
+
+  return trimmed.slice(dotIndex + 1).toLowerCase();
+}
+
+function isSupportedUploadFile(fileName: string): boolean {
+  const extension = resolveUploadExtension(fileName);
+  return extension !== undefined && SUPPORTED_UPLOAD_EXTENSIONS.includes(extension as (typeof SUPPORTED_UPLOAD_EXTENSIONS)[number]);
+}
+
+function bindUploadEvents(main: HTMLElement): void {
+  const dropzone = main.querySelector('#knowledge-upload-dropzone') as HTMLElement;
+  const fileInput = main.querySelector('#knowledge-upload-input') as HTMLInputElement;
+  const chooseButton = main.querySelector('#knowledge-upload-button') as HTMLButtonElement;
+
+  chooseButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    fileInput.click();
+  });
+
+  dropzone.addEventListener('click', () => {
+    if (!uploadInProgress) {
+      fileInput.click();
+    }
+  });
+
+  dropzone.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (!uploadInProgress) {
+        fileInput.click();
+      }
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+
+    if (file !== undefined) {
+      void handleUploadFile(file);
+    }
+
+    fileInput.value = '';
+  });
+
+  dropzone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropzone.classList.add('knowledge-upload__dropzone--active');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('knowledge-upload__dropzone--active');
+  });
+
+  dropzone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropzone.classList.remove('knowledge-upload__dropzone--active');
+
+    const file = event.dataTransfer?.files?.[0];
+
+    if (file !== undefined) {
+      void handleUploadFile(file);
+    }
+  });
+}
+
+function setUploadStatus(message: string | undefined, isError = false): void {
+  if (boundMain === null) {
+    return;
+  }
+
+  const status = boundMain.querySelector('#knowledge-upload-status') as HTMLElement | null;
+  const dropzone = boundMain.querySelector('#knowledge-upload-dropzone') as HTMLElement | null;
+  const chooseButton = boundMain.querySelector('#knowledge-upload-button') as HTMLButtonElement | null;
+
+  if (status === null) {
+    return;
+  }
+
+  if (message === undefined || message.length === 0) {
+    status.hidden = true;
+    status.textContent = '';
+    status.classList.remove('knowledge-upload__status--error');
+    return;
+  }
+
+  status.hidden = false;
+  status.textContent = message;
+  status.classList.toggle('knowledge-upload__status--error', isError);
+
+  if (dropzone !== null) {
+    dropzone.toggleAttribute('aria-busy', uploadInProgress);
+  }
+
+  if (chooseButton !== null) {
+    chooseButton.disabled = uploadInProgress;
+  }
+}
+
+async function handleUploadFile(file: File): Promise<void> {
+  if (uploadInProgress) {
+    return;
+  }
+
+  if (!isSupportedUploadFile(file.name)) {
+    setUploadStatus(t('knowledge.uploadErrorInvalidType'), true);
+    patchState({ statusText: t('knowledge.uploadErrorInvalidType') });
+    return;
+  }
+
+  uploadInProgress = true;
+  setUploadStatus(t('knowledge.uploadLoading', { name: file.name }));
+  setSearchDisabled(true);
+
+  try {
+    const workspace = getState().activeWorkspace;
+    const payload = await uploadKnowledgeDocument(workspace, file);
+    const successMessage =
+      payload.chunks === 1
+        ? t('knowledge.uploadSuccessOne', { fileName: payload.fileName })
+        : t('knowledge.uploadSuccess', { fileName: payload.fileName, count: payload.chunks });
+
+    setUploadStatus(undefined);
+    patchState({ statusText: successMessage });
+
+    if (pageState.query.trim().length > 0) {
+      await runSearch(pageState.query);
+    }
+  } catch (error) {
+    const formatted = formatUserError(error instanceof Error ? error.message : String(error));
+    setUploadStatus(formatted.message, true);
+    patchState({ statusText: formatted.message });
+  } finally {
+    uploadInProgress = false;
+    setSearchDisabled(false);
+  }
 }
 
 async function runSearch(rawQuery: string): Promise<void> {
@@ -416,6 +588,16 @@ export function refreshKnowledgeView(): void {
   if (boundMain !== null) {
     paintKnowledgeContent();
   }
+}
+
+/** Resets module state between tests. */
+export function resetKnowledgePageStateForTests(): void {
+  pageState = {
+    view: 'idle',
+    query: '',
+    workspace: getState().activeWorkspace,
+  };
+  uploadInProgress = false;
 }
 
 export function applyPendingChatDraftToComposer(): void {
