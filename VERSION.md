@@ -1,9 +1,9 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.10.0
+version: 1.11.0
 status: active
-last_updated: 2026-08-09
+last_updated: 2026-08-10
 ---
 
 # VERSION.md
@@ -480,102 +480,38 @@ Durante la validación se detectaron y cerraron cuatro hallazgos, además de tre
 
 ---
 
-## P2.5.x — Web UI Fase 3 (Entregables 1–4)
+## P2.5.x — Web UI Fase 3, consolidado (Productización post-P2.5)
 
-Vertical slice producto sobre `@atlas/web`: SPA Vite + app shell + i18n ES + chat v2. Fuente UX: [`docs/WEB_UI_PRODUCT_UX.md`](./docs/WEB_UI_PRODUCT_UX.md) §20. Informe: [`releases/WEB_UI_PHASE_3_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3_IMPLEMENTATION.md).
+**Qué es esto:** cierre consolidado de la reconstrucción completa de la Web UI (`@atlas/web`), ejecutada por Luis trabajando directamente con ChatGPT (producto/spec) y Cursor (implementación), **fuera** del proceso de super-prompt/revisión previa de esta sesión. Confirmado por Luis como trabajo intencional, no un desvío accidental. Esta entrada reemplaza las cinco entradas fragmentadas "Fase 3 / 3D+3B / 3E / 3F / 3G" que existían antes (histórico completo sigue disponible en los informes individuales bajo `releases/`, ver bibliografía abajo) y añade el hotfix más reciente (env + errores legibles) que no tenía entrada propia todavía.
 
-| # | Entregable | Status |
-|---|------------|--------|
-| 1 | Scaffold Vite + TS + tokens CSS | **Complete** |
-| 2 | App shell + router + espacio activo | **Complete** |
-| 3 | i18n ES + mappers presentación | **Complete** |
-| 4 | Chat v2 (markdown, corrección, errores humanos) | **Complete** |
+**Qué se construyó:** la Web UI pasó de un HTML/JS estático (`apps/web/public/`) a una SPA real con Vite (`apps/web/src/client/`) — router, páginas (Inicio, Conversación, Conocimiento, Actividad, Marcas), estado de app, componentes de shell, mappers de presentación, i18n español, markdown seguro (`dompurify` + `marked`), iconos (`lucide`). Endpoints nuevos en el servidor: `GET/POST /api/brands`, `GET /api/activity`, `GET/POST /api/knowledge/search`, `GET /api/history`, además de los ya existentes `/api/chat`, `/api/correct`, `/api/health`, `/api/workspaces`. `vite build` es ahora parte del build de producción real (no un artefacto aparte).
 
-**Arranque:** `pnpm --filter @atlas/web build && atlas web` → `http://127.0.0.1:4173`
+**Progresión de tests `@atlas/web` a través de las fases (todas verificadas, no autoreportadas):** 26/26 → 42/42 → 60/60 → 74/74 → 152/152.
 
-**Tests `@atlas/web`:** 26/26 (API 7 + frontend/presentation 19).
+**Verificación independiente de esta sesión, sobre el HEAD real `aeea5f5` (2026-08-10, copia limpia aislada, no la self-report de Cursor):**
 
-**Pendiente Fase 3:** ítems 5–12 (historial reload, memoria browse, settings, etc.) — ver plan §20 UX doc.
+| Chequeo | Resultado |
+|---|---|
+| `pnpm install --frozen-lockfile` | OK |
+| `pnpm run build` (raíz) | 23/23 tareas |
+| `pnpm run typecheck` (raíz) | 35/35 tareas |
+| `pnpm run lint` (raíz) | 35/35 tareas |
+| `pnpm run test` (raíz) | 46/46 tareas — `@atlas/sdk` 36/36, `@atlas/memory` 128/128 (22 archivos), `@atlas/cli` 72/72 (10 archivos), `@atlas/web` 152/152 (24 archivos) |
+| Kernel/Frozen tocado (`packages/{core,compiler,runtime,workflow,intelligence,memory,retrieval}`) desde el inicio de Fase 3 hasta `aeea5f5` | **0 commits** — límite respetado |
 
-**Quality gate (2026-08-09):** `pnpm build` 23/23 · `pnpm typecheck` 35/35 · `pnpm lint` 35/35 · `pnpm test` 45/46 (1 flake preexistente `@atlas/cli` dev-bootstrap timeout, no introducido por Fase 3 web).
+**Hotfix más reciente (commit `aeea5f5`, 2026-08-10):** durante uso real con la marca "Geeks", `/api/chat` devolvía 500 porque el proceso de `atlas web` no cargaba el `.env` del repo (sin `ATLAS_LLM_API_KEY`, caía a modo determinístico, que fallaba en esa marca), y el panel "Ver detalles" mostraba el error literal `[object Object]`. Corregido con `apps/web/src/lib/load-env.ts` y `format-atlas-error.ts`. Informe: [`WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md`](./releases/WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md). Este episodio es la primera señal real de uso del pilotaje — no fue un test sintético.
 
----
+**Gaps conocidos, sin resolver todavía:**
 
-## P2.5.x — Web UI Fase 3D + 3B (Historial + Home accionable)
+- **Bug confirmado, no corregido:** el chip de ejemplo "Clientes VIP" en Conocimiento (`apps/web/src/i18n/es.ts:267`) es texto decorativo hardcodeado, no derivado de contenido real indexado; al hacer clic devuelve 0 resultados reales (confirmado contra captura de la propia sesión de Luis). Pendiente decidir: corregir el ejemplo, quitarlo, o dejarlo documentado como conocido.
+- Modo determinístico con metas que contienen `?` sigue fallando con `CORE_INVALID_IDENTIFIER` si el LLM no está configurado — bug en `packages/sdk` (`planExecuteAndRemember`), fuera de alcance de este hotfix, documentado en el informe del hotfix §7.
+- Sin edición/eliminación de marca.
+- Historial de chat y timeline de actividad viven en memoria del proceso Web — se pierden si el servidor se reinicia (mismo comportamiento ya conocido desde P2.5, no una regresión nueva).
+- Página "Configuración" sigue siendo un placeholder ("Próximamente").
 
-Incremento UX producto: persistencia de conversación, Home accionable, renaming Conocimiento, retry. Informe: [`releases/WEB_UI_PHASE_3D_B_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3D_B_IMPLEMENTATION.md).
+**Bibliografía completa (histórico, no hace falta releer para entender el estado actual — esta entrada consolidada es la fuente de verdad):** [`WEB_UI_PHASE_3_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3_IMPLEMENTATION.md), [`WEB_UI_PHASE_3D_B_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3D_B_IMPLEMENTATION.md), [`WEB_UI_PHASE_3E_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3E_IMPLEMENTATION.md), [`WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md`](./releases/WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md), [`WEB_UI_PHASE_3F_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3F_IMPLEMENTATION.md), [`WEB_UI_PHASE_3G2_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3G2_IMPLEMENTATION.md), [`WEB_UI_WORLD_CLASS_FINAL_AUDIT.md`](./releases/WEB_UI_WORLD_CLASS_FINAL_AUDIT.md), [`WEB_UI_PHASE_3H_AUDIT.md`](./releases/WEB_UI_PHASE_3H_AUDIT.md), [`WEB_UI_PHASE_3H_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3H_IMPLEMENTATION.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md`](./releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md), [`WEB_UI_NAVIGATION_RENDER_LOOP_FIX.md`](./releases/WEB_UI_NAVIGATION_RENDER_LOOP_FIX.md), [`WEB_UI_THEME_SWITCH_AND_LIGHT_LOGO_FIX.md`](./releases/WEB_UI_THEME_SWITCH_AND_LIGHT_LOGO_FIX.md), [`WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md`](./releases/WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md).
 
-| # | Entregable | Status |
-|---|------------|--------|
-| 3D | `GET /api/history` + preload Chat (F5) | **Complete** |
-| 3B | Home accionable (hero, acciones, ejemplos, reciente) | **Complete** |
-| — | Memoria → Conocimiento + redirect `/memoria` | **Complete** |
-| — | Retry “Intentar de nuevo” | **Complete** |
-
-**Tests `@atlas/web`:** 42/42 (API 11 + frontend/presentation 31).
-
-**Quality gate (2026-08-09):** `pnpm build` 23/23 · `pnpm typecheck` · `pnpm lint` · `pnpm test` 46/46 · `pnpm atlas doctor` HEALTHY.
-
-**Pendiente Fase 3:** browse Conocimiento, Activity real, settings — ver informe §16.
-
----
-
-## P2.5.x — Web UI Fase 3E (Conocimiento browse/search)
-
-Experiencia producto para consultar conocimiento: búsqueda, resultados, aislamiento por marca, integración Chat. Informe: [`releases/WEB_UI_PHASE_3E_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3E_IMPLEMENTATION.md).
-
-| # | Entregable | Status |
-|---|------------|--------|
-| 3E | `GET/POST /api/knowledge/search` + mapper producto | **Complete** |
-| 3E | Página Conocimiento (search, estados, resultados) | **Complete** |
-| 3E | Conocimiento → Chat (`pendingChatDraft`) | **Complete** |
-| 3E | Tests aislamiento + UI + mapper | **Complete** |
-
-**Tests `@atlas/web`:** 60/60 (API 17 + frontend/presentation 43).
-
-**Quality gate (2026-08-09):** `pnpm build` 23/23 · `pnpm typecheck` · `pnpm lint` · `pnpm test` 46/46 · `pnpm atlas doctor` HEALTHY.
-
-**Pendiente Fase 3:** detalle registro, Marcas UI — ver informe §16.
-
----
-
-## P2.5.x — Web UI Fase 3F (Actividad)
-
-Timeline de actividad de sesión Web. Design: [`releases/WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md`](./releases/WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md). Informe: [`releases/WEB_UI_PHASE_3F_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3F_IMPLEMENTATION.md).
-
-| # | Entregable | Status |
-|---|------------|--------|
-| 3F | `GET /api/activity` + log in-memory | **Complete** |
-| 3F | Mapper `map-activity.ts` | **Complete** |
-| 3F | Página `/actividad` + filtros + timeline | **Complete** |
-| 3F | Home actividad reciente (mapper compartido) | **Complete** |
-
-**Tests `@atlas/web`:** 74/74.
-
-**Limitación:** actividad in-memory; ADR pendiente para persistencia durable.
-
----
-
-## P2.5.x — Web UI Fase 3G (Marcas)
-
-API (3G.1): `GET/POST /api/brands`, mapper `map-brand.ts`, errores tipados. UI (3G.2): [`releases/WEB_UI_PHASE_3G2_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3G2_IMPLEMENTATION.md).
-
-| # | Entregable | Status |
-|---|------------|--------|
-| 3G.1 | `GET /api/brands` + `POST /api/brands` | **Complete** |
-| 3G.1 | Mapper `map-brand.ts` + SessionStore | **Complete** |
-| 3G.2 | Página `/marcas` + BrandCard + modal crear | **Complete** |
-| 3G.2 | Cambio de contexto vía `switchWorkspace()` | **Complete** |
-| 3G.3 | Shell selector + confirmación + `GET /api/brands` | **Complete** |
-| 3G.4 | Home polish + coherencia producto | **Complete** |
-| 3H | Pilot polish + honestidad sesión | **Complete** |
-| 3I | Accesibilidad + responsive (WCAG 2.2 AA P0/P1) | **Complete** |
-
-**Tests `@atlas/web`:** 152/152.
-
-**Informes:** [`WEB_UI_WORLD_CLASS_FINAL_AUDIT.md`](./releases/WEB_UI_WORLD_CLASS_FINAL_AUDIT.md), [`WEB_UI_PHASE_3H_AUDIT.md`](./releases/WEB_UI_PHASE_3H_AUDIT.md), [`WEB_UI_PHASE_3H_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3H_IMPLEMENTATION.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md`](./releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md), [`WEB_UI_NAVIGATION_RENDER_LOOP_FIX.md`](./releases/WEB_UI_NAVIGATION_RENDER_LOOP_FIX.md), [`WEB_UI_THEME_SWITCH_AND_LIGHT_LOGO_FIX.md`](./releases/WEB_UI_THEME_SWITCH_AND_LIGHT_LOGO_FIX.md), [`WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md`](./releases/WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md).
-
-**Limitación:** sin edición/eliminación de marca; historial/actividad in-memory por sesión Web; Configuración sigue «Próximamente».
+**Verificación de cierre (independiente, no autoreportada):** ejecutada por Claude en esta sesión el 2026-08-10, sobre una copia aislada del repo en el commit real `aeea5f5` (no una versión anterior ni el self-report de Cursor). Confirma: pipeline completo verde, boundary Kernel intacto, conteo de tests exacto, y un gap real (chip "Clientes VIP") encontrado por revisión cruzada contra evidencia visual del propio usuario, no por autoreporte del agente implementador.
 
 ---
 
