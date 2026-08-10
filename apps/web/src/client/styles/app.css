@@ -1301,10 +1301,10 @@
   .shell__sidebar {
     display: flex;
     position: sticky;
-    top: 0;
     height: 100vh;
     overflow-y: auto;
     inset: auto;
+    top: 0;
     box-shadow: none;
     max-width: none;
   }
