@@ -486,13 +486,15 @@ Durante la validación se detectaron y cerraron cuatro hallazgos, además de tre
 
 **Qué se construyó:** la Web UI pasó de un HTML/JS estático (`apps/web/public/`) a una SPA real con Vite (`apps/web/src/client/`) — router, páginas (Inicio, Conversación, Conocimiento, Actividad, Marcas), estado de app, componentes de shell, mappers de presentación, i18n español, markdown seguro (`dompurify` + `marked`), iconos (`lucide`). Endpoints nuevos en el servidor: `GET/POST /api/brands`, `GET /api/activity`, `GET/POST /api/knowledge/search`, `GET /api/history`, además de los ya existentes `/api/chat`, `/api/correct`, `/api/health`, `/api/workspaces`. `vite build` es ahora parte del build de producción real (no un artefacto aparte).
 
-**Progresión de tests `@atlas/web` a través de las fases (todas verificadas, no autoreportadas):** 26/26 → 42/42 → 60/60 → 74/74 → 152/152 → **165/165** (upload documentos).
+**Progresión de tests `@atlas/web` a través de las fases (todas verificadas, no autoreportadas):** 26/26 → 42/42 → 60/60 → 74/74 → 152/152 → **165/165** (upload documentos) → **166/166** (UI progreso upload).
 
 **Upload de documentos (post-`aeea5f5`, 2026-08-10):** `POST /api/knowledge/upload` — PDF/DOCX/PPTX/TXT/MD → memoria buscable por marca. Informe: [`WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md`](./releases/WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md). Solo `apps/web/`; PPTX vía `jszip` (OOXML zip, sin binarios nativos).
 
 **Fixes UX revisión en vivo (post-`7569f05`, 2026-08-10):** sidebar sticky escritorio, prompt LLM sin IDs internos, búsqueda Conocimiento por tokens (singular/plural). Informe: [`WEB_UI_LIVE_REVIEW_UX_FIXES.md`](./releases/WEB_UI_LIVE_REVIEW_UX_FIXES.md). Tests `@atlas/sdk` **40/40** (+4).
 
-**Verificación independiente de esta sesión, sobre el HEAD real `aeea5f5` (2026-08-10, copia limpia aislada, no la self-report de Cursor):**
+**Consolidación fast-forward a `main` (HEAD `3acfbd9` + cierre, 2026-08-10):** la rama `cursor/live-review-ux-fixes` se fusionó en línea recta sobre `origin/main` (`561316d`) sin reescritura de historia. Commits incluidos: `57d16b7` (spec UX polish), `c57fa51` (**hotfix crítico** — `pdf-parse` v2 API `PDFParse`, sin el cual `pnpm atlas web` no arranca), `3acfbd9` (UI de progreso de subida en Conocimiento: icono, barra, fases subiendo/leyendo/indexando/disponible). Verificación independiente post-merge: `pnpm install --frozen-lockfile` OK; build **23/23**; typecheck **35/35**; lint **35/35**; test **46/46** tareas turbo — `@atlas/sdk` **40/40**, `@atlas/memory` **128/128**, `@atlas/cli` **72/72**, `@atlas/web` **166/166** (total suite **633** tests pasando, 5 todo en runtime omitidos). **Arranque real verificado:** `pnpm --filter @atlas/web build && pnpm atlas web` levantó en `http://127.0.0.1:4173` y `curl -sf` devolvió **HTTP 200** (no solo build/typecheck). Rama `cursor/live-review-ux-fixes` eliminada local y remota tras el push.
+
+**Verificación independiente de sesión anterior, sobre el HEAD real `aeea5f5` (2026-08-10, copia limpia aislada):**
 
 | Chequeo | Resultado |
 |---|---|

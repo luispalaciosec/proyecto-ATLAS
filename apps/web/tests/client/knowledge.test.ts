@@ -100,7 +100,7 @@ describe('renderKnowledge', () => {
     expect(getState().statusText).toContain('manual.txt');
     expect(getState().statusText).toContain('2 fragmentos');
     expect(main.textContent).toContain('Disponible para buscar');
-    expect(main.querySelector('#knowledge-upload-progress')?.hidden).toBe(false);
+    expect((main.querySelector('#knowledge-upload-progress') as HTMLElement | null)?.hidden).toBe(false);
     expect(searchKnowledge).toHaveBeenLastCalledWith('default', 'manual');
   });
 
@@ -137,7 +137,7 @@ describe('renderKnowledge', () => {
     await flushUi();
 
     expect(main.textContent).toContain('Disponible para buscar');
-    expect(main.querySelector('#knowledge-upload-search-btn')?.hidden).toBe(false);
+    expect((main.querySelector('#knowledge-upload-search-btn') as HTMLButtonElement | null)?.hidden).toBe(false);
   });
 
   it('renders empty state before searching', () => {
