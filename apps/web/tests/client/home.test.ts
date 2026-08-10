@@ -73,7 +73,7 @@ describe('renderHome', () => {
     renderHome(main);
 
     const primary = main.querySelector('#home-primary-chat');
-    expect(primary?.textContent).toContain('Empezar una conversación');
+    expect(primary?.textContent).toContain('Iniciar conversación');
     expect(main.querySelector('.home-primary')).not.toBeNull();
   });
 
@@ -96,15 +96,15 @@ describe('renderHome', () => {
     expect(getState().activeWorkspace).toBe('geeks');
   });
 
-  it('renders secondary actions and knowledge block', () => {
+  it('renders action cards for secondary navigation', () => {
     const main = document.querySelector('#main') as HTMLElement;
     renderHome(main);
 
     expect(main.querySelector('#home-action-knowledge')?.textContent).toContain('Explorar conocimiento');
     expect(main.querySelector('#home-action-brands')?.textContent).toContain('Trabajar con otra marca');
     expect(main.querySelector('#home-action-activity')?.textContent).toContain('Ver actividad');
-    expect(main.querySelector('#home-knowledge-cta')?.textContent).toContain('Explorar conocimiento');
-    expect(main.textContent).toContain('Conocimiento de tu marca');
+    expect(main.querySelector('#home-knowledge-cta')?.textContent).toContain('Buscar conocimiento');
+    expect(main.querySelector('.home-action-grid')).not.toBeNull();
   });
 
   it('prepares pendingChatDraft from example without auto-send', async () => {
@@ -263,7 +263,7 @@ describe('renderHome', () => {
     await flushHome();
 
     expect(main.textContent).toContain('Actividad reciente · Esta sesión');
-    expect(main.textContent).toContain('Conversaste con ATLAS');
+    expect(main.textContent).toContain('¿Qué sabes sobre este cliente?');
   });
 
   it('shows activity error and retries', async () => {
@@ -306,15 +306,17 @@ describe('renderHome', () => {
     expect(main.querySelector('.home-primary')).not.toBeNull();
     expect(main.querySelector('.home-secondary')).not.toBeNull();
     expect(main.querySelector('.home-section--continue')).not.toBeNull();
-    expect(main.querySelector('.home-section--knowledge')).not.toBeNull();
+    expect(main.querySelector('.home-section--examples')).not.toBeNull();
     expect(main.querySelector('.home-section--activity')).not.toBeNull();
+    expect(main.querySelector('.home-alert')).not.toBeNull();
   });
 
-  it('does not show isolation banner on home', () => {
+  it('shows isolation note without chat banner class', () => {
     const main = document.querySelector('#main') as HTMLElement;
     renderHome(main);
 
     expect(main.querySelector('.banner')).toBeNull();
+    expect(main.textContent).toContain('aislamiento total por marca');
   });
 
   it('does not regress brand selector shell rendering', () => {

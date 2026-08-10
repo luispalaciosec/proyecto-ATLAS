@@ -1,54 +1,53 @@
+/* ATLAS Design System — sourced from apps/web/design-system/tokens/ */
+
+@import '../../../design-system/tokens/colors.css';
+@import '../../../design-system/tokens/typography.css';
+@import '../../../design-system/tokens/spacing.css';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@font-face {
+  font-family: 'Sora';
+  src: url('../../../design-system/assets/fonts/Sora-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  color-scheme: dark light;
+  color-scheme: dark;
 
-  --color-bg: #0f1419;
-  --color-surface: #1a2332;
-  --color-surface-elevated: #243044;
-  --color-text: #e8edf4;
-  --color-text-muted: #94a3b8;
-  --color-accent: #3b82f6;
-  --color-accent-hover: #2563eb;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-border: #334155;
-  --color-user-bubble: #1e3a5f;
-  --color-assistant-bubble: #1e293b;
+  /* Legacy aliases — keep app.css stable */
+  --color-text: var(--color-text-primary);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-primary);
+  --color-accent-hover: var(--color-primary-hover);
+  --color-user-bubble: var(--color-primary);
+  --color-assistant-bubble: var(--color-surface-elevated);
 
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-full: 9999px;
-
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.25);
-  --shadow-md: 0 8px 24px rgb(0 0 0 / 0.28);
-
-  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', monospace;
-
-  --sidebar-width: 240px;
+  --sidebar-width: 220px;
   --header-height: 56px;
   --content-max: 760px;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --color-bg: #f4f7fb;
-    --color-surface: #ffffff;
-    --color-surface-elevated: #eef2f7;
-    --color-text: #0f172a;
+    color-scheme: light;
+
+    --color-bg: var(--atlas-off-white);
+    --color-surface: var(--atlas-white);
+    --color-surface-elevated: var(--atlas-white);
+    --color-border: var(--atlas-slate-200);
+    --color-border-subtle: rgb(15 23 42 / 0.08);
+    --color-text-primary: var(--atlas-navy-950);
+    --color-text-secondary: var(--atlas-slate-600);
     --color-text-muted: #64748b;
-    --color-border: #cbd5e1;
-    --color-user-bubble: #dbeafe;
-    --color-assistant-bubble: #f1f5f9;
+    --color-text-disabled: #94a3b8;
+    --color-primary-hover: #584ce0;
+    --color-primary-active: #4a3fc7;
+    --color-cyan: #0891b2;
+    --color-focus-ring: #0891b2;
+    --color-user-bubble: var(--color-primary);
+    --color-assistant-bubble: var(--atlas-slate-200);
   }
 }
 
@@ -66,10 +65,10 @@ body {
 
 body {
   background: var(--color-bg);
-  color: var(--color-text);
+  color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
 }
 
 button,
@@ -87,11 +86,11 @@ button:disabled,
 input:disabled,
 textarea:disabled {
   cursor: not-allowed;
-  opacity: 0.65;
+  opacity: 0.5;
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 

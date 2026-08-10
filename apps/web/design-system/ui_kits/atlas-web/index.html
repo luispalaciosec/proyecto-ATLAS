@@ -1,0 +1,28 @@
+<!-- @dsCard group="ATLAS Web" viewport="1280x760" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>ATLAS Web</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>*{margin:0;box-sizing:border-box}body{background:var(--color-bg)}#root{display:flex;min-height:100vh}</style>
+</head><body><div id="root"></div>
+<script type="text/babel" src="IconRocket.jsx"></script>
+<script type="text/babel" src="HomeScreen.jsx"></script>
+<script type="text/babel" src="ChatScreen.jsx"></script>
+<script type="text/babel" src="KnowledgeScreen.jsx"></script>
+<script type="text/babel" src="BrandsScreen.jsx"></script>
+<script type="text/babel" src="ActivityScreen.jsx"></script>
+<script type="text/babel">
+function App(){
+const [route,setRoute]=React.useState("home");
+const [brand,setBrand]=React.useState("General");
+const {HomeScreen,ChatScreen,KnowledgeScreen,BrandsScreen,ActivityScreen}=window.AtlasUIKit;
+if(route==="chat")return React.createElement(ChatScreen,{brand,onNavigate:setRoute});
+if(route==="knowledge")return React.createElement(KnowledgeScreen,{brand,onNavigate:setRoute});
+if(route==="brands")return React.createElement(BrandsScreen,{brand,onNavigate:setRoute,onSelect:b=>{setBrand(b);setRoute("home");}});
+if(route==="activity")return React.createElement(ActivityScreen,{brand,onNavigate:setRoute});
+return React.createElement(HomeScreen,{brand,onNavigate:setRoute});
+}
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script></body></html>

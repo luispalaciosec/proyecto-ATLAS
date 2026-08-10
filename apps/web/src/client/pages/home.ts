@@ -1,11 +1,13 @@
 import type { ActivityItemProduct } from '../../presentation/map-activity.js';
 import { formatActivityTime } from '../../presentation/map-activity.js';
+import logoUrl from '../../../design-system/assets/logo.svg?url';
 import { fetchActivity, fetchHistory } from '../api/client.js';
 import {
   deriveRecentConversationEntries,
   type RecentConversationEntry,
 } from '../lib/history.js';
 import { formatWorkingContext } from '../lib/brand-context.js';
+import { createActionIcon, createActivityIcon } from '../lib/icons.js';
 import { t } from '../../i18n/index.js';
 import {
   getState,
@@ -53,59 +55,49 @@ export function renderHome(main: HTMLElement): void {
 
   main.innerHTML = `
     <section class="page home-page">
-      <header class="page__header home-page__header">
-        <p class="home-page__eyebrow">${t('app.name')}</p>
-        <h1 class="page__title home-page__title">${t('app.productPhrase')}</h1>
-        <p class="home-page__context" aria-live="polite">${contextLine}</p>
-      </header>
-
-      <section class="home-primary" aria-labelledby="home-primary-title">
-        <div class="home-primary__content">
-          <h2 id="home-primary-title" class="home-primary__title">${t('home.primaryTitle')}</h2>
-          <p class="home-primary__body">${t('home.primaryBody')}</p>
+      <section class="home-hero home-primary" aria-labelledby="home-hero-title">
+        <div class="home-hero__content">
+          <p class="home-page__context" aria-live="polite">${contextLine}</p>
+          <h1 id="home-hero-title" class="home-hero__title">${t('home.heroTitle')}</h1>
+          <p class="home-hero__subtitle">${t('home.heroSubtitle')}</p>
+          <p class="home-hero__description">${t('home.heroDescription')}</p>
+          <p class="home-hero__product-note">${t('app.productPhrase')}</p>
         </div>
-        <button type="button" class="btn btn--primary home-primary__cta" id="home-primary-chat">
-          ${t('home.primaryCta')}
-        </button>
+        <div class="home-hero__visual" aria-hidden="true">
+          <div class="home-rocket">
+            <div class="home-rocket__glow"></div>
+            <div class="home-rocket__horizon"></div>
+            <img class="home-rocket__logo" src="${logoUrl}" alt="" width="100" height="100" decoding="async" />
+          </div>
+        </div>
       </section>
 
-      <nav class="home-secondary" aria-label="${t('home.secondaryNav')}">
-        <button type="button" class="home-secondary__action" id="home-action-knowledge">
-          ${t('home.secondaryKnowledge')}
-        </button>
-        <button type="button" class="home-secondary__action" id="home-action-brands">
-          ${t('home.secondaryBrand')}
-        </button>
-        <button type="button" class="home-secondary__action" id="home-action-activity">
-          ${t('home.secondaryActivity')}
-        </button>
-      </nav>
-
-      <section class="home-section" aria-labelledby="home-examples-title">
-        <h2 id="home-examples-title" class="home-section__title">${t('home.examplesTitle')}</h2>
-        <div class="example-list" id="home-examples"></div>
+      <section class="home-section home-actions" aria-labelledby="home-actions-title">
+        <h2 id="home-actions-title" class="home-section__heading">${t('home.actionsTitle')}</h2>
+        <div class="home-action-grid home-secondary" id="home-action-grid"></div>
       </section>
 
-      <section
-        class="home-section home-section--continue"
-        aria-labelledby="home-continue-title"
-        aria-live="polite"
-        aria-busy="${homeState.historyLoading ? 'true' : 'false'}"
-      >
-        <h2 id="home-continue-title" class="home-section__title">${t('home.continueTitle')}</h2>
-        <p class="home-section__note">${t('home.historySessionNote')}</p>
-        <div id="home-continue" class="home-continue"></div>
-      </section>
+      <div class="home-columns">
+        <section
+          class="home-section home-section--continue"
+          aria-labelledby="home-continue-title"
+          aria-live="polite"
+          aria-busy="${homeState.historyLoading ? 'true' : 'false'}"
+        >
+          <h2 id="home-continue-title" class="home-section__heading">${t('home.continueTitle')}</h2>
+          <p class="home-section__note">${t('home.historySessionNote')}</p>
+          <article class="card home-panel">
+            <div id="home-continue" class="home-continue"></div>
+          </article>
+        </section>
 
-      <section class="home-section home-section--knowledge" aria-labelledby="home-knowledge-title">
-        <article class="home-knowledge">
-          <h2 id="home-knowledge-title" class="home-knowledge__title">${t('home.knowledgeTitle')}</h2>
-          <p class="home-knowledge__body">${t('home.knowledgeBody')}</p>
-          <button type="button" class="btn btn--secondary" id="home-knowledge-cta">
-            ${t('home.knowledgeCta')}
-          </button>
-        </article>
-      </section>
+        <section class="home-section home-section--examples" aria-labelledby="home-examples-title">
+          <h2 id="home-examples-title" class="home-section__heading">${t('home.examplesTitle')}</h2>
+          <article class="card home-panel">
+            <div class="example-list" id="home-examples"></div>
+          </article>
+        </section>
+      </div>
 
       <section
         class="home-section home-section--activity"
@@ -113,14 +105,70 @@ export function renderHome(main: HTMLElement): void {
         aria-live="polite"
         aria-busy="${homeState.activityLoading ? 'true' : 'false'}"
       >
-        <h2 id="home-activity-title" class="home-section__title">
+        <h2 id="home-activity-title" class="home-section__heading">
           ${t('home.activityTitle')} · ${t('home.activitySessionScope')}
         </h2>
         <p class="home-section__note">${t('workspace.sessionScopeNote')}</p>
-        <div id="home-activity" class="home-activity"></div>
+        <article class="card home-panel">
+          <div id="home-activity" class="home-activity"></div>
+        </article>
       </section>
+
+      <aside class="home-alert" role="note">
+        <span class="home-alert__marker" aria-hidden="true"></span>
+        <p class="home-alert__text">${t('home.isolationAlert')}</p>
+      </aside>
     </section>
   `;
+
+  const actionGrid = main.querySelector('#home-action-grid') as HTMLElement;
+  actionGrid.append(
+    createActionCard({
+      buttonId: 'home-primary-chat',
+      icon: 'chat',
+      tone: 'primary',
+      title: t('home.actionChatTitle'),
+      description: t('home.actionChatBody'),
+      cta: t('home.actionChatCta'),
+      onClick: () => {
+        setRoute('/chat');
+      },
+    }),
+    createActionCard({
+      cardId: 'home-action-knowledge',
+      buttonId: 'home-knowledge-cta',
+      icon: 'knowledge',
+      tone: 'cyan',
+      title: t('home.actionKnowledgeTitle'),
+      description: t('home.actionKnowledgeBody'),
+      cta: t('home.actionKnowledgeCta'),
+      onClick: () => {
+        setRoute('/conocimiento');
+      },
+    }),
+    createActionCard({
+      cardId: 'home-action-brands',
+      icon: 'brands',
+      tone: 'primary',
+      title: t('home.actionBrandTitle'),
+      description: t('home.actionBrandBody'),
+      cta: t('home.actionBrandCta'),
+      onClick: () => {
+        setRoute('/marcas');
+      },
+    }),
+    createActionCard({
+      cardId: 'home-action-activity',
+      icon: 'activity',
+      tone: 'warning',
+      title: t('home.actionActivityTitle'),
+      description: t('home.actionActivityBody'),
+      cta: t('home.actionActivityCta'),
+      onClick: () => {
+        setRoute('/actividad');
+      },
+    }),
+  );
 
   const examples = main.querySelector('#home-examples') as HTMLElement;
   for (const key of EXAMPLE_KEYS) {
@@ -135,29 +183,53 @@ export function renderHome(main: HTMLElement): void {
     examples.append(button);
   }
 
-  main.querySelector('#home-primary-chat')?.addEventListener('click', () => {
-    setRoute('/chat');
-  });
-
-  main.querySelector('#home-action-knowledge')?.addEventListener('click', () => {
-    setRoute('/conocimiento');
-  });
-
-  main.querySelector('#home-action-brands')?.addEventListener('click', () => {
-    setRoute('/marcas');
-  });
-
-  main.querySelector('#home-action-activity')?.addEventListener('click', () => {
-    setRoute('/actividad');
-  });
-
-  main.querySelector('#home-knowledge-cta')?.addEventListener('click', () => {
-    setRoute('/conocimiento');
-  });
-
   paintHistorySection(main);
   paintActivitySection(main);
   void loadHomeData();
+}
+
+interface ActionCardOptions {
+  readonly buttonId?: string;
+  readonly cardId?: string;
+  readonly icon: 'chat' | 'knowledge' | 'brands' | 'activity';
+  readonly tone: 'primary' | 'cyan' | 'warning';
+  readonly title: string;
+  readonly description: string;
+  readonly cta: string;
+  readonly onClick: () => void;
+}
+
+function createActionCard(options: ActionCardOptions): HTMLElement {
+  const card = document.createElement('article');
+  card.className = `action-card action-card--${options.tone}`;
+
+  if (options.cardId !== undefined) {
+    card.id = options.cardId;
+  }
+
+  const iconWrap = document.createElement('div');
+  iconWrap.className = 'action-card__icon';
+  iconWrap.append(createActionIcon(options.icon));
+
+  const title = document.createElement('h3');
+  title.className = 'action-card__title';
+  title.textContent = options.title;
+
+  const description = document.createElement('p');
+  description.className = 'action-card__body';
+  description.textContent = options.description;
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'action-card__cta';
+  if (options.buttonId !== undefined) {
+    button.id = options.buttonId;
+  }
+  button.textContent = options.cta;
+  button.addEventListener('click', options.onClick);
+
+  card.append(iconWrap, title, description, button);
+  return card;
 }
 
 export function refreshHomeView(): void {
@@ -319,19 +391,7 @@ function paintActivitySection(main: HTMLElement): void {
   list.className = 'home-activity-list';
 
   for (const item of homeState.activityItems.slice(0, 3)) {
-    const card = document.createElement('article');
-    card.className = 'home-activity-item';
-
-    const title = document.createElement('p');
-    title.className = 'home-activity-item__title';
-    title.textContent = item.title;
-
-    const meta = document.createElement('p');
-    meta.className = 'home-activity-item__meta';
-    meta.textContent = item.quote ?? formatActivityTime(item.occurredAt);
-
-    card.append(title, meta);
-    list.append(card);
+    list.append(createActivityPreviewItem(item));
   }
 
   const actions = document.createElement('div');
@@ -351,30 +411,55 @@ function paintActivitySection(main: HTMLElement): void {
 
 function createContinueItem(item: RecentConversationEntry): HTMLLIElement {
   const row = document.createElement('li');
-  row.className = 'home-continue-item';
+  row.className = 'home-continue-item history-item';
 
   const content = document.createElement('div');
-  content.className = 'home-continue-item__content';
+  content.className = 'history-item__content';
 
   const title = document.createElement('p');
-  title.className = 'home-continue-item__title';
+  title.className = 'history-item__question';
   title.textContent = item.title;
 
   const meta = document.createElement('p');
-  meta.className = 'home-continue-item__meta';
+  meta.className = 'history-item__meta';
   meta.textContent = item.brandName;
 
   content.append(title, meta);
 
   const action = document.createElement('button');
   action.type = 'button';
-  action.className = 'btn btn--secondary home-continue-item__action';
+  action.className = 'btn btn--secondary history-item__action home-continue-item__action';
   action.textContent = t('home.continueAction');
   action.addEventListener('click', () => {
     setRoute('/chat');
   });
 
   row.append(content, action);
+  return row;
+}
+
+function createActivityPreviewItem(item: ActivityItemProduct): HTMLElement {
+  const row = document.createElement('div');
+  row.className = `activity-item activity-item--${item.type}`;
+
+  const main = document.createElement('div');
+  main.className = 'activity-item__main';
+
+  const iconWrap = document.createElement('span');
+  iconWrap.className = 'activity-item__icon';
+  iconWrap.append(createActivityIcon(item.type === 'error' ? 'error' : item.type));
+
+  const text = document.createElement('span');
+  text.className = 'activity-item__text';
+  text.textContent = item.quote ?? item.title;
+
+  main.append(iconWrap, text);
+
+  const time = document.createElement('span');
+  time.className = 'activity-item__time';
+  time.textContent = formatActivityTime(item.occurredAt);
+
+  row.append(main, time);
   return row;
 }
 

@@ -1,0 +1,7 @@
+*{box-sizing:border-box}
+body{background:var(--color-bg);color:var(--color-text-primary);font-family:var(--font-body);margin:0}
+a{color:var(--color-cyan)}
+a:hover{color:var(--color-primary-hover)}
+:focus-visible{outline:2px solid var(--color-focus-ring);outline-offset:2px}
+@keyframes atlas-skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}

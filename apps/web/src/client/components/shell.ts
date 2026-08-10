@@ -1,13 +1,15 @@
+import logoUrl from '../../../design-system/assets/logo.svg?url';
 import { t } from '../../i18n/index.js';
 import { type AppRoute, getState, resolveBrandDisplayName, setRoute } from '../state/app-state.js';
+import { createNavIcon, type NavIconKey } from '../lib/icons.js';
 
-const NAV_ITEMS: Array<{ route: AppRoute; labelKey: string }> = [
-  { route: '/', labelKey: 'nav.home' },
-  { route: '/chat', labelKey: 'nav.chat' },
-  { route: '/conocimiento', labelKey: 'nav.knowledge' },
-  { route: '/actividad', labelKey: 'nav.activity' },
-  { route: '/marcas', labelKey: 'nav.brands' },
-  { route: '/configuracion', labelKey: 'nav.settings' },
+const NAV_ITEMS: Array<{ route: AppRoute; labelKey: string; icon: NavIconKey }> = [
+  { route: '/', labelKey: 'nav.home', icon: 'home' },
+  { route: '/chat', labelKey: 'nav.chat', icon: 'chat' },
+  { route: '/conocimiento', labelKey: 'nav.knowledge', icon: 'knowledge' },
+  { route: '/actividad', labelKey: 'nav.activity', icon: 'activity' },
+  { route: '/marcas', labelKey: 'nav.brands', icon: 'brands' },
+  { route: '/configuracion', labelKey: 'nav.settings', icon: 'settings' },
 ];
 
 export interface ShellElements {
@@ -26,49 +28,66 @@ let outsideClickHandler: ((event: MouseEvent) => void) | undefined;
 export function renderShell(root: HTMLElement): ShellElements {
   root.innerHTML = `
     <div class="shell">
-      <header class="shell__header">
-        <div class="shell__brand">
-          <button type="button" class="shell__menu-toggle" id="menu-toggle" aria-label="${t('nav.openMenu')}"></button>
-          <div class="shell__logo">${t('app.name')}</div>
-          <nav class="shell__nav-inline" aria-label="Principal"></nav>
+      <aside class="shell__sidebar" id="sidebar" aria-label="Navegación">
+        <div class="shell__sidebar-head">
+          <a class="shell__logo" href="/" data-route="/">
+            <img
+              class="shell__logo-mark"
+              src="${logoUrl}"
+              alt=""
+              width="22"
+              height="22"
+              decoding="async"
+            />
+            <span class="shell__logo-text">${t('app.name')}</span>
+          </a>
         </div>
-        <div class="brand-switcher" id="header-brand-switcher">
-          <span class="brand-switcher__label">${t('workspace.brandLabel')}</span>
-          <div class="brand-switcher__control">
-            <button
-              type="button"
-              id="brand-switcher-trigger"
-              class="brand-switcher__trigger"
-              aria-haspopup="listbox"
-              aria-expanded="false"
-              aria-controls="brand-switcher-panel"
-            >
-              <span id="brand-switcher-current">${t('brands.loadingName')}</span>
-            </button>
-            <div
-              id="brand-switcher-panel"
-              class="brand-switcher__panel"
-              role="listbox"
-              aria-label="${t('workspace.switch')}"
-              hidden
-            ></div>
+        <nav class="shell__sidebar-nav"></nav>
+      </aside>
+      <div class="shell__frame" id="shell-body">
+        <header class="shell__header">
+          <div class="shell__brand">
+            <button type="button" class="shell__menu-toggle" id="menu-toggle" aria-label="${t('nav.openMenu')}"></button>
           </div>
-        </div>
-      </header>
-      <div class="shell__body" id="shell-body">
-        <aside class="shell__sidebar" id="sidebar" aria-label="Navegación"></aside>
+          <div class="brand-switcher" id="header-brand-switcher">
+            <span class="brand-switcher__label">${t('workspace.brandLabel')}</span>
+            <div class="brand-switcher__control">
+              <button
+                type="button"
+                id="brand-switcher-trigger"
+                class="brand-switcher__trigger"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-controls="brand-switcher-panel"
+              >
+                <span id="brand-switcher-current">${t('brands.loadingName')}</span>
+              </button>
+              <div
+                id="brand-switcher-panel"
+                class="brand-switcher__panel"
+                role="listbox"
+                aria-label="${t('workspace.switch')}"
+                hidden
+              ></div>
+            </div>
+          </div>
+        </header>
         <main class="shell__main" id="main" tabindex="-1"></main>
       </div>
       <div id="shell-dialog-root"></div>
     </div>
   `;
 
-  const inlineNav = root.querySelector('.shell__nav-inline') as HTMLElement;
-  const sidebar = root.querySelector('#sidebar') as HTMLElement;
+  const sidebarNav = root.querySelector('.shell__sidebar-nav') as HTMLElement;
+  const logoLink = root.querySelector('.shell__logo') as HTMLAnchorElement;
+
+  logoLink.addEventListener('click', (event) => {
+    event.preventDefault();
+    setRoute('/');
+  });
 
   for (const item of NAV_ITEMS) {
-    inlineNav.append(createNavLink(item.route, item.labelKey, 'shell__nav-link'));
-    sidebar.append(createNavLink(item.route, item.labelKey, 'shell__sidebar-link'));
+    sidebarNav.append(createNavLink(item.route, item.labelKey, 'shell__sidebar-link', item.icon));
   }
 
   const main = root.querySelector('#main') as HTMLElement;
@@ -89,12 +108,20 @@ export function renderShell(root: HTMLElement): ShellElements {
   };
 }
 
-function createNavLink(route: AppRoute, labelKey: string, className: string): HTMLAnchorElement {
+function createNavLink(
+  route: AppRoute,
+  labelKey: string,
+  className: string,
+  iconKey: NavIconKey,
+): HTMLAnchorElement {
   const link = document.createElement('a');
   link.href = route === '/' ? '/' : route;
   link.className = className;
   link.dataset.route = route;
-  link.textContent = t(labelKey);
+  link.append(createNavIcon(iconKey));
+  const label = document.createElement('span');
+  label.textContent = t(labelKey);
+  link.append(label);
   link.addEventListener('click', (event) => {
     event.preventDefault();
     setRoute(route);
@@ -171,18 +198,25 @@ function openBrandSwitcherPanel(
 
 export function updateShellChrome(elements: ShellElements): void {
   const state = getState();
-  const body = elements.root.querySelector('#shell-body') as HTMLElement;
+  const frame = elements.root.querySelector('#shell-body') as HTMLElement;
   const sidebar = elements.root.querySelector('#sidebar') as HTMLElement;
   const menuToggle = elements.root.querySelector('#menu-toggle') as HTMLButtonElement;
   const currentLabel = elements.root.querySelector('#brand-switcher-current') as HTMLElement;
+  const menuLabel = state.sidebarOpen ? t('nav.closeMenu') : t('nav.openMenu');
 
-  menuToggle.textContent = state.sidebarOpen ? t('nav.closeMenu') : t('nav.openMenu');
+  menuToggle.textContent = menuLabel;
+  menuToggle.setAttribute('aria-label', menuLabel);
   menuToggle.setAttribute('aria-expanded', String(state.sidebarOpen));
   sidebar.classList.toggle('is-open', state.sidebarOpen);
-  body.classList.toggle('sidebar-open', state.sidebarOpen);
+  frame.classList.toggle('sidebar-open', state.sidebarOpen);
 
   for (const link of elements.root.querySelectorAll<HTMLElement>('[data-route]')) {
     link.classList.toggle('is-active', link.dataset.route === state.route);
+    if (link.classList.contains('is-active')) {
+      link.setAttribute('aria-current', 'page');
+    } else {
+      link.removeAttribute('aria-current');
+    }
   }
 
   elements.statusBar.textContent = state.statusText;
