@@ -6,6 +6,7 @@ import type {
 } from '../../presentation/map-brand.js';
 import type { HistoryResponseProduct } from '../../presentation/map-history.js';
 import type { KnowledgeSearchResponseProduct } from '../../presentation/map-knowledge.js';
+import { extractApiErrorMessage } from '../../lib/format-atlas-error.js';
 import { getState } from '../state/app-state.js';
 
 export interface CorrectionApiPayload {
@@ -172,7 +173,7 @@ export async function sendChatMessage(
   const payload = (await response.json()) as ChatApiPayload & { error?: string };
 
   if (!response.ok) {
-    throw new Error(payload.error ?? 'Chat request failed');
+    throw new Error(extractApiErrorMessage(payload, 'Chat request failed'));
   }
 
   return payload;
@@ -191,7 +192,7 @@ export async function sendCorrection(
   const payload = (await response.json()) as CorrectionApiPayload & { error?: string };
 
   if (!response.ok) {
-    throw new Error(payload.error ?? 'Correction request failed');
+    throw new Error(extractApiErrorMessage(payload, 'Correction request failed'));
   }
 
   return payload;

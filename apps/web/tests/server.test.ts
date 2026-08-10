@@ -403,6 +403,30 @@ describe('createWebServer', () => {
     });
   });
 
+  it('returns readable brand chat errors instead of [object Object]', async () => {
+    const workspacesRoot = join(testRoot, '.atlas', 'workspaces');
+    const geeksPaths = resolveWorkspacePaths('geeks', workspacesRoot);
+    loadOrCreateBrandProfile(geeksPaths, 'Geeks');
+
+    const app = createWebServer();
+
+    await withServer(app, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          workspace: 'geeks',
+          goal: 'Hola puedo saber mi inventario?',
+        }),
+      });
+
+      expect(response.status).toBe(500);
+      const payload = (await response.json()) as { error: string };
+      expect(payload.error).not.toBe('[object Object]');
+      expect(payload.error).toContain('CORE_INVALID_IDENTIFIER');
+    });
+  });
+
   it('returns LLM chat history after POST /api/chat', async () => {
     process.env.ATLAS_LLM_API_KEY = 'test-key';
     process.env.ATLAS_LLM_MODEL = 'claude-test-model';

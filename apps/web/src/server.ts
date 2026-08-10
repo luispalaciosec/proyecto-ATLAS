@@ -10,6 +10,8 @@ import {
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 
 import { formatWebUrl, resolveWebHost, resolveWebPort } from './config.js';
+import { formatAtlasError } from './lib/format-atlas-error.js';
+import { loadEnvFromFile } from './lib/load-env.js';
 import {
   BrandDuplicateError,
   BrandReservedError,
@@ -18,6 +20,8 @@ import {
 import { mapChatResponse } from './presentation/map-chat-response.js';
 import type { ActivityItemType } from './presentation/map-activity.js';
 import { SessionStore } from './session-store.js';
+
+loadEnvFromFile();
 
 function resolveWorkspaceParam(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
@@ -210,7 +214,7 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
       const workspace =
         typeof request.body?.workspace === 'string' ? request.body.workspace : undefined;
       const goal = typeof request.body?.goal === 'string' ? request.body.goal.trim() : '';
-      const message = error instanceof Error ? error.message : String(error);
+      const message = formatAtlasError(error);
 
       if (goal.length > 0) {
         sessionStore.recordConversationError(workspace, goal, message);
@@ -267,8 +271,7 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
   });
 
   app.use((error: unknown, _request: Request, response: Response, _next: NextFunction) => {
-    const message = error instanceof Error ? error.message : String(error);
-    response.status(500).json({ error: message });
+    response.status(500).json({ error: formatAtlasError(error) });
   });
 
   return app;
