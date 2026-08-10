@@ -311,13 +311,21 @@ async function loadHomeData(): Promise<void> {
     };
   }
 
+  if (boundMain === null || boundMain.querySelector('.home-page') === null) {
+    return;
+  }
+
   paintHistorySection(boundMain);
   paintActivitySection(boundMain);
 }
 
 function paintHistorySection(main: HTMLElement): void {
-  const container = main.querySelector('#home-continue') as HTMLElement;
-  const section = main.querySelector('.home-section--continue') as HTMLElement;
+  const container = main.querySelector('#home-continue') as HTMLElement | null;
+  const section = main.querySelector('.home-section--continue') as HTMLElement | null;
+
+  if (container === null || section === null) {
+    return;
+  }
   section.setAttribute('aria-busy', String(homeState.historyLoading));
   container.replaceChildren();
 
@@ -357,8 +365,12 @@ function paintHistorySection(main: HTMLElement): void {
 }
 
 function paintActivitySection(main: HTMLElement): void {
-  const container = main.querySelector('#home-activity') as HTMLElement;
-  const section = main.querySelector('.home-section--activity') as HTMLElement;
+  const container = main.querySelector('#home-activity') as HTMLElement | null;
+  const section = main.querySelector('.home-section--activity') as HTMLElement | null;
+
+  if (container === null || section === null) {
+    return;
+  }
   section.setAttribute('aria-busy', String(homeState.activityLoading));
   container.replaceChildren();
 

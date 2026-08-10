@@ -3,7 +3,7 @@ import { loadBrandCatalog } from './lib/brand-catalog.js';
 import { bindWorkspaceSwitch, switchWorkspace } from './lib/workspace-switch.js';
 import { bindShellEvents, renderShell, updateShellChrome, type ShellElements } from './components/shell.js';
 import { renderChat, refreshChatView } from './pages/chat.js';
-import { renderHome } from './pages/home.js';
+import { renderHome, refreshHomeView } from './pages/home.js';
 import {
   applyPendingChatDraftToComposer,
   renderKnowledge,
@@ -12,6 +12,7 @@ import {
 import { renderActivity, refreshActivityView } from './pages/activity.js';
 import { renderBrands, refreshBrandsView } from './pages/brands.js';
 import {
+  type AppRoute,
   getState,
   initRouter,
   patchState,
@@ -22,6 +23,41 @@ import {
 import './styles/app.css';
 
 let shellElements: ShellElements | undefined;
+let lastRenderedRoute: AppRoute | undefined;
+let lastRenderedWorkspace: string | undefined;
+
+function shouldFullRenderRoute(): boolean {
+  const state = getState();
+  return state.route !== lastRenderedRoute || state.activeWorkspace !== lastRenderedWorkspace;
+}
+
+function markRenderedRoute(): void {
+  const state = getState();
+  lastRenderedRoute = state.route;
+  lastRenderedWorkspace = state.activeWorkspace;
+}
+
+function refreshCurrentRouteView(): void {
+  switch (getState().route) {
+    case '/chat':
+      refreshChatView();
+      break;
+    case '/conocimiento':
+      refreshKnowledgeView();
+      break;
+    case '/actividad':
+      refreshActivityView();
+      break;
+    case '/marcas':
+      refreshBrandsView();
+      break;
+    case '/':
+      refreshHomeView();
+      break;
+    default:
+      break;
+  }
+}
 
 export async function mountApp(root: HTMLElement): Promise<void> {
   shellElements = renderShell(root);
@@ -44,7 +80,13 @@ export async function mountApp(root: HTMLElement): Promise<void> {
   });
 
   subscribe(() => {
-    renderCurrentRoute();
+    if (shouldFullRenderRoute()) {
+      markRenderedRoute();
+      renderCurrentRoute();
+    } else {
+      refreshCurrentRouteView();
+    }
+
     if (shellElements) {
       updateShellChrome(shellElements, {
         onCloseSidebar: () => {
@@ -65,6 +107,7 @@ export async function mountApp(root: HTMLElement): Promise<void> {
   }
 
   renderCurrentRoute();
+  markRenderedRoute();
   updateShellChrome(shellElements, {
     onCloseSidebar: () => {
       patchState({ sidebarOpen: false });
@@ -104,12 +147,6 @@ function renderCurrentRoute(): void {
       renderHome(shellElements.main);
       break;
   }
-
-  updateShellChrome(shellElements, {
-    onCloseSidebar: () => {
-      patchState({ sidebarOpen: false });
-    },
-  });
 }
 
 function renderSettingsPlaceholder(main: HTMLElement): void {

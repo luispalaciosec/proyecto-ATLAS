@@ -220,7 +220,11 @@ export function setPendingChatDraft(text: string | undefined): void {
 
 export function consumePendingChatDraft(): string | undefined {
   const draft = state.pendingChatDraft;
-  patchState({ pendingChatDraft: undefined });
+
+  if (draft !== undefined) {
+    patchState({ pendingChatDraft: undefined });
+  }
+
   return draft;
 }
 

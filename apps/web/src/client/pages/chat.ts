@@ -65,6 +65,11 @@ export function renderChat(main: HTMLElement): void {
 
 async function preloadHistory(): Promise<void> {
   const workspace = getState().activeWorkspace;
+
+  if (getState().chatHistoryLoading || getState().chatHistoryLoadedFor === workspace) {
+    return;
+  }
+
   patchState({ chatHistoryLoading: true, statusText: t('chat.recovering') });
   paintHistoryLoading();
 
