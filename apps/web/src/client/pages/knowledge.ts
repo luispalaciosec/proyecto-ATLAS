@@ -6,6 +6,7 @@ import {
 } from '../../presentation/map-knowledge.js';
 import { formatUserError } from '../../presentation/format-error.js';
 import { formatWorkingContext } from '../lib/brand-context.js';
+import { appendExpandableDetails } from '../lib/expandable-details.js';
 import { t } from '../../i18n/index.js';
 import { searchKnowledge } from '../api/client.js';
 import {
@@ -389,24 +390,8 @@ function renderErrorSection(): HTMLElement {
   actions.append(retryButton);
 
   if (pageState.errorTechnical !== undefined) {
-    const detailsButton = document.createElement('button');
-    detailsButton.type = 'button';
-    detailsButton.className = 'btn btn--ghost';
-    detailsButton.textContent = t('common.showDetails');
-
-    const details = document.createElement('pre');
-    details.className = 'error-panel__details';
-    details.hidden = true;
-    details.textContent = pageState.errorTechnical;
-
-    detailsButton.addEventListener('click', () => {
-      details.hidden = !details.hidden;
-      detailsButton.textContent = details.hidden
-        ? t('common.showDetails')
-        : t('common.hideDetails');
-    });
-
-    panel.append(message, actions, detailsButton, details);
+    panel.append(message, actions);
+    appendExpandableDetails(panel, pageState.errorTechnical);
     return panel;
   }
 

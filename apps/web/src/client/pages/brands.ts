@@ -2,7 +2,8 @@ import type { BrandProduct } from '../../presentation/map-brand.js';
 import { t } from '../../i18n/index.js';
 import { createBrand, fetchBrands, BrandApiError } from '../api/client.js';
 import { refreshBrandCatalog } from '../lib/brand-catalog.js';
-import { trapDialogFocus } from '../lib/dialog.js';
+import { mountDialogRoot } from '../lib/dialog.js';
+import { appendExpandableDetails } from '../lib/expandable-details.js';
 import { renderBrandCard, renderBrandCardSkeleton } from '../components/brand-card.js';
 import { switchWorkspace } from '../lib/workspace-switch.js';
 import { applyBrandCatalog, getState, resolveBrandDisplayName } from '../state/app-state.js';
@@ -22,6 +23,7 @@ interface BrandsPageState {
 
 let boundMain: HTMLElement | null = null;
 let lastFocusedElement: HTMLElement | null = null;
+let unmountCreateDialog: (() => void) | undefined;
 
 let pageState: BrandsPageState = {
   loading: true,
@@ -230,24 +232,8 @@ function renderErrorState(): HTMLElement {
   actions.append(retry);
 
   if (pageState.errorTechnical !== undefined) {
-    const detailsButton = document.createElement('button');
-    detailsButton.type = 'button';
-    detailsButton.className = 'btn btn--ghost';
-    detailsButton.textContent = t('common.showDetails');
-
-    const details = document.createElement('pre');
-    details.className = 'error-panel__details';
-    details.hidden = true;
-    details.textContent = pageState.errorTechnical;
-
-    detailsButton.addEventListener('click', () => {
-      details.hidden = !details.hidden;
-      detailsButton.textContent = details.hidden
-        ? t('common.showDetails')
-        : t('common.hideDetails');
-    });
-
-    panel.append(title, body, actions, detailsButton, details);
+    panel.append(title, body, actions);
+    appendExpandableDetails(panel, pageState.errorTechnical);
     return panel;
   }
 
@@ -366,8 +352,24 @@ function openCreateDialog(trigger: HTMLButtonElement): void {
   };
 
   const root = boundMain.querySelector('#brands-dialog-root') as HTMLElement;
-  root.replaceChildren(renderCreateDialog());
-  trapDialogFocus(root);
+  const backdrop = renderCreateDialog();
+  const shellBody = document.querySelector('#shell-body') as HTMLElement | null;
+
+  unmountCreateDialog = mountDialogRoot(root, backdrop, {
+    onEscape: () => {
+      if (!pageState.createSubmitting) {
+        closeCreateDialog();
+      }
+    },
+    onBackdropClick: () => {
+      if (!pageState.createSubmitting) {
+        closeCreateDialog();
+      }
+    },
+    restoreFocusTo: trigger,
+    inertTarget: shellBody,
+    initialFocus: backdrop.querySelector('#brands-create-name') as HTMLInputElement,
+  });
 }
 
 function closeCreateDialog(): void {
@@ -383,6 +385,9 @@ function closeCreateDialog(): void {
     createErrorTechnical: undefined,
   };
 
+  unmountCreateDialog?.();
+  unmountCreateDialog = undefined;
+
   const root = boundMain.querySelector('#brands-dialog-root') as HTMLElement;
   root.replaceChildren();
 
@@ -394,11 +399,6 @@ function closeCreateDialog(): void {
 function renderCreateDialog(): HTMLElement {
   const backdrop = document.createElement('div');
   backdrop.className = 'dialog-backdrop';
-  backdrop.addEventListener('click', (event) => {
-    if (event.target === backdrop && !pageState.createSubmitting) {
-      closeCreateDialog();
-    }
-  });
 
   const dialog = document.createElement('div');
   dialog.className = 'dialog';
@@ -450,7 +450,6 @@ function renderCreateDialog(): HTMLElement {
   backdrop.append(dialog);
 
   const form = dialog.querySelector('#brands-create-form') as HTMLFormElement;
-  const nameInput = dialog.querySelector('#brands-create-name') as HTMLInputElement;
   const cancelButton = dialog.querySelector('#brands-create-cancel') as HTMLButtonElement;
 
   cancelButton.addEventListener('click', () => {
@@ -463,17 +462,6 @@ function renderCreateDialog(): HTMLElement {
     event.preventDefault();
     void submitCreateForm(form);
   });
-
-  backdrop.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !pageState.createSubmitting) {
-      event.preventDefault();
-      closeCreateDialog();
-    }
-  });
-
-  window.setTimeout(() => {
-    nameInput.focus();
-  }, 0);
 
   return backdrop;
 }
@@ -538,24 +526,7 @@ function showCreateError(panel: HTMLElement, message: string, technical?: string
   panel.append(text);
 
   if (technical !== undefined) {
-    const detailsButton = document.createElement('button');
-    detailsButton.type = 'button';
-    detailsButton.className = 'btn btn--ghost';
-    detailsButton.textContent = t('common.showDetails');
-
-    const details = document.createElement('pre');
-    details.className = 'error-panel__details';
-    details.hidden = true;
-    details.textContent = technical;
-
-    detailsButton.addEventListener('click', () => {
-      details.hidden = !details.hidden;
-      detailsButton.textContent = details.hidden
-        ? t('common.showDetails')
-        : t('common.hideDetails');
-    });
-
-    panel.append(detailsButton, details);
+    appendExpandableDetails(panel, technical);
   }
 }
 

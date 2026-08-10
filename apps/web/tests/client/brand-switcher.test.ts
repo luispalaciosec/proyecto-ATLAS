@@ -62,6 +62,7 @@ describe('renderShell brand switcher', () => {
     const elements = renderShell(root);
     bindShellEvents(elements, {
       onToggleSidebar: () => {},
+      onCloseSidebar: () => {},
       onBrandSelect: () => {},
       onManageBrands: () => {},
     });

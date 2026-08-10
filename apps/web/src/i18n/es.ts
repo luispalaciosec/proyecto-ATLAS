@@ -128,6 +128,7 @@ export const es = {
     emptyResponse: 'No recibí una respuesta del asistente.',
     correct: 'Corregir respuesta',
     correctTitle: 'Corregir respuesta',
+    correctLabel: '¿Qué debería haber dicho ATLAS?',
     correctPlaceholder: '¿Qué debería haber dicho ATLAS?',
     correctSubmit: 'Enviar corrección',
     correcting: 'Guardando corrección…',

@@ -16,6 +16,9 @@
 :root {
   color-scheme: dark;
 
+  /* 3I-P1-08: stronger UI border contrast on dark surfaces (WCAG 1.4.11) */
+  --color-border: #334155;
+
   /* Legacy aliases — keep app.css stable */
   --color-text: var(--color-text-primary);
   --color-text-muted: var(--color-text-muted);

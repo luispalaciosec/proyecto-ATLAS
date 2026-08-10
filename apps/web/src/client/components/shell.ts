@@ -12,9 +12,15 @@ const NAV_ITEMS: Array<{ route: AppRoute; labelKey: string; icon: NavIconKey }> 
   { route: '/configuracion', labelKey: 'nav.settings', icon: 'settings' },
 ];
 
+const MOBILE_SHELL_QUERY = '(max-width: 899px)';
+
 export interface ShellElements {
   readonly root: HTMLElement;
   readonly main: HTMLElement;
+  readonly shellBody: HTMLElement;
+  readonly sidebar: HTMLElement;
+  readonly sidebarBackdrop: HTMLButtonElement;
+  readonly menuToggle: HTMLButtonElement;
   readonly statusBar: HTMLElement;
   readonly brandSwitcher: HTMLElement;
   readonly brandSwitcherTrigger: HTMLButtonElement;
@@ -24,6 +30,12 @@ export interface ShellElements {
 
 let panelOpen = false;
 let outsideClickHandler: ((event: MouseEvent) => void) | undefined;
+let sidebarKeydownHandler: ((event: KeyboardEvent) => void) | undefined;
+let lastSidebarOpen = false;
+
+function isMobileShell(): boolean {
+  return window.matchMedia(MOBILE_SHELL_QUERY).matches;
+}
 
 export function renderShell(root: HTMLElement): ShellElements {
   root.innerHTML = `
@@ -44,13 +56,20 @@ export function renderShell(root: HTMLElement): ShellElements {
         </div>
         <nav class="shell__sidebar-nav"></nav>
       </aside>
+      <button
+        type="button"
+        class="shell__sidebar-backdrop"
+        id="sidebar-backdrop"
+        hidden
+        aria-label="${t('nav.closeMenu')}"
+      ></button>
       <div class="shell__frame" id="shell-body">
         <header class="shell__header">
           <div class="shell__brand">
             <button type="button" class="shell__menu-toggle" id="menu-toggle" aria-label="${t('nav.openMenu')}"></button>
           </div>
           <div class="brand-switcher" id="header-brand-switcher">
-            <span class="brand-switcher__label">${t('workspace.brandLabel')}</span>
+            <span class="brand-switcher__label" id="brand-switcher-label">${t('workspace.brandLabel')}</span>
             <div class="brand-switcher__control">
               <button
                 type="button"
@@ -59,6 +78,7 @@ export function renderShell(root: HTMLElement): ShellElements {
                 aria-haspopup="listbox"
                 aria-expanded="false"
                 aria-controls="brand-switcher-panel"
+                aria-labelledby="brand-switcher-label brand-switcher-current"
               >
                 <span id="brand-switcher-current">${t('brands.loadingName')}</span>
               </button>
@@ -95,17 +115,26 @@ export function renderShell(root: HTMLElement): ShellElements {
   status.id = 'status-bar';
   status.className = 'status-bar';
   status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+  status.setAttribute('aria-atomic', 'true');
   main.after(status);
 
-  return {
+  const elements: ShellElements = {
     root,
     main,
+    shellBody: root.querySelector('#shell-body') as HTMLElement,
+    sidebar: root.querySelector('#sidebar') as HTMLElement,
+    sidebarBackdrop: root.querySelector('#sidebar-backdrop') as HTMLButtonElement,
+    menuToggle: root.querySelector('#menu-toggle') as HTMLButtonElement,
     statusBar: status,
     brandSwitcher: root.querySelector('#header-brand-switcher') as HTMLElement,
     brandSwitcherTrigger: root.querySelector('#brand-switcher-trigger') as HTMLButtonElement,
     brandSwitcherPanel: root.querySelector('#brand-switcher-panel') as HTMLElement,
     dialogRoot: root.querySelector('#shell-dialog-root') as HTMLElement,
   };
+
+  lastSidebarOpen = false;
+  return elements;
 }
 
 function createNavLink(
@@ -129,6 +158,66 @@ function createNavLink(
   return link;
 }
 
+function getListboxOptions(panel: HTMLElement): HTMLButtonElement[] {
+  return [...panel.querySelectorAll<HTMLButtonElement>('.brand-switcher__option')];
+}
+
+function focusListboxOption(options: readonly HTMLButtonElement[], index: number): void {
+  if (options.length === 0) {
+    return;
+  }
+
+  const normalized = ((index % options.length) + options.length) % options.length;
+  options[normalized]?.focus();
+}
+
+function handleListboxKeydown(event: KeyboardEvent, elements: ShellElements): void {
+  if (!panelOpen) {
+    return;
+  }
+
+  const options = getListboxOptions(elements.brandSwitcherPanel);
+
+  if (options.length === 0) {
+    return;
+  }
+
+  const activeIndex = options.findIndex((option) => option === document.activeElement);
+
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault();
+      focusListboxOption(options, activeIndex < 0 ? 0 : activeIndex + 1);
+      break;
+    case 'ArrowUp':
+      event.preventDefault();
+      focusListboxOption(options, activeIndex < 0 ? options.length - 1 : activeIndex - 1);
+      break;
+    case 'Home':
+      event.preventDefault();
+      focusListboxOption(options, 0);
+      break;
+    case 'End':
+      event.preventDefault();
+      focusListboxOption(options, options.length - 1);
+      break;
+    case 'Enter':
+    case ' ':
+      if (document.activeElement instanceof HTMLButtonElement && document.activeElement.classList.contains('brand-switcher__option')) {
+        event.preventDefault();
+        document.activeElement.click();
+      }
+      break;
+    case 'Escape':
+      event.preventDefault();
+      closeBrandSwitcherPanel(elements);
+      elements.brandSwitcherTrigger.focus();
+      break;
+    default:
+      break;
+  }
+}
+
 function populateBrandSwitcherPanel(
   elements: ShellElements,
   onBrandSelect: (brandId: string) => void,
@@ -142,6 +231,7 @@ function populateBrandSwitcherPanel(
     const option = document.createElement('button');
     option.type = 'button';
     option.className = 'brand-switcher__option';
+    option.id = `brand-switcher-option-${brand.id}`;
     option.setAttribute('role', 'option');
     option.dataset.brandId = brand.id;
     option.textContent = brand.name;
@@ -156,6 +246,7 @@ function populateBrandSwitcherPanel(
         onBrandSelect(brand.id);
       } else {
         closeBrandSwitcherPanel(elements);
+        elements.brandSwitcherTrigger.focus();
       }
     });
 
@@ -196,11 +287,73 @@ function openBrandSwitcherPanel(
   firstOption?.focus();
 }
 
-export function updateShellChrome(elements: ShellElements): void {
+function getSidebarFocusables(sidebar: HTMLElement): HTMLElement[] {
+  return [...sidebar.querySelectorAll<HTMLElement>('a.shell__sidebar-link, button:not([hidden])')];
+}
+
+function releaseSidebarAccessibility(): void {
+  if (sidebarKeydownHandler !== undefined) {
+    document.removeEventListener('keydown', sidebarKeydownHandler);
+    sidebarKeydownHandler = undefined;
+  }
+}
+
+function syncMobileSidebarAccessibility(
+  elements: ShellElements,
+  sidebarOpen: boolean,
+  onCloseSidebar: () => void,
+): void {
+  releaseSidebarAccessibility();
+
+  const mobile = isMobileShell();
+  elements.sidebarBackdrop.hidden = !(mobile && sidebarOpen);
+  elements.main.inert = mobile && sidebarOpen;
+  elements.shellBody.inert = false;
+
+  if (!mobile || !sidebarOpen) {
+    return;
+  }
+
+  const focusables = getSidebarFocusables(elements.sidebar);
+  focusables[0]?.focus();
+
+  sidebarKeydownHandler = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      onCloseSidebar();
+      elements.menuToggle.focus();
+      return;
+    }
+
+    if (event.key !== 'Tab' || focusables.length === 0) {
+      return;
+    }
+
+    const first = focusables[0]!;
+    const last = focusables[focusables.length - 1]!;
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+      return;
+    }
+
+    if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
+  document.addEventListener('keydown', sidebarKeydownHandler);
+}
+
+export function updateShellChrome(
+  elements: ShellElements,
+  options?: { onCloseSidebar?: () => void },
+): void {
   const state = getState();
-  const frame = elements.root.querySelector('#shell-body') as HTMLElement;
-  const sidebar = elements.root.querySelector('#sidebar') as HTMLElement;
-  const menuToggle = elements.root.querySelector('#menu-toggle') as HTMLButtonElement;
+  const sidebar = elements.sidebar;
+  const menuToggle = elements.menuToggle;
   const currentLabel = elements.root.querySelector('#brand-switcher-current') as HTMLElement;
   const menuLabel = state.sidebarOpen ? t('nav.closeMenu') : t('nav.openMenu');
 
@@ -208,7 +361,21 @@ export function updateShellChrome(elements: ShellElements): void {
   menuToggle.setAttribute('aria-label', menuLabel);
   menuToggle.setAttribute('aria-expanded', String(state.sidebarOpen));
   sidebar.classList.toggle('is-open', state.sidebarOpen);
-  frame.classList.toggle('sidebar-open', state.sidebarOpen);
+  elements.shellBody.classList.toggle('sidebar-open', state.sidebarOpen);
+
+  if (options?.onCloseSidebar !== undefined) {
+    if (state.sidebarOpen && !lastSidebarOpen && isMobileShell()) {
+      syncMobileSidebarAccessibility(elements, true, options.onCloseSidebar);
+    } else if (!state.sidebarOpen && lastSidebarOpen) {
+      syncMobileSidebarAccessibility(elements, false, options.onCloseSidebar);
+    } else if (state.sidebarOpen && isMobileShell()) {
+      syncMobileSidebarAccessibility(elements, true, options.onCloseSidebar);
+    } else if (!state.sidebarOpen) {
+      syncMobileSidebarAccessibility(elements, false, options.onCloseSidebar);
+    }
+  }
+
+  lastSidebarOpen = state.sidebarOpen;
 
   for (const link of elements.root.querySelectorAll<HTMLElement>('[data-route]')) {
     link.classList.toggle('is-active', link.dataset.route === state.route);
@@ -240,12 +407,17 @@ export function bindShellEvents(
   elements: ShellElements,
   handlers: {
     onToggleSidebar: () => void;
+    onCloseSidebar: () => void;
     onBrandSelect: (brandId: string) => void;
     onManageBrands: () => void;
   },
 ): void {
-  const menuToggle = elements.root.querySelector('#menu-toggle') as HTMLButtonElement;
-  menuToggle.addEventListener('click', handlers.onToggleSidebar);
+  elements.menuToggle.addEventListener('click', handlers.onToggleSidebar);
+
+  elements.sidebarBackdrop.addEventListener('click', () => {
+    handlers.onCloseSidebar();
+    elements.menuToggle.focus();
+  });
 
   elements.brandSwitcherTrigger.addEventListener('click', () => {
     if (!getState().brandsLoaded) {
@@ -254,6 +426,7 @@ export function bindShellEvents(
 
     if (panelOpen) {
       closeBrandSwitcherPanel(elements);
+      elements.brandSwitcherTrigger.focus();
       return;
     }
 
@@ -264,11 +437,7 @@ export function bindShellEvents(
   });
 
   elements.brandSwitcherPanel.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      closeBrandSwitcherPanel(elements);
-      elements.brandSwitcherTrigger.focus();
-    }
+    handleListboxKeydown(event, elements);
   });
 
   outsideClickHandler = (event: MouseEvent) => {
@@ -291,8 +460,14 @@ export function bindShellEvents(
 }
 
 export function teardownShellEvents(): void {
+  releaseSidebarAccessibility();
+
   if (outsideClickHandler !== undefined) {
     document.removeEventListener('click', outsideClickHandler);
     outsideClickHandler = undefined;
   }
+}
+
+export function getShellBodyElement(root: HTMLElement): HTMLElement | null {
+  return root.querySelector('#shell-body');
 }

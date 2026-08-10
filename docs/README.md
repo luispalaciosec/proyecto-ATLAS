@@ -35,6 +35,8 @@ Architecture proposals (RFCs) live in [`proposals/rfc/`](./proposals/rfc/).
 | [../releases/WEB_UI_WORLD_CLASS_FINAL_AUDIT.md](../releases/WEB_UI_WORLD_CLASS_FINAL_AUDIT.md) | Product / UX | Fase 3H — auditoría final pre-piloto (world-class UX) |
 | [../releases/WEB_UI_PHASE_3H_AUDIT.md](../releases/WEB_UI_PHASE_3H_AUDIT.md) | Product / UX | Fase 3H — auditoría pre-implementación pilot polish |
 | [../releases/WEB_UI_PHASE_3H_IMPLEMENTATION.md](../releases/WEB_UI_PHASE_3H_IMPLEMENTATION.md) | Product / Frontend | Fase 3H — pilot polish + honestidad sesión |
+| [../releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md](../releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md) | Product / UX / A11y | Fase 3I Parte A — auditoría accesibilidad + responsive (WCAG 2.2 AA) |
+| [../releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md](../releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md) | Product / Frontend / A11y | Fase 3I Parte B — implementación P0 + P1 accesibilidad |
 | [../releases/ATLAS_PILOT_READINESS_AUDIT.md](../releases/ATLAS_PILOT_READINESS_AUDIT.md) | Product / Pilot | Auditoría preparación piloto real |
 | [../releases/ATLAS_PILOT_PROTOCOL.md](../releases/ATLAS_PILOT_PROTOCOL.md) | Product / Pilot | Protocolo sesiones piloto |
 | [../releases/ATLAS_PILOT_FEEDBACK.md](../releases/ATLAS_PILOT_FEEDBACK.md) | Product / Pilot | Plantilla feedback por sesión |

@@ -4,6 +4,7 @@ import {
   groupActivityItemsByDate,
 } from '../../presentation/map-activity.js';
 import { formatWorkingContext } from '../lib/brand-context.js';
+import { appendExpandableDetails } from '../lib/expandable-details.js';
 import { t } from '../../i18n/index.js';
 import { fetchActivity } from '../api/client.js';
 import { getState, resolveBrandDisplayName, setPendingChatDraft, setPendingKnowledgeQuery, setRoute } from '../state/app-state.js';
@@ -227,24 +228,8 @@ function renderErrorState(): HTMLElement {
   actions.append(retry);
 
   if (pageState.errorTechnical !== undefined) {
-    const detailsButton = document.createElement('button');
-    detailsButton.type = 'button';
-    detailsButton.className = 'btn btn--ghost';
-    detailsButton.textContent = t('common.showDetails');
-
-    const details = document.createElement('pre');
-    details.className = 'error-panel__details';
-    details.hidden = true;
-    details.textContent = pageState.errorTechnical;
-
-    detailsButton.addEventListener('click', () => {
-      details.hidden = !details.hidden;
-      detailsButton.textContent = details.hidden
-        ? t('common.showDetails')
-        : t('common.hideDetails');
-    });
-
-    panel.append(message, actions, detailsButton, details);
+    panel.append(message, actions);
+    appendExpandableDetails(panel, pageState.errorTechnical);
     return panel;
   }
 
@@ -341,24 +326,7 @@ function renderActivityCard(item: ActivityItemProduct): HTMLElement {
   }
 
   if (item.technicalDetails !== undefined) {
-    const detailsButton = document.createElement('button');
-    detailsButton.type = 'button';
-    detailsButton.className = 'btn btn--ghost';
-    detailsButton.textContent = t('common.showDetails');
-
-    const details = document.createElement('pre');
-    details.className = 'error-panel__details';
-    details.hidden = true;
-    details.textContent = item.technicalDetails;
-
-    detailsButton.addEventListener('click', () => {
-      details.hidden = !details.hidden;
-      detailsButton.textContent = details.hidden
-        ? t('common.showDetails')
-        : t('common.hideDetails');
-    });
-
-    body.append(detailsButton, details);
+    appendExpandableDetails(body, item.technicalDetails);
   }
 
   entry.append(time, body);

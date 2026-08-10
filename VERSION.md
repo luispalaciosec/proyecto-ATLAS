@@ -569,10 +569,11 @@ API (3G.1): `GET/POST /api/brands`, mapper `map-brand.ts`, errores tipados. UI (
 | 3G.3 | Shell selector + confirmación + `GET /api/brands` | **Complete** |
 | 3G.4 | Home polish + coherencia producto | **Complete** |
 | 3H | Pilot polish + honestidad sesión | **Complete** |
+| 3I | Accesibilidad + responsive (WCAG 2.2 AA P0/P1) | **Complete** |
 
-**Tests `@atlas/web`:** 134/134.
+**Tests `@atlas/web`:** 143/143.
 
-**Informes:** [`WEB_UI_WORLD_CLASS_FINAL_AUDIT.md`](./releases/WEB_UI_WORLD_CLASS_FINAL_AUDIT.md), [`WEB_UI_PHASE_3H_AUDIT.md`](./releases/WEB_UI_PHASE_3H_AUDIT.md), [`WEB_UI_PHASE_3H_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3H_IMPLEMENTATION.md).
+**Informes:** [`WEB_UI_WORLD_CLASS_FINAL_AUDIT.md`](./releases/WEB_UI_WORLD_CLASS_FINAL_AUDIT.md), [`WEB_UI_PHASE_3H_AUDIT.md`](./releases/WEB_UI_PHASE_3H_AUDIT.md), [`WEB_UI_PHASE_3H_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3H_IMPLEMENTATION.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md`](./releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md).
 
 **Limitación:** sin edición/eliminación de marca; historial/actividad in-memory por sesión Web; Configuración sigue «Próximamente».
 

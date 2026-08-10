@@ -1,6 +1,6 @@
 import { t } from '../../i18n/index.js';
 import type { ShellElements } from '../components/shell.js';
-import { closeBrandSwitcherPanel } from '../components/shell.js';
+import { closeBrandSwitcherPanel, getShellBodyElement } from '../components/shell.js';
 import { mountDialogRoot } from './dialog.js';
 import { reloadChatHistory, renderChat } from '../pages/chat.js';
 import {
@@ -52,6 +52,8 @@ function requestSwitchConfirmation(targetBrandId: string): Promise<boolean> {
   const currentName = resolveBrandDisplayName(state.activeWorkspace);
   const targetName = resolveBrandDisplayName(targetBrandId);
   const draftNotice = hasUnsavedDraft() ? t('brands.switchDialogDraft') : undefined;
+  const restoreFocusTarget = shellElementsRef.brandSwitcherTrigger;
+  const inertTarget = getShellBodyElement(shellElementsRef.root);
 
   return new Promise((resolve) => {
     const backdrop = document.createElement('div');
@@ -101,8 +103,11 @@ function requestSwitchConfirmation(targetBrandId: string): Promise<boolean> {
     dialog.append(actions);
     backdrop.append(dialog);
 
+    let unmount: (() => void) | undefined;
+
     const close = (accepted: boolean): void => {
-      unmount();
+      unmount?.();
+      unmount = undefined;
       resolve(accepted);
     };
 
@@ -114,18 +119,17 @@ function requestSwitchConfirmation(targetBrandId: string): Promise<boolean> {
       close(true);
     });
 
-    const unmount = mountDialogRoot(shellElementsRef!.dialogRoot, backdrop, {
+    unmount = mountDialogRoot(shellElementsRef!.dialogRoot, backdrop, {
       onEscape: () => {
         close(false);
       },
       onBackdropClick: () => {
         close(false);
       },
+      restoreFocusTo: restoreFocusTarget,
+      inertTarget,
+      initialFocus: confirm,
     });
-
-    window.setTimeout(() => {
-      confirm.focus();
-    }, 0);
   });
 }
 

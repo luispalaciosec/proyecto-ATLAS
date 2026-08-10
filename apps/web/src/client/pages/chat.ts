@@ -1,4 +1,5 @@
 import { formatWorkingContext } from '../lib/brand-context.js';
+import { appendExpandableDetails } from '../lib/expandable-details.js';
 import { t } from '../../i18n/index.js';
 import { formatCorrectionStatus, formatUserError } from '../../presentation/format-error.js';
 import { mapChatResponse } from '../../presentation/map-chat-response.js';
@@ -33,7 +34,7 @@ export function renderChat(main: HTMLElement): void {
         <p class="page__subtitle">${contextLine}</p>
       </header>
       <div class="banner">${t('workspace.isolationBanner', { name: workspaceName })}</div>
-      <div id="chat-thread" class="chat-thread" aria-live="polite" aria-busy="false"></div>
+      <div id="chat-thread" class="chat-thread" aria-busy="false"></div>
       <form id="chat-form" class="chat-composer">
         <label class="chat-composer__label" for="chat-input">${t('chat.placeholder')}</label>
         <div class="chat-composer__row">
@@ -41,8 +42,9 @@ export function renderChat(main: HTMLElement): void {
           <button type="submit" class="btn btn--primary" id="chat-send">${t('chat.send')}</button>
         </div>
       </form>
-      <section class="correction-panel" id="correction-panel" hidden>
-        <h2 class="card__title">${t('chat.correctTitle')}</h2>
+      <section class="correction-panel" id="correction-panel" hidden aria-labelledby="correction-panel-title">
+        <h2 id="correction-panel-title" class="card__title">${t('chat.correctTitle')}</h2>
+        <label class="chat-composer__label" for="correction-input">${t('chat.correctLabel')}</label>
         <textarea id="correction-input" class="chat-composer__input" rows="3" placeholder="${t('chat.correctPlaceholder')}"></textarea>
         <div class="actions-row">
           <button type="button" class="btn btn--secondary" id="correction-cancel">${t('common.cancel')}</button>
@@ -243,24 +245,7 @@ function renderMessageElement(message: UiChatMessage): HTMLElement {
     }
 
     if (message.technicalDetails !== undefined) {
-      const detailsButton = document.createElement('button');
-      detailsButton.type = 'button';
-      detailsButton.className = 'btn btn--ghost';
-      detailsButton.textContent = t('common.showDetails');
-
-      const details = document.createElement('pre');
-      details.className = 'error-panel__details';
-      details.hidden = true;
-      details.textContent = message.technicalDetails;
-
-      detailsButton.addEventListener('click', () => {
-        details.hidden = !details.hidden;
-        detailsButton.textContent = details.hidden
-          ? t('common.showDetails')
-          : t('common.hideDetails');
-      });
-
-      panel.append(detailsButton, details);
+      appendExpandableDetails(panel, message.technicalDetails);
     }
 
     element.append(panel);

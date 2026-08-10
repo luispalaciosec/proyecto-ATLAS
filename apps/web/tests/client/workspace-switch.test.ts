@@ -66,6 +66,11 @@ describe('switchWorkspace', () => {
   it('cancels switch without changing active brand when draft exists', async () => {
     setPendingChatDraft('borrador');
 
+    const root = document.querySelector('#app') as HTMLElement;
+    const elements = renderShell(root);
+    bindWorkspaceSwitch(elements, () => {});
+    elements.brandSwitcherTrigger.focus();
+
     const confirmPromise = switchWorkspace('geeks');
     const dialog = document.querySelector('[role="dialog"]') as HTMLElement;
     dialog.querySelector('.btn--ghost')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -73,6 +78,7 @@ describe('switchWorkspace', () => {
 
     expect(getState().activeWorkspace).toBe('default');
     expect(getState().pendingChatDraft).toBe('borrador');
+    expect(document.activeElement).toBe(elements.brandSwitcherTrigger);
   });
 
   it('clears pending draft after confirmed switch with draft', async () => {

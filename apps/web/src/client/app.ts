@@ -32,6 +32,9 @@ export async function mountApp(root: HTMLElement): Promise<void> {
     onToggleSidebar: () => {
       patchState({ sidebarOpen: !getState().sidebarOpen });
     },
+    onCloseSidebar: () => {
+      patchState({ sidebarOpen: false });
+    },
     onBrandSelect: (brandId) => {
       void switchWorkspace(brandId);
     },
@@ -43,7 +46,11 @@ export async function mountApp(root: HTMLElement): Promise<void> {
   subscribe(() => {
     renderCurrentRoute();
     if (shellElements) {
-      updateShellChrome(shellElements);
+      updateShellChrome(shellElements, {
+        onCloseSidebar: () => {
+          patchState({ sidebarOpen: false });
+        },
+      });
     }
   });
 
@@ -58,7 +65,11 @@ export async function mountApp(root: HTMLElement): Promise<void> {
   }
 
   renderCurrentRoute();
-  updateShellChrome(shellElements);
+  updateShellChrome(shellElements, {
+    onCloseSidebar: () => {
+      patchState({ sidebarOpen: false });
+    },
+  });
 }
 
 function renderCurrentRoute(): void {
@@ -94,7 +105,11 @@ function renderCurrentRoute(): void {
       break;
   }
 
-  updateShellChrome(shellElements);
+  updateShellChrome(shellElements, {
+    onCloseSidebar: () => {
+      patchState({ sidebarOpen: false });
+    },
+  });
 }
 
 function renderSettingsPlaceholder(main: HTMLElement): void {
