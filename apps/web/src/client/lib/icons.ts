@@ -1,15 +1,20 @@
 import {
   BookOpen,
   Building2,
+  CircleCheck,
   createElement,
+  FileText,
+  FileType,
   House,
   MessageCircle,
   Moon,
   Pencil,
+  Presentation,
   Search,
   Settings,
   Sun,
   TrendingUp,
+  Upload,
   type IconNode,
 } from 'lucide';
 
@@ -80,4 +85,27 @@ export function createActivityIcon(
 
 export function createThemeIcon(mode: 'light' | 'dark'): SVGElement {
   return renderIcon(mode === 'dark' ? Sun : Moon, { size: 18, className: 'shell__theme-toggle-icon' });
+}
+
+export function createUploadIdleIcon(className = 'knowledge-upload__idle-icon'): SVGElement {
+  return renderIcon(Upload, { size: 28, className, strokeWidth: 1.5 });
+}
+
+export function createUploadSuccessIcon(className = 'knowledge-upload__success-icon'): SVGElement {
+  return renderIcon(CircleCheck, { size: 28, className, strokeWidth: 1.75 });
+}
+
+export function createFileTypeIcon(
+  extension: string,
+  className = 'knowledge-upload__file-icon',
+): SVGElement {
+  const map: Record<string, IconNode> = {
+    pdf: FileType,
+    docx: FileText,
+    pptx: Presentation,
+    txt: FileText,
+    md: FileText,
+  };
+
+  return renderIcon(map[extension] ?? FileText, { size: 28, className, strokeWidth: 1.5 });
 }

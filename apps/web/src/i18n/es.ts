@@ -269,6 +269,13 @@ export const es = {
     uploadDropActive: 'Suelta el archivo para subirlo',
     uploadSupported: 'Formatos: PDF, DOCX, PPTX, TXT, MD (máx. 15MB)',
     uploadLoading: 'Estamos incorporando {name}…',
+    uploadPhaseUploading: 'Subiendo archivo…',
+    uploadPhaseReading: 'Leyendo documento…',
+    uploadPhaseIndexing: 'Indexando en el conocimiento…',
+    uploadPhaseAvailable: 'Disponible para buscar',
+    uploadPhaseError: 'No se pudo incorporar el documento',
+    uploadSuccessDetail: '{fileName} ya forma parte del conocimiento de {workspace}.',
+    uploadSearchDocument: 'Buscar en este documento',
     uploadSuccess: 'Se incorporó {fileName} ({count} fragmentos guardados)',
     uploadSuccessOne: 'Se incorporó {fileName} (1 fragmento guardado)',
     uploadErrorInvalidType:

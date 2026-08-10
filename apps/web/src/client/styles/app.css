@@ -1365,6 +1365,137 @@
   background: color-mix(in srgb, var(--color-primary) 6%, var(--color-bg));
 }
 
+.knowledge-upload__dropzone--busy {
+  cursor: default;
+  pointer-events: none;
+}
+
+.knowledge-upload__idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.knowledge-upload__idle-icon-wrap,
+.knowledge-upload__file-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+}
+
+.knowledge-upload__idle-icon-wrap {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-full, 999px);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.knowledge-upload__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.knowledge-upload__file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.knowledge-upload__file-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1;
+}
+
+.knowledge-upload__file-name {
+  margin: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.knowledge-upload__phase {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.knowledge-upload__progress-track {
+  width: 100%;
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: var(--radius-full, 999px);
+  background: color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+.knowledge-upload__progress-bar {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary),
+    color-mix(in srgb, var(--color-cyan, var(--color-primary)) 80%, var(--color-primary))
+  );
+  transition: width 0.25s ease;
+}
+
+.knowledge-upload__progress--indeterminate .knowledge-upload__progress-bar {
+  background-size: 200% 100%;
+  animation: knowledge-upload-progress-pulse 1.4s ease-in-out infinite;
+}
+
+.knowledge-upload__progress--success .knowledge-upload__phase {
+  color: var(--color-success, #15803d);
+  font-weight: 600;
+}
+
+.knowledge-upload__progress--success .knowledge-upload__progress-bar {
+  background: var(--color-success, #15803d);
+}
+
+.knowledge-upload__progress--error .knowledge-upload__phase {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.knowledge-upload__progress--error .knowledge-upload__progress-bar {
+  background: var(--color-error);
+}
+
+.knowledge-upload__detail {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.knowledge-upload__search-btn {
+  align-self: flex-start;
+}
+
+@keyframes knowledge-upload-progress-pulse {
+  0% {
+    opacity: 0.65;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.65;
+  }
+}
+
 .knowledge-upload__hint {
   margin: 0;
   text-align: center;

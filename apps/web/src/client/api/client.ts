@@ -161,9 +161,18 @@ export async function fetchActivity(
   return payload;
 }
 
+export type KnowledgeUploadPhase = 'uploading' | 'reading' | 'indexing' | 'available' | 'error';
+
+export interface KnowledgeUploadProgress {
+  readonly phase: KnowledgeUploadPhase;
+  readonly progress: number;
+  readonly fileName: string;
+}
+
 export async function uploadKnowledgeDocument(
   slug: string,
   file: File,
+  onProgress?: (progress: KnowledgeUploadProgress) => void,
 ): Promise<KnowledgeUploadResponseProduct> {
   const formData = new FormData();
   formData.append('file', file);
@@ -172,18 +181,84 @@ export async function uploadKnowledgeDocument(
     formData.append('workspace', slug);
   }
 
-  const response = await fetch('/api/knowledge/upload', {
-    method: 'POST',
-    body: formData,
+  const report = (phase: KnowledgeUploadPhase, progress: number): void => {
+    onProgress?.({ phase, progress, fileName: file.name });
+  };
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let readingTimer: ReturnType<typeof setTimeout> | undefined;
+    let indexingTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const clearTimers = (): void => {
+      if (readingTimer !== undefined) {
+        clearTimeout(readingTimer);
+        readingTimer = undefined;
+      }
+
+      if (indexingTimer !== undefined) {
+        clearTimeout(indexingTimer);
+        indexingTimer = undefined;
+      }
+    };
+
+    report('uploading', 2);
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        const uploadPercent = Math.round((event.loaded / event.total) * 45);
+        report('uploading', Math.max(5, uploadPercent));
+      }
+    });
+
+    xhr.upload.addEventListener('load', () => {
+      report('reading', 52);
+      readingTimer = setTimeout(() => {
+        report('indexing', 68);
+      }, 350);
+      indexingTimer = setTimeout(() => {
+        report('indexing', 82);
+      }, 1100);
+    });
+
+    xhr.addEventListener('load', () => {
+      clearTimers();
+
+      let payload: KnowledgeUploadResponseProduct & { error?: string };
+
+      try {
+        payload = JSON.parse(xhr.responseText) as KnowledgeUploadResponseProduct & { error?: string };
+      } catch {
+        report('error', 0);
+        reject(new Error('Knowledge upload failed'));
+        return;
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        report('available', 100);
+        resolve(payload);
+        return;
+      }
+
+      report('error', 0);
+      reject(new Error(extractApiErrorMessage(payload, 'Knowledge upload failed')));
+    });
+
+    xhr.addEventListener('error', () => {
+      clearTimers();
+      report('error', 0);
+      reject(new Error('Knowledge upload failed'));
+    });
+
+    xhr.addEventListener('abort', () => {
+      clearTimers();
+      report('error', 0);
+      reject(new Error('Knowledge upload failed'));
+    });
+
+    xhr.open('POST', '/api/knowledge/upload');
+    xhr.send(formData);
   });
-
-  const payload = (await response.json()) as KnowledgeUploadResponseProduct & { error?: string };
-
-  if (!response.ok) {
-    throw new Error(extractApiErrorMessage(payload, 'Knowledge upload failed'));
-  }
-
-  return payload;
 }
 
 export async function sendChatMessage(

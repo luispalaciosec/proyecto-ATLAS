@@ -51,11 +51,18 @@ describe('renderKnowledge', () => {
   });
 
   it('uploads a supported file and refreshes active search', async () => {
-    uploadKnowledgeDocument.mockResolvedValue({
-      fileName: 'manual.txt',
-      chunks: 2,
-      recordIds: ['a', 'b'],
-    });
+    uploadKnowledgeDocument.mockImplementation(
+      async (_slug: string, file: File, onProgress?: (progress: { phase: string; progress: number; fileName: string }) => void) => {
+        onProgress?.({ phase: 'uploading', progress: 20, fileName: file.name });
+        onProgress?.({ phase: 'indexing', progress: 80, fileName: file.name });
+        onProgress?.({ phase: 'available', progress: 100, fileName: file.name });
+        return {
+          fileName: 'manual.txt',
+          chunks: 2,
+          recordIds: ['a', 'b'],
+        };
+      },
+    );
     searchKnowledge.mockResolvedValue({
       workspace: 'default',
       query: 'manual',
@@ -89,10 +96,48 @@ describe('renderKnowledge', () => {
     await flushUi();
     await flushUi();
 
-    expect(uploadKnowledgeDocument).toHaveBeenCalledWith('default', file);
+    expect(uploadKnowledgeDocument).toHaveBeenCalledWith('default', file, expect.any(Function));
     expect(getState().statusText).toContain('manual.txt');
     expect(getState().statusText).toContain('2 fragmentos');
+    expect(main.textContent).toContain('Disponible para buscar');
+    expect(main.querySelector('#knowledge-upload-progress')?.hidden).toBe(false);
     expect(searchKnowledge).toHaveBeenLastCalledWith('default', 'manual');
+  });
+
+  it('shows upload progress phases while uploading', async () => {
+    let resolveUpload!: (value: { fileName: string; chunks: number; recordIds: string[] }) => void;
+    const uploadPromise = new Promise<{ fileName: string; chunks: number; recordIds: string[] }>((resolve) => {
+      resolveUpload = resolve;
+    });
+
+    uploadKnowledgeDocument.mockImplementation(
+      async (_slug: string, file: File, onProgress?: (progress: { phase: string; progress: number; fileName: string }) => void) => {
+        onProgress?.({ phase: 'uploading', progress: 25, fileName: file.name });
+        onProgress?.({ phase: 'reading', progress: 55, fileName: file.name });
+        onProgress?.({ phase: 'indexing', progress: 75, fileName: file.name });
+        return uploadPromise;
+      },
+    );
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderKnowledge(main);
+
+    const fileInput = main.querySelector('#knowledge-upload-input') as HTMLInputElement;
+    const file = new File(['contenido'], 'informe.pdf', { type: 'application/pdf' });
+    Object.defineProperty(fileInput, 'files', { value: [file] });
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await flushUi();
+
+    expect(main.textContent).toContain('informe.pdf');
+    expect(main.textContent).toContain('Indexando en el conocimiento');
+
+    resolveUpload({ fileName: 'informe.pdf', chunks: 1, recordIds: ['x'] });
+    await flushUi();
+    await flushUi();
+
+    expect(main.textContent).toContain('Disponible para buscar');
+    expect(main.querySelector('#knowledge-upload-search-btn')?.hidden).toBe(false);
   });
 
   it('renders empty state before searching', () => {
