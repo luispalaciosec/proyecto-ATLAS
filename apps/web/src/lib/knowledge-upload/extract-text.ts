@@ -1,6 +1,6 @@
 import mammoth from 'mammoth';
 import JSZip from 'jszip';
-import pdfParse from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 
 import {
   EMPTY_EXTRACTION_MESSAGE,
@@ -47,8 +47,14 @@ async function extractPptxText(buffer: Buffer): Promise<string> {
 }
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
-  const result = await pdfParse(buffer);
-  return result.text.trim();
+  const parser = new PDFParse({ data: buffer });
+
+  try {
+    const result = await parser.getText();
+    return result.text.trim();
+  } finally {
+    await parser.destroy();
+  }
 }
 
 async function extractDocxText(buffer: Buffer): Promise<string> {

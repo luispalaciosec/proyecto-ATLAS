@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('pdf-parse', () => ({
-  default: vi.fn(async () => ({ text: 'PDF zeta-quantum-7742 contenido extraido' })),
+  PDFParse: vi.fn().mockImplementation(() => ({
+    getText: vi.fn(async () => ({ text: 'PDF zeta-quantum-7742 contenido extraido' })),
+    destroy: vi.fn(async () => undefined),
+  })),
 }));
 
 import { chunkText } from '../src/lib/knowledge-upload/chunk-text.js';
