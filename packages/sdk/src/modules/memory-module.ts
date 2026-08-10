@@ -73,14 +73,37 @@ function extractSearchableText(record: MemoryRecord): string {
   return JSON.stringify(record.content);
 }
 
-function matchesContentQuery(record: MemoryRecord, query: string): boolean {
+const MIN_SEARCH_TOKEN_LENGTH = 3;
+
+function tokenizeForSearch(text: string): readonly string[] {
+  return normalizeForSearch(text).split(/\s+/).filter((token) => token.length > 0);
+}
+
+function tokenMatchesQuery(queryToken: string, textTokens: readonly string[]): boolean {
+  return textTokens.some(
+    (textToken) => textToken.startsWith(queryToken) || queryToken.startsWith(textToken),
+  );
+}
+
+export function matchesContentQuery(record: MemoryRecord, query: string): boolean {
   const normalizedQuery = normalizeForSearch(query.trim());
 
   if (normalizedQuery.length === 0) {
     return true;
   }
 
-  return normalizeForSearch(extractSearchableText(record)).includes(normalizedQuery);
+  const normalizedText = normalizeForSearch(extractSearchableText(record));
+  const queryTokens = tokenizeForSearch(normalizedQuery).filter(
+    (token) => token.length >= MIN_SEARCH_TOKEN_LENGTH,
+  );
+
+  if (queryTokens.length === 0) {
+    return normalizedText.includes(normalizedQuery);
+  }
+
+  const textTokens = tokenizeForSearch(normalizedText);
+
+  return queryTokens.every((queryToken) => tokenMatchesQuery(queryToken, textTokens));
 }
 
 function createRecordId(): string {

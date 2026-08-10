@@ -25,6 +25,10 @@ const SYSTEM_PROMPT = [
   'If a tool result shows total greater than zero or a non-empty records array, you must',
   'reference that data in your response — never claim no information exists when a tool',
   'result shows otherwise. If a tool result is genuinely empty, say so plainly instead of guessing.',
+  'Tool results may include internal tracking identifiers (workflowId, sessionId, memoryRecordId, recordId).',
+  'These are internal metadata — never read them aloud or show them to the user unless they explicitly',
+  'ask for technical or debugging details. Summarize outcomes in business language',
+  '(e.g. "pedido confirmado y registrado" instead of citing a workflow ID).',
 ].join(' ');
 
 function readOptionalStringOption(

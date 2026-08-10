@@ -1300,14 +1300,17 @@
 
   .shell__sidebar {
     display: flex;
-    position: static;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
     inset: auto;
     box-shadow: none;
     max-width: none;
   }
 
   .shell__sidebar.is-open {
-    position: static;
+    position: sticky;
     max-width: none;
   }
 

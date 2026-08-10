@@ -490,6 +490,8 @@ Durante la validación se detectaron y cerraron cuatro hallazgos, además de tre
 
 **Upload de documentos (post-`aeea5f5`, 2026-08-10):** `POST /api/knowledge/upload` — PDF/DOCX/PPTX/TXT/MD → memoria buscable por marca. Informe: [`WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md`](./releases/WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md). Solo `apps/web/`; PPTX vía `jszip` (OOXML zip, sin binarios nativos).
 
+**Fixes UX revisión en vivo (post-`7569f05`, 2026-08-10):** sidebar sticky escritorio, prompt LLM sin IDs internos, búsqueda Conocimiento por tokens (singular/plural). Informe: [`WEB_UI_LIVE_REVIEW_UX_FIXES.md`](./releases/WEB_UI_LIVE_REVIEW_UX_FIXES.md). Tests `@atlas/sdk` **40/40** (+4).
+
 **Verificación independiente de esta sesión, sobre el HEAD real `aeea5f5` (2026-08-10, copia limpia aislada, no la self-report de Cursor):**
 
 | Chequeo | Resultado |
@@ -505,7 +507,7 @@ Durante la validación se detectaron y cerraron cuatro hallazgos, además de tre
 
 **Gaps conocidos, sin resolver todavía:**
 
-- **Bug confirmado, no corregido:** el chip de ejemplo "Clientes VIP" en Conocimiento (`apps/web/src/i18n/es.ts:267`) es texto decorativo hardcodeado, no derivado de contenido real indexado; al hacer clic devuelve 0 resultados reales (confirmado contra captura de la propia sesión de Luis). Pendiente decidir: corregir el ejemplo, quitarlo, o dejarlo documentado como conocido.
+- ~~**Bug confirmado, no corregido:** el chip de ejemplo "Clientes VIP"~~ → **Corregido** en fixes UX en vivo (búsqueda por tokens, `packages/sdk`).
 - Modo determinístico con metas que contienen `?` sigue fallando con `CORE_INVALID_IDENTIFIER` si el LLM no está configurado — bug en `packages/sdk` (`planExecuteAndRemember`), fuera de alcance de este hotfix, documentado en el informe del hotfix §7.
 - Sin edición/eliminación de marca.
 - Historial de chat y timeline de actividad viven en memoria del proceso Web — se pierden si el servidor se reinicia (mismo comportamiento ya conocido desde P2.5, no una regresión nueva).

@@ -22,6 +22,7 @@ export type {
   StoreMemoryContentResult,
   StorePlanExecutionOptions,
 } from './modules/memory-module.js';
+export { matchesContentQuery } from './modules/memory-module.js';
 export type { PlanFromGoalOptions } from './modules/planning-module.js';
 export type { RetrieveForGoalOptions } from './modules/retrieval-module.js';
 export type { AskOptions } from './modules/llm-module.js';

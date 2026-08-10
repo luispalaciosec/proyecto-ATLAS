@@ -1,6 +1,43 @@
 import { describe, expect, it } from 'vitest';
 
-import { createAtlas } from '../src/index.js';
+import { createAtlas, matchesContentQuery } from '../src/index.js';
+import type { MemoryRecord } from '@atlas/memory';
+
+function createRecord(content: string): MemoryRecord {
+  return {
+    id: 'record.test',
+    type: 'CliMemory',
+    content: { text: content },
+    metadata: {
+      namespaceId: 'cli.default',
+      revision: 1,
+      version: '1',
+      visibility: 'private',
+    },
+    timestamp: '2026-01-01T00:00:00.000Z',
+  } as MemoryRecord;
+}
+
+describe('matchesContentQuery', () => {
+  it('matches plural query tokens against singular stored text', () => {
+    const record = createRecord('El cliente VIP Ana prefiere entrega los lunes.');
+
+    expect(matchesContentQuery(record, 'Clientes VIP')).toBe(true);
+    expect(matchesContentQuery(record, 'cliente VIP')).toBe(true);
+  });
+
+  it('matches single-token queries like VIP', () => {
+    const record = createRecord('Pedido VIP #G-500 laptop gaming');
+
+    expect(matchesContentQuery(record, 'VIP')).toBe(true);
+  });
+
+  it('does not match unrelated queries', () => {
+    const record = createRecord('Política de devolución 30 días');
+
+    expect(matchesContentQuery(record, 'Clientes VIP')).toBe(false);
+  });
+});
 
 describe('MemoryModule', () => {
   it('stores and searches content through the public memory facade', async () => {
