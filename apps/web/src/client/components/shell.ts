@@ -1,7 +1,8 @@
 import logoUrl from '../../../design-system/assets/logo.svg?url';
 import { t } from '../../i18n/index.js';
 import { type AppRoute, getState, resolveBrandDisplayName, setRoute } from '../state/app-state.js';
-import { createNavIcon, type NavIconKey } from '../lib/icons.js';
+import { createNavIcon, createThemeIcon, type NavIconKey } from '../lib/icons.js';
+import { getTheme, toggleTheme } from '../lib/theme.js';
 
 const NAV_ITEMS: Array<{ route: AppRoute; labelKey: string; icon: NavIconKey }> = [
   { route: '/', labelKey: 'nav.home', icon: 'home' },
@@ -21,6 +22,7 @@ export interface ShellElements {
   readonly sidebar: HTMLElement;
   readonly sidebarBackdrop: HTMLButtonElement;
   readonly menuToggle: HTMLButtonElement;
+  readonly themeToggle: HTMLButtonElement;
   readonly statusBar: HTMLElement;
   readonly brandSwitcher: HTMLElement;
   readonly brandSwitcherTrigger: HTMLButtonElement;
@@ -68,7 +70,14 @@ export function renderShell(root: HTMLElement): ShellElements {
           <div class="shell__brand">
             <button type="button" class="shell__menu-toggle" id="menu-toggle" aria-label="${t('nav.openMenu')}"></button>
           </div>
-          <div class="brand-switcher" id="header-brand-switcher">
+          <div class="shell__header-actions">
+            <button
+              type="button"
+              class="shell__theme-toggle"
+              id="theme-toggle"
+              aria-label="${t('nav.themeToLight')}"
+            ></button>
+            <div class="brand-switcher" id="header-brand-switcher">
             <span class="brand-switcher__label" id="brand-switcher-label">${t('workspace.brandLabel')}</span>
             <div class="brand-switcher__control">
               <button
@@ -90,6 +99,7 @@ export function renderShell(root: HTMLElement): ShellElements {
                 hidden
               ></div>
             </div>
+          </div>
           </div>
         </header>
         <main class="shell__main" id="main" tabindex="-1"></main>
@@ -126,6 +136,7 @@ export function renderShell(root: HTMLElement): ShellElements {
     sidebar: root.querySelector('#sidebar') as HTMLElement,
     sidebarBackdrop: root.querySelector('#sidebar-backdrop') as HTMLButtonElement,
     menuToggle: root.querySelector('#menu-toggle') as HTMLButtonElement,
+    themeToggle: root.querySelector('#theme-toggle') as HTMLButtonElement,
     statusBar: status,
     brandSwitcher: root.querySelector('#header-brand-switcher') as HTMLElement,
     brandSwitcherTrigger: root.querySelector('#brand-switcher-trigger') as HTMLButtonElement,
@@ -134,7 +145,19 @@ export function renderShell(root: HTMLElement): ShellElements {
   };
 
   lastSidebarOpen = false;
+  syncThemeToggle(elements.themeToggle);
   return elements;
+}
+
+function syncThemeToggle(button: HTMLButtonElement): void {
+  const theme = getTheme();
+  button.replaceChildren(createThemeIcon(theme));
+  button.setAttribute(
+    'aria-label',
+    theme === 'dark' ? t('nav.themeToLight') : t('nav.themeToDark'),
+  );
+  button.setAttribute('aria-pressed', String(theme === 'dark'));
+  button.dataset.theme = theme;
 }
 
 function createNavLink(
@@ -394,6 +417,8 @@ export function updateShellChrome(
 
   elements.brandSwitcherTrigger.disabled = !state.brandsLoaded;
 
+  syncThemeToggle(elements.themeToggle);
+
   if (panelOpen) {
     for (const option of elements.brandSwitcherPanel.querySelectorAll<HTMLButtonElement>('.brand-switcher__option')) {
       const isActive = option.dataset.brandId === state.activeWorkspace;
@@ -413,6 +438,11 @@ export function bindShellEvents(
   },
 ): void {
   elements.menuToggle.addEventListener('click', handlers.onToggleSidebar);
+
+  elements.themeToggle.addEventListener('click', () => {
+    toggleTheme();
+    syncThemeToggle(elements.themeToggle);
+  });
 
   elements.sidebarBackdrop.addEventListener('click', () => {
     handlers.onCloseSidebar();

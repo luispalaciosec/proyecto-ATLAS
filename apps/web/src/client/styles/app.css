@@ -33,7 +33,7 @@
   display: block;
   height: 22px;
   width: auto;
-  filter: invert(1);
+  filter: var(--logo-mark-filter);
 }
 
 .shell__logo-text {
@@ -125,6 +125,33 @@
   position: sticky;
   top: 0;
   z-index: var(--z-dropdown);
+}
+
+.shell__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+.shell__theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+.shell__theme-toggle:hover {
+  background: rgb(104 92 255 / 0.08);
+}
+
+.shell__theme-toggle-icon {
+  flex-shrink: 0;
 }
 
 .shell__brand {
@@ -729,7 +756,7 @@
   z-index: 1;
   height: 100px;
   width: auto;
-  filter: invert(1) drop-shadow(0 0 24px rgb(104 92 255 / 0.5));
+  filter: var(--home-rocket-logo-filter);
 }
 
 .home-section__heading {

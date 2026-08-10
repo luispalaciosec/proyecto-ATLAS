@@ -4,9 +4,11 @@ import {
   createElement,
   House,
   MessageCircle,
+  Moon,
   Pencil,
   Search,
   Settings,
+  Sun,
   TrendingUp,
   type IconNode,
 } from 'lucide';
@@ -74,4 +76,8 @@ export function createActivityIcon(
   } as const;
 
   return renderIcon(map[type], { size: 16, className: 'activity-item__icon-svg' });
+}
+
+export function createThemeIcon(mode: 'light' | 'dark'): SVGElement {
+  return renderIcon(mode === 'dark' ? Sun : Moon, { size: 18, className: 'shell__theme-toggle-icon' });
 }

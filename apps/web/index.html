@@ -4,6 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark light" />
+    <script>
+      (function initAtlasTheme() {
+        var storageKey = 'atlas.theme';
+        var theme = 'dark';
+
+        try {
+          var stored = localStorage.getItem(storageKey);
+
+          if (stored === 'light' || stored === 'dark') {
+            theme = stored;
+          } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+            theme = 'light';
+          }
+        } catch (_error) {
+          if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+            theme = 'light';
+          }
+        }
+
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
     <title>ATLAS</title>
   </head>
   <body>

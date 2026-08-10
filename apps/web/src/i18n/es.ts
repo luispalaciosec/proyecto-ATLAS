@@ -15,6 +15,8 @@ export const es = {
     settings: 'Configuración',
     openMenu: 'Abrir menú',
     closeMenu: 'Cerrar menú',
+    themeToLight: 'Cambiar a modo claro',
+    themeToDark: 'Cambiar a modo oscuro',
   },
   common: {
     loading: 'Cargando…',
