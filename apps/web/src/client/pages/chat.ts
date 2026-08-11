@@ -1,4 +1,5 @@
 import { formatWorkingContext } from '../lib/brand-context.js';
+import { copyTextToClipboard } from '../lib/copy-text.js';
 import { appendExpandableDetails } from '../lib/expandable-details.js';
 import { t } from '../../i18n/index.js';
 import { formatCorrectionStatus, formatUserError } from '../../presentation/format-error.js';
@@ -35,13 +36,6 @@ export function renderChat(main: HTMLElement): void {
       </header>
       <div class="banner">${t('workspace.isolationBanner', { name: workspaceName })}</div>
       <div id="chat-thread" class="chat-thread" aria-busy="false"></div>
-      <form id="chat-form" class="chat-composer">
-        <label class="chat-composer__label" for="chat-input">${t('chat.placeholder')}</label>
-        <div class="chat-composer__row">
-          <textarea id="chat-input" class="chat-composer__input" rows="3" placeholder="${t('chat.placeholder')}"></textarea>
-          <button type="submit" class="btn btn--primary" id="chat-send">${t('chat.send')}</button>
-        </div>
-      </form>
       <section class="correction-panel" id="correction-panel" hidden aria-labelledby="correction-panel-title">
         <h2 id="correction-panel-title" class="card__title">${t('chat.correctTitle')}</h2>
         <label class="chat-composer__label" for="correction-input">${t('chat.correctLabel')}</label>
@@ -51,6 +45,13 @@ export function renderChat(main: HTMLElement): void {
           <button type="button" class="btn btn--primary" id="correction-submit">${t('chat.correctSubmit')}</button>
         </div>
       </section>
+      <form id="chat-form" class="chat-composer">
+        <label class="chat-composer__label" for="chat-input">${t('chat.placeholder')}</label>
+        <div class="chat-composer__row">
+          <textarea id="chat-input" class="chat-composer__input" rows="3" placeholder="${t('chat.placeholder')}"></textarea>
+          <button type="submit" class="btn btn--primary" id="chat-send">${t('chat.send')}</button>
+        </div>
+      </form>
     </section>
   `;
 
@@ -207,19 +208,42 @@ function renderMessageElement(message: UiChatMessage): HTMLElement {
     copyButton.type = 'button';
     copyButton.className = 'btn btn--ghost';
     copyButton.textContent = t('common.copy');
-    copyButton.addEventListener('click', async () => {
-      await navigator.clipboard.writeText(message.text);
-      patchState({ statusText: t('common.copied') });
+    copyButton.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const originalLabel = copyButton.textContent ?? t('common.copy');
+      const copied = await copyTextToClipboard(message.text);
+
+      if (copied) {
+        copyButton.textContent = t('common.copied');
+        copyButton.classList.add('message__action--success');
+        patchState({ statusText: t('common.copied') });
+        window.setTimeout(() => {
+          copyButton.textContent = originalLabel;
+          copyButton.classList.remove('message__action--success');
+        }, 2000);
+        return;
+      }
+
+      patchState({ statusText: t('errors.copyFailed') });
     });
 
     const correctButton = document.createElement('button');
     correctButton.type = 'button';
     correctButton.className = 'btn btn--ghost';
     correctButton.textContent = t('chat.correct');
-    correctButton.addEventListener('click', () => {
+    correctButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
       const panel = boundMain?.querySelector('#correction-panel') as HTMLElement | null;
+      const correctionInput = boundMain?.querySelector('#correction-input') as HTMLTextAreaElement | null;
+
       if (panel !== null) {
         panel.hidden = false;
+        panel.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+        correctionInput?.focus();
       }
     });
 

@@ -8,11 +8,12 @@ import { getState, setActiveWorkspace } from '../../src/client/state/app-state.j
 
 const sendChatMessage = vi.fn();
 const fetchHistory = vi.fn();
+const sendCorrection = vi.fn();
 
 vi.mock('../../src/client/api/client.js', () => ({
   fetchHistory: (...args: unknown[]) => fetchHistory(...args),
   sendChatMessage: (...args: unknown[]) => sendChatMessage(...args),
-  sendCorrection: vi.fn(),
+  sendCorrection: (...args: unknown[]) => sendCorrection(...args),
 }));
 
 async function flushUi(): Promise<void> {
@@ -149,5 +150,66 @@ describe('renderChat', () => {
     const details = main.querySelector('.error-panel__details') as HTMLElement | null;
     expect(details?.hidden).toBe(true);
     expect(details?.textContent).toContain('429');
+  });
+
+  it('copies assistant text and shows inline confirmation', async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.assign(navigator, {
+      clipboard: { writeText },
+    });
+
+    sendChatMessage.mockResolvedValueOnce({
+      mode: 'llm',
+      success: true,
+      llm_message: 'Respuesta copiable',
+    });
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderChat(main);
+    await flushUi();
+
+    const input = main.querySelector('#chat-input') as HTMLTextAreaElement;
+    input.value = 'Hola';
+    (main.querySelector('#chat-form') as HTMLFormElement).requestSubmit();
+    await flushUi();
+    await flushUi();
+
+    const copyButton = main.querySelector('.message__actions .btn--ghost') as HTMLButtonElement;
+    copyButton.click();
+    await flushUi();
+
+    expect(writeText).toHaveBeenCalledWith('Respuesta copiable');
+    expect(copyButton.textContent).toBe('Copiado');
+    expect(getState().statusText).toBe('Copiado');
+  });
+
+  it('opens correction panel above composer when correcting', async () => {
+    sendChatMessage.mockResolvedValueOnce({
+      mode: 'llm',
+      success: true,
+      llm_message: 'Respuesta corregible',
+    });
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderChat(main);
+    await flushUi();
+
+    const input = main.querySelector('#chat-input') as HTMLTextAreaElement;
+    input.value = 'Hola';
+    (main.querySelector('#chat-form') as HTMLFormElement).requestSubmit();
+    await flushUi();
+    await flushUi();
+
+    const panel = main.querySelector('#correction-panel') as HTMLElement;
+    const form = main.querySelector('#chat-form') as HTMLFormElement;
+    const buttons = main.querySelectorAll('.message__actions .btn--ghost');
+    const correctButton = buttons[buttons.length - 1] as HTMLButtonElement;
+
+    expect(panel.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    correctButton.click();
+
+    expect(panel.hidden).toBe(false);
+    expect(main.querySelector('#correction-input')).not.toBeNull();
   });
 });

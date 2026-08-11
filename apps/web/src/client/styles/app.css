@@ -548,6 +548,11 @@
   margin-top: var(--space-2);
 }
 
+.message__action--success {
+  color: var(--color-success, #15803d);
+  font-weight: 600;
+}
+
 .chat-composer {
   position: relative;
   border: 1px solid var(--color-border);
@@ -636,8 +641,16 @@
 }
 
 .correction-panel {
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  background: var(--color-surface);
+}
+
+.correction-panel:not([hidden]) {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface));
+  box-shadow: 0 8px 24px rgb(15 23 42 / 0.08);
 }
 
 .home-page__header {

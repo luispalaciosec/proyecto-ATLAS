@@ -143,6 +143,7 @@ export const es = {
     generic: 'No pudimos completar la solicitud.',
     emptyMessage: 'Escribe un mensaje antes de enviar.',
     emptyCorrection: 'Escribe una corrección antes de enviar.',
+    copyFailed: 'No pudimos copiar el texto. Inténtalo de nuevo.',
     emptyWorkspace: 'El nombre de la marca no puede estar vacío.',
     rateLimit:
       'El servicio de IA está temporalmente ocupado. Inténtalo nuevamente en unos segundos.',
