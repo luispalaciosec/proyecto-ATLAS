@@ -260,6 +260,48 @@ describe('LlmModule', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
+  it('includes fresh knowledge retrieval in the system message before answering', async () => {
+    const fake = createFakeLlmProviderWithRequests([
+      Object.freeze({
+        message: Object.freeze({ role: 'assistant' as const, content: 'Acknowledged.' }),
+        usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+        stopReason: 'end_turn' as const,
+      }),
+    ]);
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-llm-fresh-knowledge-'));
+    const atlas = createAtlas({
+      memory: { storageFilePath: join(dir, 'memory.json') },
+      llm: { provider: fake.provider },
+    });
+
+    await atlas.memory.storeContent({
+      content:
+        'Un descuento del 15% requiere aprobación escrita del Gerente Comercial.',
+      recordType: 'document',
+      metadata: Object.freeze({ fileName: 'Politica_Comercial.md' }),
+    });
+
+    await atlas.llm.ask('¿Puedo ofrecer un 15% de descuento sin aprobación?', {
+      history: Object.freeze([
+        Object.freeze({
+          role: 'user' as const,
+          content: '¿Puedo ofrecer un 15% de descuento sin aprobación?',
+        }),
+        Object.freeze({
+          role: 'assistant' as const,
+          content: 'No tengo esa política registrada.',
+        }),
+      ]),
+    });
+
+    const systemMessage = fake.requests[0]?.messages.find((message) => message.role === 'system');
+    expect(systemMessage?.content).toContain('Fresh knowledge retrieval for this turn');
+    expect(systemMessage?.content).toContain('Gerente Comercial');
+    expect(systemMessage?.content).toContain('never assume a previous answer remains valid');
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
   it('includes internal identifier guidance in the system message', async () => {
     const fake = createFakeLlmProviderWithRequests([
       Object.freeze({
@@ -331,9 +373,7 @@ describe('LlmModule', () => {
       },
     });
 
-    expect(() => {
-      void atlas.llm.ask('Hello');
-    }).toThrow(/Unsupported ATLAS_LLM_PROVIDER/);
+    await expect(atlas.llm.ask('Hello')).rejects.toThrow(/Unsupported ATLAS_LLM_PROVIDER/);
 
     rmSync(dir, { recursive: true, force: true });
   });

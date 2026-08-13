@@ -1,4 +1,5 @@
 import type { EventBus } from '@atlas/events';
+import { normalizeForSearch } from '@atlas/core';
 import {
   createAnthropicProvider,
   createOpenAICompatibleProvider,
@@ -13,6 +14,7 @@ import {
 import type { Atlas } from '../atlas/atlas.js';
 import type { AtlasLlmOptions, AtlasWorkspaceOptions } from '../atlas/options.js';
 import { planExecuteAndRemember } from '../plan/plan-execution-memory.js';
+import type { SearchMemoryContentResult } from './memory-module.js';
 
 const DEFAULT_BUDGET: LlmBudget = Object.freeze({ maxTurns: 6 });
 
@@ -29,6 +31,11 @@ const SYSTEM_PROMPT = [
   'These are internal metadata — never read them aloud or show them to the user unless they explicitly',
   'ask for technical or debugging details. Summarize outcomes in business language',
   '(e.g. "pedido confirmado y registrado" instead of citing a workflow ID).',
+  'Each user turn includes a fresh automatic knowledge retrieval block — treat it as the current',
+  'ground truth for this answer, even if you answered a similar question earlier in the thread.',
+  'If the user repeats or reformulates a prior question, or mentions adding or updating knowledge,',
+  'still rely on the fresh retrieval block and use memory_search again when needed — never assume',
+  'a previous answer remains valid after knowledge may have changed.',
 ].join(' ');
 
 function readOptionalStringOption(
@@ -48,12 +55,162 @@ function resolveConfiguredProviderId(options: AtlasLlmOptions): string {
   return (readOptionalStringOption(options, 'providerId') ?? 'anthropic').toLowerCase();
 }
 
-function buildSystemPrompt(contextPrompt?: string): string {
-  if (typeof contextPrompt === 'string' && contextPrompt.trim().length > 0) {
-    return `${SYSTEM_PROMPT}\n\n---\n\n${contextPrompt.trim()}`;
+const KNOWLEDGE_CONTEXT_RECORD_LIMIT = 8;
+const KNOWLEDGE_CONTEXT_SNIPPET_MAX_LENGTH = 1200;
+const KNOWLEDGE_PREFETCH_MIN_TOKEN_LENGTH = 4;
+const KNOWLEDGE_PREFETCH_STOPWORDS = new Set([
+  'about',
+  'algo',
+  'como',
+  'cual',
+  'debe',
+  'debo',
+  'decir',
+  'dime',
+  'donde',
+  'este',
+  'esta',
+  'esto',
+  'hace',
+  'hacer',
+  'just',
+  'menciona',
+  'mismo',
+  'para',
+  'puede',
+  'puedo',
+  'que',
+  'quisiera',
+  'repite',
+  'respuesta',
+  'saber',
+  'solo',
+  'tell',
+  'that',
+  'this',
+  'what',
+  'when',
+  'where',
+  'which',
+  'with',
+  'without',
+]);
+
+function buildKnowledgePrefetchQueries(goal: string): readonly string[] {
+  const trimmedGoal = goal.trim();
+  const queries = new Set<string>();
+
+  if (trimmedGoal.length > 0) {
+    queries.add(trimmedGoal);
   }
 
-  return SYSTEM_PROMPT;
+  for (const token of normalizeForSearch(trimmedGoal).split(/\s+/)) {
+    if (
+      token.length >= KNOWLEDGE_PREFETCH_MIN_TOKEN_LENGTH &&
+      !KNOWLEDGE_PREFETCH_STOPWORDS.has(token)
+    ) {
+      queries.add(token);
+    }
+  }
+
+  return Object.freeze([...queries]);
+}
+
+async function prefetchKnowledgeForGoal(
+  atlas: Atlas,
+  goal: string,
+): Promise<SearchMemoryContentResult> {
+  const recordsById = new Map<string, SearchMemoryContentResult['records'][number]>();
+
+  for (const query of buildKnowledgePrefetchQueries(goal)) {
+    const result = await atlas.memory.searchContent({ query });
+
+    for (const record of result.records) {
+      recordsById.set(record.id, record);
+    }
+  }
+
+  const records = Object.freeze([...recordsById.values()]);
+
+  return Object.freeze({
+    records,
+    total: records.length,
+    query: goal.trim(),
+  });
+}
+
+function extractKnowledgeRecordText(content: unknown): string {
+  if (typeof content === 'string') {
+    return content.trim();
+  }
+
+  if (
+    content !== null &&
+    typeof content === 'object' &&
+    'text' in content &&
+    typeof (content as { text?: unknown }).text === 'string'
+  ) {
+    return (content as { text: string }).text.trim();
+  }
+
+  try {
+    return JSON.stringify(content);
+  } catch {
+    return String(content);
+  }
+}
+
+function truncateKnowledgeSnippet(text: string, maxLength: number): string {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength - 1).trim()}…`;
+}
+
+function buildFreshKnowledgeContextBlock(
+  goal: string,
+  searchResult: SearchMemoryContentResult,
+): string {
+  const lines = [
+    'Fresh knowledge retrieval for this turn (automatic — current ground truth):',
+    `Search query: ${goal}`,
+    `Matching records: ${searchResult.total}`,
+  ];
+
+  if (searchResult.total === 0) {
+    lines.push('No matching knowledge records were found for this question.');
+    return lines.join('\n');
+  }
+
+  for (const [index, record] of searchResult.records.slice(0, KNOWLEDGE_CONTEXT_RECORD_LIMIT).entries()) {
+    const recordType =
+      typeof record.type === 'string' && record.type.trim().length > 0 ? record.type : 'unknown';
+    lines.push(`--- Record ${index + 1} (${recordType}) ---`);
+    lines.push(truncateKnowledgeSnippet(extractKnowledgeRecordText(record.content), KNOWLEDGE_CONTEXT_SNIPPET_MAX_LENGTH));
+  }
+
+  if (searchResult.total > KNOWLEDGE_CONTEXT_RECORD_LIMIT) {
+    lines.push(
+      `(… ${searchResult.total - KNOWLEDGE_CONTEXT_RECORD_LIMIT} additional matching records omitted)`,
+    );
+  }
+
+  return lines.join('\n');
+}
+
+function buildSystemPrompt(contextPrompt?: string, knowledgeContext?: string): string {
+  const sections = [SYSTEM_PROMPT];
+
+  if (typeof knowledgeContext === 'string' && knowledgeContext.trim().length > 0) {
+    sections.push(knowledgeContext.trim());
+  }
+
+  if (typeof contextPrompt === 'string' && contextPrompt.trim().length > 0) {
+    sections.push(contextPrompt.trim());
+  }
+
+  return sections.join('\n\n---\n\n');
 }
 
 function asString(value: unknown, fieldName: string): string {
@@ -251,16 +408,21 @@ export class LlmModule {
     );
   }
 
-  ask(goalText: string, options: AskOptions = {}): Promise<ToolLoopResult> {
+  async ask(goalText: string, options: AskOptions = {}): Promise<ToolLoopResult> {
     const normalizedGoal = goalText.trim();
 
     if (normalizedGoal.length === 0) {
       throw new Error('Goal must not be empty');
     }
 
+    const knowledgeSearch = await prefetchKnowledgeForGoal(this.#atlas, normalizedGoal);
+
     return runToolLoop({
       provider: this.#resolveProvider(),
-      systemPrompt: buildSystemPrompt(this.#llmOptions.contextPrompt),
+      systemPrompt: buildSystemPrompt(
+        this.#llmOptions.contextPrompt,
+        buildFreshKnowledgeContextBlock(normalizedGoal, knowledgeSearch),
+      ),
       userMessage: normalizedGoal,
       tools: createAtlasToolExecutors(this.#atlas),
       budget: options.budget ?? this.#defaultBudget,

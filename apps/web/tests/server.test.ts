@@ -485,6 +485,140 @@ describe('createWebServer', () => {
     });
   });
 
+  it('returns no knowledge search results when query is empty', async () => {
+    mkdirSync(join(testRoot, '.atlas'), { recursive: true });
+    writeFileSync(
+      join(testRoot, '.atlas', 'memory.json'),
+      JSON.stringify(
+        {
+          version: 1,
+          records: [
+            {
+              id: 'record.default.note',
+              type: 'document',
+              content: { text: 'Política de devolución: 30 días.' },
+              metadata: { namespaceId: 'cli.default', source: 'seed' },
+              timestamp: '2026-08-01T00:00:00.000Z',
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+
+    const app = createWebServer();
+
+    await withServer(app, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/knowledge/search?query=`);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({
+        workspace: 'default',
+        query: '',
+        total: 0,
+        records: [],
+      });
+    });
+  });
+
+  it('filters knowledge search results instead of returning every document', async () => {
+    mkdirSync(join(testRoot, '.atlas'), { recursive: true });
+    writeFileSync(
+      join(testRoot, '.atlas', 'memory.json'),
+      JSON.stringify(
+        {
+          version: 1,
+          records: [
+            {
+              id: 'record.doc.contexto',
+              type: 'document',
+              content: {
+                text: 'Contexto institucional del banco. Productos crediticios y operaciones generales.',
+              },
+              metadata: {
+                namespaceId: 'cli.default',
+                source: 'upload',
+                fileName: 'Contexto_Banco_Amazonas.md',
+              },
+              timestamp: '2026-08-01T00:00:00.000Z',
+            },
+            {
+              id: 'record.doc.politica',
+              type: 'document',
+              content: {
+                text: 'Los ejecutivos comerciales pueden aplicar descuentos de hasta el 10%. Un descuento del 15% requiere aprobación escrita del Gerente Comercial.',
+              },
+              metadata: {
+                namespaceId: 'cli.default',
+                source: 'upload',
+                fileName: 'Politica_Comercial_Banco_Amazonas.md',
+              },
+              timestamp: '2026-08-02T00:00:00.000Z',
+            },
+            {
+              id: 'record.doc.creditos',
+              type: 'document',
+              content: { text: 'Líneas de crédito corporativo y garantías hipotecarias.' },
+              metadata: {
+                namespaceId: 'cli.default',
+                source: 'upload',
+                fileName: 'Creditos_Corporativos.md',
+              },
+              timestamp: '2026-08-03T00:00:00.000Z',
+            },
+            {
+              id: 'record.doc.onboarding',
+              type: 'document',
+              content: { text: 'Proceso de vinculación comercial y documentación KYC.' },
+              metadata: {
+                namespaceId: 'cli.default',
+                source: 'upload',
+                fileName: 'Onboarding_Comercial.md',
+              },
+              timestamp: '2026-08-04T00:00:00.000Z',
+            },
+            {
+              id: 'record.doc.tarifario',
+              type: 'document',
+              content: { text: 'Tarifario de servicios bancarios y comisiones por producto.' },
+              metadata: {
+                namespaceId: 'cli.default',
+                source: 'upload',
+                fileName: 'Tarifario_Servicios.md',
+              },
+              timestamp: '2026-08-05T00:00:00.000Z',
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+
+    const app = createWebServer();
+
+    await withServer(app, async (baseUrl) => {
+      const matching = await fetch(`${baseUrl}/api/knowledge/search?query=descuento`);
+      expect(matching.status).toBe(200);
+      const matchingPayload = (await matching.json()) as {
+        total: number;
+        records: Array<{ snippet: string }>;
+      };
+
+      expect(matchingPayload.total).toBe(1);
+      expect(matchingPayload.records[0]?.snippet).toContain('Gerente Comercial');
+
+      const missing = await fetch(`${baseUrl}/api/knowledge/search?query=terminoinexistente999`);
+      expect(missing.status).toBe(200);
+      const missingPayload = (await missing.json()) as { total: number; records: unknown[] };
+
+      expect(missingPayload.total).toBe(0);
+      expect(missingPayload.records).toEqual([]);
+    });
+  });
+
   it('returns knowledge search results from default memory file', async () => {
     mkdirSync(join(testRoot, '.atlas'), { recursive: true });
     writeFileSync(
@@ -650,6 +784,7 @@ describe('createWebServer', () => {
         new Blob([Uint8Array.from(readFixture('sample.txt'))], { type: 'text/plain' }),
         'sample.txt',
       );
+      formData.append('folder', 'Comercial');
 
       const upload = await fetch(`${baseUrl}/api/knowledge/upload`, {
         method: 'POST',
@@ -658,13 +793,48 @@ describe('createWebServer', () => {
 
       expect(upload.status).toBe(200);
       const uploadPayload = (await upload.json()) as {
+        documentId: string;
         fileName: string;
+        folder: string;
         chunks: number;
         recordIds: string[];
       };
       expect(uploadPayload.fileName).toBe('sample.txt');
+      expect(uploadPayload.folder).toBe('Comercial');
+      expect(uploadPayload.documentId.length).toBeGreaterThan(0);
       expect(uploadPayload.chunks).toBeGreaterThan(0);
       expect(uploadPayload.recordIds.length).toBe(uploadPayload.chunks);
+
+      const documents = await fetch(`${baseUrl}/api/knowledge/documents`);
+      expect(documents.status).toBe(200);
+      const documentsPayload = (await documents.json()) as {
+        total: number;
+        documents: Array<{ fileName: string; folder: string; chunks: number }>;
+        folders: string[];
+      };
+      expect(documentsPayload.total).toBe(1);
+      expect(documentsPayload.documents[0]?.fileName).toBe('sample.txt');
+      expect(documentsPayload.documents[0]?.folder).toBe('Comercial');
+      expect(documentsPayload.folders).toContain('Comercial');
+
+      const filtered = await fetch(`${baseUrl}/api/knowledge/documents?folder=Comercial`);
+      expect(filtered.status).toBe(200);
+      const filteredPayload = (await filtered.json()) as { total: number };
+      expect(filteredPayload.total).toBe(1);
+
+      const folders = await fetch(`${baseUrl}/api/knowledge/folders`);
+      expect(folders.status).toBe(200);
+      const foldersPayload = (await folders.json()) as { folders: string[] };
+      expect(foldersPayload.folders).toContain('Comercial');
+
+      const createFolder = await fetch(`${baseUrl}/api/knowledge/folders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Legal' }),
+      });
+      expect(createFolder.status).toBe(201);
+      const createdPayload = (await createFolder.json()) as { folders: string[] };
+      expect(createdPayload.folders).toContain('Legal');
 
       const search = await fetch(`${baseUrl}/api/knowledge/search?query=zeta-quantum-7742`);
       expect(search.status).toBe(200);

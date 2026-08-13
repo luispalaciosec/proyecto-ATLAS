@@ -74,15 +74,24 @@ function extractSearchableText(record: MemoryRecord): string {
 }
 
 const MIN_SEARCH_TOKEN_LENGTH = 3;
+const MAX_SINGULAR_PREFIX_GAP = 2;
 
 function tokenizeForSearch(text: string): readonly string[] {
   return normalizeForSearch(text).split(/\s+/).filter((token) => token.length > 0);
 }
 
 function tokenMatchesQuery(queryToken: string, textTokens: readonly string[]): boolean {
-  return textTokens.some(
-    (textToken) => textToken.startsWith(queryToken) || queryToken.startsWith(textToken),
-  );
+  return textTokens.some((textToken) => {
+    if (textToken.startsWith(queryToken)) {
+      return true;
+    }
+
+    if (!queryToken.startsWith(textToken)) {
+      return false;
+    }
+
+    return queryToken.length - textToken.length <= MAX_SINGULAR_PREFIX_GAP;
+  });
 }
 
 export function matchesContentQuery(record: MemoryRecord, query: string): boolean {

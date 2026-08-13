@@ -37,6 +37,22 @@ describe('matchesContentQuery', () => {
 
     expect(matchesContentQuery(record, 'Clientes VIP')).toBe(false);
   });
+
+  it('does not match short prefix tokens that are unrelated to the query', () => {
+    const record = createRecord(
+      'Contexto institucional del banco. Productos crediticios y operaciones generales.',
+    );
+
+    expect(matchesContentQuery(record, 'descuento')).toBe(false);
+  });
+
+  it('matches descuento queries against stored discount policy text', () => {
+    const record = createRecord(
+      'Los ejecutivos comerciales pueden aplicar descuentos de hasta el 10%. Un descuento del 15% requiere aprobación escrita del Gerente Comercial.',
+    );
+
+    expect(matchesContentQuery(record, 'descuento')).toBe(true);
+  });
 });
 
 describe('MemoryModule', () => {
