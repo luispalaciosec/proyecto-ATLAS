@@ -14,12 +14,26 @@ export type AppRoute =
 
 export type ChatMessageKind = 'user' | 'assistant' | 'system' | 'error' | 'loading';
 
+export interface UiChatReasoningStep {
+  readonly type: string;
+  readonly label: string;
+  readonly preview?: string;
+}
+
+export interface UiChatMetrics {
+  readonly elapsedMs: number;
+  readonly inputTokens?: number;
+  readonly outputTokens?: number;
+}
+
 export interface UiChatMessage {
   readonly id: string;
   readonly kind: ChatMessageKind;
   readonly text: string;
   readonly markdown?: boolean;
   readonly technicalDetails?: string;
+  readonly reasoningSteps?: readonly UiChatReasoningStep[];
+  readonly metrics?: UiChatMetrics;
 }
 
 export interface AppState {

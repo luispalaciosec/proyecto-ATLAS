@@ -6,6 +6,7 @@ import {
   FileText,
   FileType,
   House,
+  LoaderCircle,
   MessageCircle,
   Moon,
   Pencil,
@@ -15,6 +16,7 @@ import {
   Sun,
   TrendingUp,
   Upload,
+  ArrowUp,
   type IconNode,
 } from 'lucide';
 
@@ -108,4 +110,12 @@ export function createFileTypeIcon(
   };
 
   return renderIcon(map[extension] ?? FileText, { size: 28, className, strokeWidth: 1.5 });
+}
+
+export function createSendIcon(className = 'chat-composer__send-icon-svg'): SVGElement {
+  return renderIcon(ArrowUp, { size: 18, className, strokeWidth: 2 });
+}
+
+export function createSendSpinner(className = 'chat-composer__send-spinner-svg'): SVGElement {
+  return renderIcon(LoaderCircle, { size: 18, className, strokeWidth: 2 });
 }

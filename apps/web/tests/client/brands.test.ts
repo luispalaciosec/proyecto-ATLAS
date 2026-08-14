@@ -55,7 +55,12 @@ const geeksBrand = {
 
 describe('renderBrands', () => {
   beforeEach(() => {
-    document.body.innerHTML = '<main id="main"></main>';
+    document.body.innerHTML = `
+      <div id="shell-body">
+        <main id="main"></main>
+      </div>
+      <div id="shell-dialog-root"></div>
+    `;
     setActiveWorkspace('default', { resetChat: true });
     setRoute('/marcas');
     fetchBrands.mockReset();
@@ -141,9 +146,36 @@ describe('renderBrands', () => {
 
     (main.querySelector('#brands-create-open') as HTMLButtonElement).click();
 
-    expect(main.querySelector('[role="dialog"]')).not.toBeNull();
-    expect(main.textContent).toContain('Crear una marca');
-    expect(main.textContent).toContain('Nombre de la marca');
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(document.body.textContent).toContain('Crear una marca');
+    expect(document.body.textContent).toContain('Nombre de la marca');
+  });
+
+  it('allows typing in create modal inputs while shell-body is inert', async () => {
+    fetchBrands.mockResolvedValue({
+      activeBrandId: 'default',
+      brands: [generalBrand],
+    });
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderBrands(main);
+    await flushUi();
+
+    (main.querySelector('#brands-create-open') as HTMLButtonElement).click();
+
+    const shellBody = document.querySelector('#shell-body') as HTMLElement;
+    const nameInput = document.querySelector('#brands-create-name') as HTMLInputElement;
+    const purposeInput = document.querySelector('#brands-create-purpose') as HTMLInputElement;
+
+    expect(shellBody.inert).toBe(true);
+    expect(nameInput.inert).not.toBe(true);
+    expect(purposeInput.inert).not.toBe(true);
+
+    nameInput.value = 'Revital';
+    purposeInput.value = 'Marketing para centros';
+
+    expect(nameInput.value).toBe('Revital');
+    expect(purposeInput.value).toBe('Marketing para centros');
   });
 
   it('validates empty brand name before submit', async () => {
@@ -157,11 +189,11 @@ describe('renderBrands', () => {
     await flushUi();
 
     (main.querySelector('#brands-create-open') as HTMLButtonElement).click();
-    (main.querySelector('#brands-create-form') as HTMLFormElement).requestSubmit();
+    (document.querySelector('#brands-create-form') as HTMLFormElement).requestSubmit();
     await flushUi();
 
     expect(createBrand).not.toHaveBeenCalled();
-    expect(main.textContent).toContain('Escribe un nombre para la marca');
+    expect(document.body.textContent).toContain('Escribe un nombre para la marca');
   });
 
   it('creates a brand successfully and shows success feedback', async () => {
@@ -184,14 +216,14 @@ describe('renderBrands', () => {
     await flushUi();
 
     (main.querySelector('#brands-create-open') as HTMLButtonElement).click();
-    const nameInput = main.querySelector('#brands-create-name') as HTMLInputElement;
+    const nameInput = document.querySelector('#brands-create-name') as HTMLInputElement;
     nameInput.value = 'Revital';
-    (main.querySelector('#brands-create-form') as HTMLFormElement).requestSubmit();
+    (document.querySelector('#brands-create-form') as HTMLFormElement).requestSubmit();
     await flushUi();
     await flushUi();
 
     expect(createBrand).toHaveBeenCalledWith('Revital', undefined);
-    expect(main.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
     expect(main.textContent).toContain('Marca creada correctamente');
     expect(main.textContent).toContain('Trabajar con Revital');
   });
@@ -210,12 +242,12 @@ describe('renderBrands', () => {
     await flushUi();
 
     (main.querySelector('#brands-create-open') as HTMLButtonElement).click();
-    (main.querySelector('#brands-create-name') as HTMLInputElement).value = 'Geeks';
-    (main.querySelector('#brands-create-form') as HTMLFormElement).requestSubmit();
+    (document.querySelector('#brands-create-name') as HTMLInputElement).value = 'Geeks';
+    (document.querySelector('#brands-create-form') as HTMLFormElement).requestSubmit();
     await flushUi();
 
-    expect(main.textContent).toContain('Ya existe una marca con ese nombre');
-    expect(main.textContent).toContain('Puedes trabajar con ella desde esta página');
+    expect(document.body.textContent).toContain('Ya existe una marca con ese nombre');
+    expect(document.body.textContent).toContain('Puedes trabajar con ella desde esta página');
   });
 
   it('shows generic create error with technical details hidden by default', async () => {
@@ -232,13 +264,13 @@ describe('renderBrands', () => {
     await flushUi();
 
     (main.querySelector('#brands-create-open') as HTMLButtonElement).click();
-    (main.querySelector('#brands-create-name') as HTMLInputElement).value = '!!!';
-    (main.querySelector('#brands-create-form') as HTMLFormElement).requestSubmit();
+    (document.querySelector('#brands-create-name') as HTMLInputElement).value = '!!!';
+    (document.querySelector('#brands-create-form') as HTMLFormElement).requestSubmit();
     await flushUi();
 
-    expect(main.textContent).toContain('No pudimos crear la marca');
-    expect(main.textContent).toContain('Ver detalles');
-    const details = main.querySelector('.error-panel__details') as HTMLElement | null;
+    expect(document.body.textContent).toContain('No pudimos crear la marca');
+    expect(document.body.textContent).toContain('Ver detalles');
+    const details = document.querySelector('.error-panel__details') as HTMLElement | null;
     expect(details?.hidden).toBe(true);
   });
 

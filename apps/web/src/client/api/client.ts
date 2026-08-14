@@ -6,6 +6,8 @@ import type {
 } from '../../presentation/map-brand.js';
 import type { HistoryResponseProduct } from '../../presentation/map-history.js';
 import type { KnowledgeSearchResponseProduct } from '../../presentation/map-knowledge.js';
+import type { KnowledgeDocumentsResponseProduct } from '../../presentation/map-knowledge-documents.js';
+import type { KnowledgeFoldersResponseProduct } from '../../presentation/map-knowledge-folders.js';
 import { extractApiErrorMessage } from '../../lib/format-atlas-error.js';
 import type { KnowledgeUploadResponseProduct } from '../../presentation/map-knowledge-upload.js';
 import { getState } from '../state/app-state.js';
@@ -125,6 +127,74 @@ export async function searchKnowledge(
   return payload;
 }
 
+export async function fetchKnowledgeFolders(slug: string): Promise<KnowledgeFoldersResponseProduct> {
+  const params = new URLSearchParams();
+
+  if (slug !== 'default') {
+    params.set('workspace', slug);
+  }
+
+  const query = params.toString();
+  const response = await fetch(
+    query.length > 0 ? `/api/knowledge/folders?${query}` : '/api/knowledge/folders',
+  );
+  const payload = (await response.json()) as KnowledgeFoldersResponseProduct & { error?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? 'Knowledge folders request failed');
+  }
+
+  return payload;
+}
+
+export async function createKnowledgeFolder(
+  slug: string,
+  name: string,
+): Promise<KnowledgeFoldersResponseProduct> {
+  const response = await fetch('/api/knowledge/folders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...(slug !== 'default' ? { workspace: slug } : {}),
+      name,
+    }),
+  });
+  const payload = (await response.json()) as KnowledgeFoldersResponseProduct & { error?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? 'Knowledge folder create failed');
+  }
+
+  return payload;
+}
+
+export async function fetchKnowledgeDocuments(
+  slug: string,
+  folder?: string,
+): Promise<KnowledgeDocumentsResponseProduct> {
+  const params = new URLSearchParams();
+
+  if (slug !== 'default') {
+    params.set('workspace', slug);
+  }
+
+  if (folder !== undefined && folder !== 'all') {
+    params.set('folder', folder);
+  }
+
+  const query = params.toString();
+  const response = await fetch(
+    query.length > 0 ? `/api/knowledge/documents?${query}` : '/api/knowledge/documents',
+  );
+  const payload = (await response.json()) as KnowledgeDocumentsResponseProduct & { error?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? 'Knowledge documents request failed');
+  }
+
+  return payload;
+}
+
 function activityQuery(
   slug: string,
   options?: { limit?: number; type?: ActivityItemType },
@@ -173,12 +243,17 @@ export async function uploadKnowledgeDocument(
   slug: string,
   file: File,
   onProgress?: (progress: KnowledgeUploadProgress) => void,
+  folder?: string,
 ): Promise<KnowledgeUploadResponseProduct> {
   const formData = new FormData();
   formData.append('file', file);
 
   if (slug !== 'default') {
     formData.append('workspace', slug);
+  }
+
+  if (folder !== undefined && folder.trim().length > 0) {
+    formData.append('folder', folder.trim());
   }
 
   const report = (phase: KnowledgeUploadPhase, progress: number): void => {

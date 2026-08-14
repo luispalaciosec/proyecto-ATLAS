@@ -14,6 +14,7 @@ import { formatWebUrl, resolveWebHost, resolveWebPort } from './config.js';
 import { formatAtlasError } from './lib/format-atlas-error.js';
 import { loadEnvFromFile } from './lib/load-env.js';
 import { MAX_UPLOAD_BYTES } from './lib/knowledge-upload/constants.js';
+import { normalizeKnowledgeFolder } from './lib/knowledge-upload/folder.js';
 import { KnowledgeUploadError } from './lib/knowledge-upload/upload-errors.js';
 import {
   BrandDuplicateError,
@@ -32,6 +33,20 @@ function resolveWorkspaceParam(value: unknown): string | undefined {
 
 function resolveQueryParam(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function resolveFolderParam(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed.length === 0 || trimmed === 'all') {
+    return undefined;
+  }
+
+  return normalizeKnowledgeFolder(trimmed);
 }
 
 async function handleKnowledgeSearch(
@@ -217,6 +232,49 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
     );
   });
 
+  app.get('/api/knowledge/documents', async (request, response, next) => {
+    try {
+      const payload = await sessionStore.listKnowledgeDocuments(
+        resolveWorkspaceParam(request.query.workspace),
+        resolveFolderParam(request.query.folder),
+      );
+
+      response.json(payload);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/knowledge/folders', async (request, response, next) => {
+    try {
+      const payload = sessionStore.listKnowledgeFolders(
+        resolveWorkspaceParam(request.query.workspace),
+      );
+
+      response.json(payload);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/knowledge/folders', async (request, response, next) => {
+    try {
+      const name = typeof request.body?.name === 'string' ? request.body.name : '';
+      const payload = sessionStore.createKnowledgeFolder(
+        resolveWorkspaceParam(request.body?.workspace),
+        name,
+      );
+
+      response.status(201).json(payload);
+    } catch (error) {
+      if (handleKnowledgeUploadError(error, response, next)) {
+        return;
+      }
+
+      next(error);
+    }
+  });
+
   app.post('/api/knowledge/upload', (request, response, next) => {
     knowledgeUpload.single('file')(request, response, async (multerError) => {
       if (multerError !== undefined) {
@@ -237,10 +295,13 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
         }
 
         const workspace = resolveWorkspaceParam(request.body?.workspace);
+        const folder =
+          typeof request.body?.folder === 'string' ? request.body.folder : undefined;
         const payload = await sessionStore.uploadKnowledgeDocument(
           workspace,
           file.originalname,
           file.buffer,
+          folder,
         );
 
         response.json(payload);

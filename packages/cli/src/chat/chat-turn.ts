@@ -1,5 +1,6 @@
 import type { AtlasService } from '../services/atlas-service.js';
 import { captureLastMemorySessionId, type ChatSessionState } from './chat-session.js';
+import { mapTranscriptToReasoningSteps, type ChatReasoningStepPayload } from './map-reasoning-steps.js';
 import { recordFeedback } from './feedback.js';
 
 export interface ChatTurnPayload {
@@ -13,6 +14,12 @@ export interface ChatTurnPayload {
   readonly mode?: 'llm' | 'deterministic';
   readonly llm_message?: string;
   readonly llm_turns?: number;
+  readonly llm_reasoning_steps?: readonly ChatReasoningStepPayload[];
+  readonly llm_elapsed_ms?: number;
+  readonly llm_usage?: {
+    readonly input_tokens: number;
+    readonly output_tokens: number;
+  };
   readonly budget_exceeded?: boolean;
   readonly retrieval: {
     readonly selected: number;
@@ -38,9 +45,11 @@ async function executeDeterministicChatTurn(
   goal: string,
 ): Promise<ChatTurnPayload> {
   session.turnCount += 1;
+  const startedAt = performance.now();
 
   const result = await atlasService.planAndExecute(session.client, goal);
   const memorySessionId = captureLastMemorySessionId(session);
+  const elapsedMs = Math.round(performance.now() - startedAt);
 
   return Object.freeze({
     command: 'chat',
@@ -51,6 +60,7 @@ async function executeDeterministicChatTurn(
     mode: 'deterministic',
     workflow_id: result.planning.workflow?.identity.workflow_id,
     ...(memorySessionId !== undefined ? { memory_session_id: memorySessionId } : {}),
+    llm_elapsed_ms: elapsedMs,
     retrieval: Object.freeze({
       selected: result.retrieval.context.items.length,
       total_candidates: result.retrieval.context.totalCandidates,
@@ -69,8 +79,10 @@ async function executeLlmChatTurn(
   goal: string,
 ): Promise<ChatTurnPayload> {
   session.turnCount += 1;
+  const startedAt = performance.now();
 
   const result = await session.client.llm.ask(goal, { history: session.history });
+  const elapsedMs = Math.round(performance.now() - startedAt);
 
   session.history.push(Object.freeze({ role: 'user', content: goal }));
   session.history.push(...result.transcript);
@@ -89,6 +101,12 @@ async function executeLlmChatTurn(
     mode: 'llm',
     llm_message: result.finalMessage,
     llm_turns: result.turns,
+    llm_reasoning_steps: mapTranscriptToReasoningSteps(result.transcript),
+    llm_elapsed_ms: elapsedMs,
+    llm_usage: Object.freeze({
+      input_tokens: result.usage.inputTokens,
+      output_tokens: result.usage.outputTokens,
+    }),
     budget_exceeded: result.budgetExceeded,
     retrieval: Object.freeze({
       selected: 0,

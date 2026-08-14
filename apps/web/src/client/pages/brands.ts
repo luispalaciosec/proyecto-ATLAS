@@ -87,7 +87,6 @@ export function renderBrands(main: HTMLElement): void {
       ></section>
     </section>
 
-    <div id="brands-dialog-root"></div>
   `;
 
   main.querySelector('#brands-create-open')?.addEventListener('click', () => {
@@ -338,8 +337,18 @@ function paintSuccessBanner(): void {
   banner.append(message, actions);
 }
 
+function resolveShellDialogRoot(): HTMLElement | null {
+  return document.querySelector('#shell-dialog-root');
+}
+
 function openCreateDialog(trigger: HTMLButtonElement): void {
   if (boundMain === null || pageState.createOpen) {
+    return;
+  }
+
+  const root = resolveShellDialogRoot();
+
+  if (root === null) {
     return;
   }
 
@@ -351,7 +360,6 @@ function openCreateDialog(trigger: HTMLButtonElement): void {
     createErrorTechnical: undefined,
   };
 
-  const root = boundMain.querySelector('#brands-dialog-root') as HTMLElement;
   const backdrop = renderCreateDialog();
   const shellBody = document.querySelector('#shell-body') as HTMLElement | null;
 
@@ -388,8 +396,7 @@ function closeCreateDialog(): void {
   unmountCreateDialog?.();
   unmountCreateDialog = undefined;
 
-  const root = boundMain.querySelector('#brands-dialog-root') as HTMLElement;
-  root.replaceChildren();
+  resolveShellDialogRoot()?.replaceChildren();
 
   if (lastFocusedElement !== null) {
     lastFocusedElement.focus();

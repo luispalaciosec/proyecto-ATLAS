@@ -1,6 +1,12 @@
 import { formatWorkingContext } from '../lib/brand-context.js';
+import {
+  renderCompletedReasoningSummary,
+  startSimulatedReasoning,
+} from '../lib/chat-reasoning.js';
 import { copyTextToClipboard } from '../lib/copy-text.js';
+import { renderMessageMetrics } from '../lib/format-chat-metrics.js';
 import { appendExpandableDetails } from '../lib/expandable-details.js';
+import { createSendIcon, createSendSpinner } from '../lib/icons.js';
 import { t } from '../../i18n/index.js';
 import { formatCorrectionStatus, formatUserError } from '../../presentation/format-error.js';
 import { mapChatResponse } from '../../presentation/map-chat-response.js';
@@ -21,6 +27,16 @@ import {
 
 let boundMain: HTMLElement | null = null;
 let lastCorrectableMessageId: string | undefined;
+let stopReasoningAnimation: (() => void) | undefined;
+
+function clearReasoningAnimation(): void {
+  const stop = stopReasoningAnimation;
+
+  if (stop !== undefined) {
+    stop();
+    stopReasoningAnimation = undefined;
+  }
+}
 
 export function renderChat(main: HTMLElement): void {
   boundMain = main;
@@ -46,16 +62,27 @@ export function renderChat(main: HTMLElement): void {
         </div>
       </section>
       <form id="chat-form" class="chat-composer">
-        <label class="chat-composer__label" for="chat-input">${t('chat.placeholder')}</label>
+        <label class="chat-composer__label visually-hidden" for="chat-input">${t('chat.placeholder')}</label>
         <div class="chat-composer__row">
-          <textarea id="chat-input" class="chat-composer__input" rows="3" placeholder="${t('chat.placeholder')}"></textarea>
-          <button type="submit" class="btn btn--primary" id="chat-send">${t('chat.send')}</button>
+          <textarea id="chat-input" class="chat-composer__input" rows="1" placeholder="${t('chat.placeholder')}"></textarea>
+          <button
+            type="submit"
+            class="chat-composer__send"
+            id="chat-send"
+            aria-label="${t('chat.send')}"
+            disabled
+          >
+            <span class="chat-composer__send-icon" id="chat-send-icon"></span>
+            <span class="chat-composer__send-spinner" id="chat-send-spinner" hidden aria-hidden="true"></span>
+          </button>
         </div>
       </form>
     </section>
   `;
 
   bindChatEvents(main);
+
+  mountSendButton(main);
 
   if (getState().chatHistoryLoadedFor !== state.activeWorkspace) {
     void preloadHistory();
@@ -107,11 +134,35 @@ function paintHistoryLoading(): void {
   `;
 }
 
+function mountSendButton(main: HTMLElement): void {
+  const iconWrap = main.querySelector('#chat-send-icon') as HTMLElement | null;
+  const spinnerWrap = main.querySelector('#chat-send-spinner') as HTMLElement | null;
+
+  if (iconWrap !== null) {
+    iconWrap.replaceChildren(createSendIcon());
+  }
+
+  if (spinnerWrap !== null) {
+    spinnerWrap.replaceChildren(createSendSpinner());
+  }
+}
+
 function bindChatEvents(main: HTMLElement): void {
   const form = main.querySelector('#chat-form') as HTMLFormElement;
   const input = main.querySelector('#chat-input') as HTMLTextAreaElement;
+  const send = main.querySelector('#chat-send') as HTMLButtonElement;
   const correctionPanel = main.querySelector('#correction-panel') as HTMLElement;
   const correctionInput = main.querySelector('#correction-input') as HTMLTextAreaElement;
+
+  const syncSendAvailability = (): void => {
+    if (getState().chatLoading) {
+      return;
+    }
+
+    send.disabled = input.value.trim().length === 0;
+  };
+
+  input.addEventListener('input', syncSendAvailability);
 
   input.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -183,13 +234,50 @@ function paintMessages(): void {
     thread.append(renderMessageElement(message));
   }
 
+  attachLiveReasoningAnimation(state.chatMessages);
   thread.scrollTop = thread.scrollHeight;
+}
+
+function attachLiveReasoningAnimation(messages: readonly UiChatMessage[]): void {
+  if (boundMain === null) {
+    return;
+  }
+
+  const loadingMessage = messages.find((message) => message.kind === 'loading');
+
+  if (loadingMessage === undefined) {
+    return;
+  }
+
+  const host = boundMain.querySelector(
+    `[data-reasoning-host="${loadingMessage.id}"]`,
+  ) as HTMLElement | null;
+
+  if (host === null) {
+    return;
+  }
+
+  clearReasoningAnimation();
+  stopReasoningAnimation = startSimulatedReasoning(host, loadingMessage.id);
 }
 
 function renderMessageElement(message: UiChatMessage): HTMLElement {
   const element = document.createElement('article');
-  element.className = `message message--${message.kind}`;
+  element.className = `message message--${message.kind} message--enter`;
   element.dataset.messageId = message.id;
+
+  if (message.kind === 'loading') {
+    const liveHost = document.createElement('div');
+    liveHost.className = 'message__reasoning-host';
+    liveHost.dataset.reasoningHost = message.id;
+    element.classList.add('message--reasoning');
+    element.append(liveHost);
+    return element;
+  }
+
+  if (message.reasoningSteps !== undefined && message.reasoningSteps.length > 0) {
+    element.append(renderCompletedReasoningSummary(message.reasoningSteps));
+  }
 
   if (message.markdown) {
     const content = document.createElement('div');
@@ -251,6 +339,10 @@ function renderMessageElement(message: UiChatMessage): HTMLElement {
     element.append(actions);
   }
 
+  if (message.kind === 'assistant' && message.metrics !== undefined) {
+    element.append(renderMessageMetrics(message.metrics));
+  }
+
   if (message.kind === 'error') {
     const panel = document.createElement('div');
     panel.className = 'error-panel';
@@ -292,17 +384,22 @@ async function submitChatMessage(message: string, options?: SubmitChatOptions): 
   patchState({ chatLoading: true, statusText: t('chat.thinking'), lastFailedGoal: undefined });
   removeLastErrorMessage();
 
+  clearReasoningAnimation();
+
   if (options?.skipUserMessage !== true) {
     appendChatMessage({ id: createMessageId(), kind: 'user', text: message });
   }
 
-  appendChatMessage({ id: createMessageId(), kind: 'loading', text: t('chat.thinking') });
+  const loadingId = createMessageId();
+  appendChatMessage({ id: loadingId, kind: 'loading', text: t('chat.thinking') });
   paintMessages();
-  setComposerDisabled(true);
+  setComposerDisabled(true, true);
 
   try {
+    const startedAt = performance.now();
     const payload = await sendChatMessage(state.activeWorkspace, message);
-    const view = mapChatResponse(payload);
+    const clientElapsedMs = Math.round(performance.now() - startedAt);
+    const view = mapChatResponse(payload, clientElapsedMs);
     const assistantId = createMessageId();
     lastCorrectableMessageId = assistantId;
     replaceLastLoadingMessage({
@@ -311,6 +408,12 @@ async function submitChatMessage(message: string, options?: SubmitChatOptions): 
       text: view.assistantMessage,
       markdown: true,
       technicalDetails: view.technicalDetails,
+      reasoningSteps: view.reasoningSteps,
+      metrics: {
+        elapsedMs: Math.max(view.metrics.elapsedMs, clientElapsedMs),
+        inputTokens: view.metrics.inputTokens,
+        outputTokens: view.metrics.outputTokens,
+      },
     });
     patchState({
       chatLoading: false,
@@ -333,7 +436,8 @@ async function submitChatMessage(message: string, options?: SubmitChatOptions): 
       lastFailedGoal: message,
     });
   } finally {
-    setComposerDisabled(false);
+    clearReasoningAnimation();
+    setComposerDisabled(false, false);
     paintMessages();
   }
 }
@@ -368,15 +472,33 @@ async function submitCorrection(correction: string): Promise<void> {
   paintMessages();
 }
 
-function setComposerDisabled(disabled: boolean): void {
+function setComposerDisabled(disabled: boolean, loading = false): void {
   if (boundMain === null) {
     return;
   }
 
   const input = boundMain.querySelector('#chat-input') as HTMLTextAreaElement | null;
   const send = boundMain.querySelector('#chat-send') as HTMLButtonElement | null;
-  if (input) input.disabled = disabled;
-  if (send) send.disabled = disabled;
+  const spinner = boundMain.querySelector('#chat-send-spinner') as HTMLElement | null;
+  const icon = boundMain.querySelector('#chat-send-icon') as HTMLElement | null;
+
+  if (input) {
+    input.disabled = disabled;
+  }
+
+  if (send) {
+    send.disabled = disabled || (!loading && input?.value.trim().length === 0);
+    send.classList.toggle('chat-composer__send--loading', loading);
+    send.setAttribute('aria-busy', String(loading));
+  }
+
+  if (spinner) {
+    spinner.hidden = !loading;
+  }
+
+  if (icon) {
+    icon.hidden = loading;
+  }
 }
 
 export function refreshChatView(): void {

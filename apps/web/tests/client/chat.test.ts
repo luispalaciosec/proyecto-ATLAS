@@ -212,4 +212,46 @@ describe('renderChat', () => {
     expect(panel.hidden).toBe(false);
     expect(main.querySelector('#correction-input')).not.toBeNull();
   });
+
+  it('shows live reasoning panel while waiting for assistant response', async () => {
+    let resolveChat!: (value: Record<string, unknown>) => void;
+    const chatPromise = new Promise<Record<string, unknown>>((resolve) => {
+      resolveChat = resolve;
+    });
+
+    sendChatMessage.mockReturnValue(chatPromise);
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderChat(main);
+    await flushUi();
+
+    const input = main.querySelector('#chat-input') as HTMLTextAreaElement;
+    input.value = 'Plan semanal de contenido';
+    (main.querySelector('#chat-form') as HTMLFormElement).requestSubmit();
+    await flushUi();
+
+    expect(main.textContent).toContain('Razonamiento');
+    expect(main.textContent).toContain('Analizando tu solicitud');
+    expect(main.querySelector('.chat-composer__send--loading')).not.toBeNull();
+
+    resolveChat({
+      mode: 'llm',
+      success: true,
+      llm_message: 'Plan listo',
+      llm_turns: 2,
+      llm_elapsed_ms: 4200,
+      llm_usage: { input_tokens: 300, output_tokens: 180 },
+      llm_reasoning_steps: [
+        { type: 'memory_search', preview: 'contenido' },
+        { type: 'composing' },
+      ],
+    });
+
+    await flushUi();
+    await flushUi();
+
+    expect(main.textContent).toContain('Plan listo');
+    expect(main.textContent).toContain('Ver razonamiento');
+    expect(main.textContent).toMatch(/tokens/);
+  });
 });

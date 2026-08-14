@@ -17,10 +17,14 @@ import {
 
 const searchKnowledge = vi.fn();
 const uploadKnowledgeDocument = vi.fn();
+const fetchKnowledgeDocuments = vi.fn();
+const createKnowledgeFolder = vi.fn();
 
 vi.mock('../../src/client/api/client.js', () => ({
   searchKnowledge: (...args: unknown[]) => searchKnowledge(...args),
   uploadKnowledgeDocument: (...args: unknown[]) => uploadKnowledgeDocument(...args),
+  fetchKnowledgeDocuments: (...args: unknown[]) => fetchKnowledgeDocuments(...args),
+  createKnowledgeFolder: (...args: unknown[]) => createKnowledgeFolder(...args),
   fetchHistory: vi.fn(async () => ({ workspace: 'default', messages: [], canCorrect: false })),
   fetchWorkspaces: vi.fn(async () => ({ workspaces: ['default'] })),
   sendChatMessage: vi.fn(),
@@ -39,15 +43,37 @@ describe('renderKnowledge', () => {
     setRoute('/conocimiento');
     searchKnowledge.mockReset();
     uploadKnowledgeDocument.mockReset();
+    fetchKnowledgeDocuments.mockReset();
+    createKnowledgeFolder.mockReset();
+    fetchKnowledgeDocuments.mockResolvedValue({
+      workspace: 'default',
+      folders: ['General'],
+      total: 0,
+      documents: [],
+    });
+    createKnowledgeFolder.mockResolvedValue({
+      workspace: 'default',
+      folders: ['General', 'Comercial'],
+    });
     resetKnowledgePageStateForTests();
   });
 
-  it('renders upload zone', () => {
+  it('renders upload zone and document library', async () => {
     const main = document.querySelector('#main') as HTMLElement;
     renderKnowledge(main);
 
-    expect(main.textContent).toContain('Subir documento');
+    expect(main.textContent).toContain('Subir documentos');
+    expect(main.textContent).toContain('Arrastra uno o varios archivos');
+    expect(main.textContent).toContain('Biblioteca de documentos');
+    expect(main.textContent).toContain('Crear carpeta');
     expect(main.querySelector('#knowledge-upload-dropzone')).not.toBeNull();
+    expect(main.querySelector('#knowledge-upload-folder-select')).not.toBeNull();
+
+    await flushUi();
+    await flushUi();
+
+    expect(fetchKnowledgeDocuments).toHaveBeenCalledWith('default', undefined);
+    expect(main.textContent).toContain('Aún no hay documentos');
   });
 
   it('uploads a supported file and refreshes active search', async () => {
@@ -57,7 +83,9 @@ describe('renderKnowledge', () => {
         onProgress?.({ phase: 'indexing', progress: 80, fileName: file.name });
         onProgress?.({ phase: 'available', progress: 100, fileName: file.name });
         return {
+          documentId: 'doc.test',
           fileName: 'manual.txt',
+          folder: 'General',
           chunks: 2,
           recordIds: ['a', 'b'],
         };
@@ -96,7 +124,12 @@ describe('renderKnowledge', () => {
     await flushUi();
     await flushUi();
 
-    expect(uploadKnowledgeDocument).toHaveBeenCalledWith('default', file, expect.any(Function));
+    expect(uploadKnowledgeDocument).toHaveBeenCalledWith(
+      'default',
+      file,
+      expect.any(Function),
+      'General',
+    );
     expect(getState().statusText).toContain('manual.txt');
     expect(getState().statusText).toContain('2 fragmentos');
     expect(main.textContent).toContain('Disponible para buscar');
@@ -104,9 +137,53 @@ describe('renderKnowledge', () => {
     expect(searchKnowledge).toHaveBeenLastCalledWith('default', 'manual');
   });
 
+  it('uploads multiple supported files sequentially', async () => {
+    uploadKnowledgeDocument.mockImplementation(
+      async (_slug: string, file: File) => ({
+        documentId: `doc.${file.name}`,
+        fileName: file.name,
+        folder: 'General',
+        chunks: 1,
+        recordIds: [file.name],
+      }),
+    );
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderKnowledge(main);
+    await flushUi();
+    await flushUi();
+
+    const fileInput = main.querySelector('#knowledge-upload-input') as HTMLInputElement;
+    const files = [
+      new File(['a'], 'manual.txt', { type: 'text/plain' }),
+      new File(['b'], 'politica.md', { type: 'text/markdown' }),
+    ];
+    Object.defineProperty(fileInput, 'files', { value: files });
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await flushUi();
+    await flushUi();
+
+    expect(uploadKnowledgeDocument).toHaveBeenCalledTimes(2);
+    expect(getState().statusText).toContain('Se incorporaron 2 documentos');
+    expect(main.textContent).toContain('Documento 2 de 2');
+  });
+
   it('shows upload progress phases while uploading', async () => {
-    let resolveUpload!: (value: { fileName: string; chunks: number; recordIds: string[] }) => void;
-    const uploadPromise = new Promise<{ fileName: string; chunks: number; recordIds: string[] }>((resolve) => {
+    let resolveUpload!: (value: {
+      documentId: string;
+      fileName: string;
+      folder: string;
+      chunks: number;
+      recordIds: string[];
+    }) => void;
+    const uploadPromise = new Promise<{
+      documentId: string;
+      fileName: string;
+      folder: string;
+      chunks: number;
+      recordIds: string[];
+    }>((resolve) => {
       resolveUpload = resolve;
     });
 
@@ -132,12 +209,63 @@ describe('renderKnowledge', () => {
     expect(main.textContent).toContain('informe.pdf');
     expect(main.textContent).toContain('Indexando en el conocimiento');
 
-    resolveUpload({ fileName: 'informe.pdf', chunks: 1, recordIds: ['x'] });
+    resolveUpload({
+      documentId: 'doc.test',
+      fileName: 'informe.pdf',
+      folder: 'General',
+      chunks: 1,
+      recordIds: ['x'],
+    });
     await flushUi();
     await flushUi();
 
     expect(main.textContent).toContain('Disponible para buscar');
     expect((main.querySelector('#knowledge-upload-search-btn') as HTMLButtonElement | null)?.hidden).toBe(false);
+  });
+
+  it('creates a folder and refreshes the library', async () => {
+    const main = document.querySelector('#main') as HTMLElement;
+    renderKnowledge(main);
+    await flushUi();
+    await flushUi();
+
+    const input = main.querySelector('#knowledge-create-folder-input') as HTMLInputElement;
+    input.value = 'Comercial';
+    (main.querySelector('#knowledge-create-folder-form') as HTMLFormElement).requestSubmit();
+    await flushUi();
+    await flushUi();
+
+    expect(createKnowledgeFolder).toHaveBeenCalledWith('default', 'Comercial');
+    expect(main.textContent).toContain('Carpeta «Comercial» creada.');
+  });
+
+  it('renders document library entries and folder filters', async () => {
+    fetchKnowledgeDocuments.mockResolvedValue({
+      workspace: 'default',
+      folders: ['General', 'Comercial'],
+      total: 1,
+      documents: [
+        {
+          documentId: 'doc.1',
+          fileName: 'Manual.pdf',
+          fileType: 'pdf',
+          folder: 'Comercial',
+          chunks: 3,
+          uploadedAt: '2026-08-10T12:00:00.000Z',
+          recordIds: ['a', 'b', 'c'],
+        },
+      ],
+    });
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderKnowledge(main);
+    await flushUi();
+    await flushUi();
+
+    expect(main.textContent).toContain('Manual.pdf');
+    expect(main.textContent).toContain('Todas las carpetas');
+    expect(main.textContent).toContain('Comercial');
+    expect(main.textContent).toContain('Buscar en documento');
   });
 
   it('renders empty state before searching', () => {
