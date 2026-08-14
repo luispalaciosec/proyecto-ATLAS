@@ -23,6 +23,21 @@ import {
   type KnowledgeSearchResponseProduct,
 } from './presentation/map-knowledge.js';
 import type { KnowledgeUploadResponseProduct } from './presentation/map-knowledge-upload.js';
+import {
+  mapKnowledgeDocumentsToProduct,
+  type KnowledgeDocumentsResponseProduct,
+} from './presentation/map-knowledge-documents.js';
+import {
+  mapKnowledgeFoldersToProduct,
+  type KnowledgeFoldersResponseProduct,
+} from './presentation/map-knowledge-folders.js';
+import { resolveKnowledgeFolder } from './lib/knowledge-upload/folder.js';
+import {
+  createStoredKnowledgeFolder,
+  listStoredKnowledgeFolders,
+  mergeKnowledgeFolderLists,
+  registerKnowledgeFolderIfMissing,
+} from './lib/knowledge-upload/knowledge-folders-store.js';
 import { chunkText } from './lib/knowledge-upload/chunk-text.js';
 import {
   EMPTY_EXTRACTION_MESSAGE,
@@ -301,10 +316,54 @@ export class SessionStore {
     return mapKnowledgeSearchToProduct(key, result);
   }
 
+  async listKnowledgeDocuments(
+    workspaceKey: string | undefined,
+    folderFilter?: string,
+  ): Promise<KnowledgeDocumentsResponseProduct> {
+    const key = workspaceKey?.trim() || 'default';
+    const session = await this.getOrCreate(workspaceKey);
+    const result = await session.client.memory.searchContent({
+      query: '',
+      recordType: 'document',
+    });
+    const mapped = mapKnowledgeDocumentsToProduct(key, result.records, folderFilter);
+    const folders = mergeKnowledgeFolderLists(
+      listStoredKnowledgeFolders(workspaceKey),
+      mapped.folders,
+    );
+
+    return Object.freeze({
+      ...mapped,
+      folders,
+    });
+  }
+
+  listKnowledgeFolders(workspaceKey: string | undefined): KnowledgeFoldersResponseProduct {
+    const key = workspaceKey?.trim() || 'default';
+    const stored = listStoredKnowledgeFolders(workspaceKey);
+
+    return mapKnowledgeFoldersToProduct(key, stored);
+  }
+
+  createKnowledgeFolder(
+    workspaceKey: string | undefined,
+    folderInput: string,
+  ): KnowledgeFoldersResponseProduct {
+    const key = workspaceKey?.trim() || 'default';
+    const folders = createStoredKnowledgeFolder(workspaceKey, folderInput);
+
+    return mapKnowledgeFoldersToProduct(key, folders);
+  }
+
+  #createKnowledgeDocumentId(): string {
+    return `doc.${Date.now()}.${Math.random().toString(36).slice(2, 10)}`;
+  }
+
   async uploadKnowledgeDocument(
     workspaceKey: string | undefined,
     fileName: string,
     buffer: Buffer,
+    folderInput?: string,
   ): Promise<KnowledgeUploadResponseProduct> {
     const extension = resolveSupportedExtension(fileName);
 
@@ -321,6 +380,9 @@ export class SessionStore {
     const session = await this.getOrCreate(workspaceKey);
     const recordIds: string[] = [];
     const uploadedAt = new Date().toISOString();
+    const folder = resolveKnowledgeFolder(folderInput);
+    const documentId = this.#createKnowledgeDocumentId();
+    registerKnowledgeFolderIfMissing(workspaceKey, folder);
 
     for (let index = 0; index < chunks.length; index += 1) {
       const chunkTextValue = chunks[index];
@@ -334,8 +396,10 @@ export class SessionStore {
         recordType: 'document',
         metadata: Object.freeze({
           source: 'upload',
+          documentId,
           fileName,
           fileType: extension,
+          folder,
           chunkIndex: index,
           totalChunks: chunks.length,
           uploadedAt,
@@ -352,7 +416,9 @@ export class SessionStore {
     this.recordKnowledgeUploadActivity(workspaceKey, fileName, recordIds.length);
 
     return Object.freeze({
+      documentId,
       fileName,
+      folder,
       chunks: recordIds.length,
       recordIds: Object.freeze([...recordIds]),
     });
