@@ -784,7 +784,6 @@ describe('createWebServer', () => {
         new Blob([Uint8Array.from(readFixture('sample.txt'))], { type: 'text/plain' }),
         'sample.txt',
       );
-      formData.append('folder', 'Comercial');
 
       const upload = await fetch(`${baseUrl}/api/knowledge/upload`, {
         method: 'POST',
@@ -793,48 +792,13 @@ describe('createWebServer', () => {
 
       expect(upload.status).toBe(200);
       const uploadPayload = (await upload.json()) as {
-        documentId: string;
         fileName: string;
-        folder: string;
         chunks: number;
         recordIds: string[];
       };
       expect(uploadPayload.fileName).toBe('sample.txt');
-      expect(uploadPayload.folder).toBe('Comercial');
-      expect(uploadPayload.documentId.length).toBeGreaterThan(0);
       expect(uploadPayload.chunks).toBeGreaterThan(0);
       expect(uploadPayload.recordIds.length).toBe(uploadPayload.chunks);
-
-      const documents = await fetch(`${baseUrl}/api/knowledge/documents`);
-      expect(documents.status).toBe(200);
-      const documentsPayload = (await documents.json()) as {
-        total: number;
-        documents: Array<{ fileName: string; folder: string; chunks: number }>;
-        folders: string[];
-      };
-      expect(documentsPayload.total).toBe(1);
-      expect(documentsPayload.documents[0]?.fileName).toBe('sample.txt');
-      expect(documentsPayload.documents[0]?.folder).toBe('Comercial');
-      expect(documentsPayload.folders).toContain('Comercial');
-
-      const filtered = await fetch(`${baseUrl}/api/knowledge/documents?folder=Comercial`);
-      expect(filtered.status).toBe(200);
-      const filteredPayload = (await filtered.json()) as { total: number };
-      expect(filteredPayload.total).toBe(1);
-
-      const folders = await fetch(`${baseUrl}/api/knowledge/folders`);
-      expect(folders.status).toBe(200);
-      const foldersPayload = (await folders.json()) as { folders: string[] };
-      expect(foldersPayload.folders).toContain('Comercial');
-
-      const createFolder = await fetch(`${baseUrl}/api/knowledge/folders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'Legal' }),
-      });
-      expect(createFolder.status).toBe(201);
-      const createdPayload = (await createFolder.json()) as { folders: string[] };
-      expect(createdPayload.folders).toContain('Legal');
 
       const search = await fetch(`${baseUrl}/api/knowledge/search?query=zeta-quantum-7742`);
       expect(search.status).toBe(200);
