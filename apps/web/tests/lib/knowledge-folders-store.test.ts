@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 
 import {
   createStoredKnowledgeFolder,
@@ -12,6 +12,21 @@ import {
 } from '../../src/lib/knowledge-upload/knowledge-folders-store.js';
 
 describe('knowledge-folders-store', () => {
+  let previousMemoryFile: string | undefined;
+
+  beforeEach(() => {
+    previousMemoryFile = process.env.ATLAS_MEMORY_FILE;
+    delete process.env.ATLAS_MEMORY_FILE;
+  });
+
+  afterEach(() => {
+    if (previousMemoryFile === undefined) {
+      delete process.env.ATLAS_MEMORY_FILE;
+    } else {
+      process.env.ATLAS_MEMORY_FILE = previousMemoryFile;
+    }
+  });
+
   it('creates and lists folders per workspace', () => {
     const root = mkdtempSync(join(tmpdir(), 'atlas-knowledge-folders-'));
     const previous = process.cwd();

@@ -11,7 +11,7 @@ import * as extractTextModule from '../src/lib/knowledge-upload/extract-text.js'
 import { EMPTY_EXTRACTION_MESSAGE } from '../src/lib/knowledge-upload/constants.js';
 import { createWebServer } from '../src/server.js';
 import { SessionStore } from '../src/session-store.js';
-import { readFixture } from './fixtures/fixture-utils.js';
+import { readFixture, createXlsxFixture } from './fixtures/fixture-utils.js';
 import {
   loadOrCreateBrandProfile,
   resolveWorkspacePaths,
@@ -807,6 +807,116 @@ describe('createWebServer', () => {
     });
   });
 
+  it('uploads xlsx knowledge and makes it searchable', async () => {
+    const app = createWebServer();
+
+    await withServer(app, async (baseUrl) => {
+      const buffer = createXlsxFixture({
+        VentasExcelSearch: [
+          ['Cliente', 'Monto'],
+          ['Farmacias del Oriente', 150000],
+        ],
+      });
+      const formData = new FormData();
+      formData.append(
+        'file',
+        new Blob([Uint8Array.from(buffer)], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        }),
+        'ventas.xlsx',
+      );
+
+      const upload = await fetch(`${baseUrl}/api/knowledge/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      expect(upload.status).toBe(200);
+      const uploadPayload = (await upload.json()) as {
+        fileName: string;
+        chunks: number;
+        sheetCount?: number;
+        recordIds: string[];
+      };
+      expect(uploadPayload.fileName).toBe('ventas.xlsx');
+      expect(uploadPayload.chunks).toBeGreaterThan(0);
+      expect(uploadPayload.sheetCount).toBe(1);
+      expect(uploadPayload.recordIds.length).toBe(uploadPayload.chunks);
+
+      const search = await fetch(`${baseUrl}/api/knowledge/search?query=ventasexcelsearch`);
+      expect(search.status).toBe(200);
+      const searchPayload = (await search.json()) as { total: number };
+      expect(searchPayload.total).toBeGreaterThan(0);
+    });
+  });
+
+  it('finds excel cell values in knowledge search when queried by value alone', async () => {
+    const app = createWebServer();
+
+    await withServer(app, async (baseUrl) => {
+      const buffer = createXlsxFixture({
+        Ventas: [
+          ['Cliente', 'Producto', 'Monto'],
+          ['Ferreteria Andina', 'Taladro', 45000],
+          ['Comercial Loja', 'Sierra', 32000],
+        ],
+      });
+      const formData = new FormData();
+      formData.append(
+        'file',
+        new Blob([Uint8Array.from(buffer)], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        }),
+        'ferreteria.xlsx',
+      );
+
+      const upload = await fetch(`${baseUrl}/api/knowledge/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      expect(upload.status).toBe(200);
+
+      for (const term of ['Ferreteria', 'Taladro', '45000', 'Comercial', 'Sierra']) {
+        const search = await fetch(`${baseUrl}/api/knowledge/search?query=${encodeURIComponent(term)}`);
+        expect(search.status).toBe(200);
+        const searchPayload = (await search.json()) as { total: number };
+        expect(searchPayload.total).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  it('uploads xls knowledge', async () => {
+    const app = createWebServer();
+
+    await withServer(app, async (baseUrl) => {
+      const buffer = createXlsxFixture(
+        {
+          Legacy: [
+            ['Codigo', 'Valor'],
+            ['XLS-001', 'excel-token-legacy-001'],
+          ],
+        },
+        'xls',
+      );
+      const formData = new FormData();
+      formData.append(
+        'file',
+        new Blob([Uint8Array.from(buffer)], { type: 'application/vnd.ms-excel' }),
+        'legacy.xls',
+      );
+
+      const upload = await fetch(`${baseUrl}/api/knowledge/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      expect(upload.status).toBe(200);
+      const uploadPayload = (await upload.json()) as { fileName: string; sheetCount?: number };
+      expect(uploadPayload.fileName).toBe('legacy.xls');
+      expect(uploadPayload.sheetCount).toBe(1);
+    });
+  });
+
   it('rejects unsupported upload formats with 400', async () => {
     const app = createWebServer();
 
@@ -815,7 +925,7 @@ describe('createWebServer', () => {
       formData.append(
         'file',
         new Blob(['contenido'], { type: 'application/octet-stream' }),
-        'datos.xlsx',
+        'datos.zip',
       );
 
       const response = await fetch(`${baseUrl}/api/knowledge/upload`, {
@@ -825,9 +935,143 @@ describe('createWebServer', () => {
 
       expect(response.status).toBe(400);
       const payload = (await response.json()) as { error: string };
-      expect(payload.error).toContain('.xlsx');
+      expect(payload.error).toContain('.zip');
+      expect(payload.error).toContain('xls, xlsx');
       expect(payload.error).not.toBe('[object Object]');
     });
+  });
+
+  it('returns 422 for corrupt excel uploads without exposing stack traces', async () => {
+    const app = createWebServer();
+
+    await withServer(app, async (baseUrl) => {
+      const formData = new FormData();
+      formData.append(
+        'file',
+        new Blob([Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04])], { type: 'application/octet-stream' }),
+        'corrupto.xlsx',
+      );
+
+      const response = await fetch(`${baseUrl}/api/knowledge/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      expect(response.status).toBe(422);
+      const payload = (await response.json()) as { error: string };
+      expect(payload.error).toContain('No se pudo leer el archivo Excel');
+      expect(payload.error).not.toMatch(/stack|TypeError|Error:/i);
+    });
+  });
+
+  it('prefers newer excel uploads with the same file name in search', async () => {
+    const app = createWebServer();
+
+    await withServer(app, async (baseUrl) => {
+      const uploadVersion = async (sheetName: string) => {
+        const buffer = createXlsxFixture({
+          [sheetName]: [
+            ['Token', 'Version'],
+            ['activo', 'si'],
+          ],
+        });
+        const formData = new FormData();
+        formData.append(
+          'file',
+          new Blob([Uint8Array.from(buffer)], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          }),
+          'versiones.xlsx',
+        );
+
+        const response = await fetch(`${baseUrl}/api/knowledge/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        expect(response.status).toBe(200);
+      };
+
+      await uploadVersion('VersionesExcelV1');
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      await uploadVersion('VersionesExcelV2');
+
+      const v1Search = await fetch(`${baseUrl}/api/knowledge/search?query=versionesexcelv1`);
+      const v2Search = await fetch(`${baseUrl}/api/knowledge/search?query=versionesexcelv2`);
+
+      expect(v1Search.status).toBe(200);
+      expect(v2Search.status).toBe(200);
+
+      const v1Payload = (await v1Search.json()) as { total: number; records: Array<{ timestamp?: string }> };
+      const v2Payload = (await v2Search.json()) as { total: number; records: Array<{ timestamp?: string }> };
+
+      expect(v1Payload.total).toBeGreaterThan(0);
+      expect(v2Payload.total).toBeGreaterThan(0);
+
+      const newestV2 = v2Payload.records[0]?.timestamp ?? '';
+      const newestV1 = v1Payload.records[0]?.timestamp ?? '';
+      expect(newestV2.localeCompare(newestV1)).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  it('isolates excel knowledge search between brand workspaces', async () => {
+    const workspacesRoot = mkdtempSync(join(tmpdir(), 'atlas-excel-brand-'));
+    const geeksPaths = resolveWorkspacePaths('geeks', workspacesRoot);
+    const revitalPaths = resolveWorkspacePaths('revital', workspacesRoot);
+    loadOrCreateBrandProfile(geeksPaths, 'Geeks');
+    loadOrCreateBrandProfile(revitalPaths, 'Revital');
+
+    const previousRoot = process.env.ATLAS_WORKSPACES_ROOT;
+    process.env.ATLAS_WORKSPACES_ROOT = workspacesRoot;
+
+    try {
+      const app = createWebServer();
+
+      await withServer(app, async (baseUrl) => {
+        const buffer = createXlsxFixture({
+          GeeksExcelSecret: [
+            ['Marca', 'Token'],
+            ['Geeks', 'secreto'],
+          ],
+        });
+        const formData = new FormData();
+        formData.append(
+          'file',
+          new Blob([Uint8Array.from(buffer)], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          }),
+          'geeks.xlsx',
+        );
+        formData.append('workspace', 'geeks');
+
+        const upload = await fetch(`${baseUrl}/api/knowledge/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        expect(upload.status).toBe(200);
+
+        const geeksSearch = await fetch(
+          `${baseUrl}/api/knowledge/search?workspace=geeks&query=geeksexcelsecret`,
+        );
+        expect(geeksSearch.status).toBe(200);
+        const geeksPayload = (await geeksSearch.json()) as { total: number };
+        expect(geeksPayload.total).toBe(1);
+
+        const revitalSearch = await fetch(
+          `${baseUrl}/api/knowledge/search?workspace=revital&query=geeksexcelsecret`,
+        );
+        expect(revitalSearch.status).toBe(200);
+        const revitalPayload = (await revitalSearch.json()) as { total: number };
+        expect(revitalPayload.total).toBe(0);
+      });
+    } finally {
+      if (previousRoot === undefined) {
+        delete process.env.ATLAS_WORKSPACES_ROOT;
+      } else {
+        process.env.ATLAS_WORKSPACES_ROOT = previousRoot;
+      }
+
+      rmSync(workspacesRoot, { recursive: true, force: true });
+    }
   });
 
   it('returns 422 when uploaded file has no extractable text', async () => {

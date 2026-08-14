@@ -21,6 +21,7 @@ import { KnowledgeUploadError } from '../src/lib/knowledge-upload/upload-errors.
 import {
   createDocxFixture,
   createPptxFixture,
+  createXlsxFixture,
   readFixture,
 } from './fixtures/fixture-utils.js';
 
@@ -31,12 +32,14 @@ describe('knowledge upload helpers', () => {
     expect(resolveSupportedExtension('Manual.pdf')).toBe('pdf');
     expect(resolveSupportedExtension('notes.TXT')).toBe('txt');
     expect(resolveSupportedExtension('slides.pptx')).toBe('pptx');
-    expect(resolveSupportedExtension('budget.xlsx')).toBeUndefined();
+    expect(resolveSupportedExtension('budget.xlsx')).toBe('xlsx');
+    expect(resolveSupportedExtension('legacy.xls')).toBe('xls');
+    expect(resolveSupportedExtension('archive.zip')).toBeUndefined();
   });
 
   it('formats unsupported extension messages', () => {
-    expect(formatUnsupportedExtensionMessage('xlsx')).toContain('.xlsx');
-    expect(formatUnsupportedExtensionMessage('xlsx')).toContain('pdf, docx, pptx, txt, md');
+    expect(formatUnsupportedExtensionMessage('zip')).toContain('.zip');
+    expect(formatUnsupportedExtensionMessage('zip')).toContain('pdf, docx, pptx, txt, md, xls, xlsx');
   });
 
   it('chunks long text on paragraph boundaries', () => {
@@ -74,6 +77,19 @@ describe('knowledge upload helpers', () => {
     const buffer = Buffer.from('%PDF-1.4 fake', 'utf8');
     const text = await extractTextFromBuffer(buffer, 'pdf', 'sample.pdf');
 
+    expect(text).toContain(KEYWORD);
+  });
+
+  it('extracts xlsx fixture text', async () => {
+    const buffer = createXlsxFixture({
+      Datos: [
+        ['Keyword', 'Valor'],
+        ['Busqueda', KEYWORD],
+      ],
+    });
+    const text = await extractTextFromBuffer(buffer, 'xlsx', 'sample.xlsx');
+
+    expect(text).toContain('[Hoja: Datos]');
     expect(text).toContain(KEYWORD);
   });
 

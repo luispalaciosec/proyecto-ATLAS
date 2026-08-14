@@ -39,11 +39,16 @@ import {
   registerKnowledgeFolderIfMissing,
 } from './lib/knowledge-upload/knowledge-folders-store.js';
 import { chunkText } from './lib/knowledge-upload/chunk-text.js';
+import { chunkExcelWorkbook } from './lib/knowledge-upload/chunk-excel.js';
 import {
   EMPTY_EXTRACTION_MESSAGE,
   formatUnsupportedExtensionMessage,
   resolveSupportedExtension,
 } from './lib/knowledge-upload/constants.js';
+import {
+  extractExcelWorkbook,
+  isExcelExtension,
+} from './lib/knowledge-upload/extract-excel.js';
 import {
   assertExtractedText,
   extractTextFromBuffer,
@@ -375,14 +380,69 @@ export class SessionStore {
       throw new KnowledgeUploadError(400, formatUnsupportedExtensionMessage(invalidExtension));
     }
 
-    const extracted = assertExtractedText(await extractTextFromBuffer(buffer, extension, fileName));
-    const chunks = chunkText(extracted);
     const session = await this.getOrCreate(workspaceKey);
     const recordIds: string[] = [];
     const uploadedAt = new Date().toISOString();
     const folder = resolveKnowledgeFolder(folderInput);
     const documentId = this.#createKnowledgeDocumentId();
     registerKnowledgeFolderIfMissing(workspaceKey, folder);
+
+    if (isExcelExtension(extension)) {
+      const workbook = extractExcelWorkbook(buffer, fileName);
+      const excelChunks = chunkExcelWorkbook(workbook);
+
+      if (excelChunks.length === 0) {
+        throw new KnowledgeUploadError(422, EMPTY_EXTRACTION_MESSAGE);
+      }
+
+      for (let index = 0; index < excelChunks.length; index += 1) {
+        const excelChunk = excelChunks[index];
+
+        if (excelChunk === undefined || excelChunk.content.length === 0) {
+          continue;
+        }
+
+        const stored = await session.client.memory.storeContent({
+          content: excelChunk.content,
+          recordType: 'document',
+          metadata: Object.freeze({
+            source: 'upload',
+            documentId,
+            fileName,
+            fileType: extension,
+            folder,
+            chunkIndex: index,
+            totalChunks: excelChunks.length,
+            uploadedAt,
+            sheetName: excelChunk.sheetName,
+            sheetIndex: excelChunk.sheetIndex,
+            totalSheets: excelChunk.totalSheets,
+            rowStart: excelChunk.rowStart,
+            rowEnd: excelChunk.rowEnd,
+          }),
+        });
+
+        recordIds.push(stored.recordId);
+      }
+
+      if (recordIds.length === 0) {
+        throw new KnowledgeUploadError(422, EMPTY_EXTRACTION_MESSAGE);
+      }
+
+      this.recordKnowledgeUploadActivity(workspaceKey, fileName, recordIds.length);
+
+      return Object.freeze({
+        documentId,
+        fileName,
+        folder,
+        chunks: recordIds.length,
+        sheetCount: workbook.sheets.length,
+        recordIds: Object.freeze([...recordIds]),
+      });
+    }
+
+    const extracted = assertExtractedText(await extractTextFromBuffer(buffer, extension, fileName));
+    const chunks = chunkText(extracted);
 
     for (let index = 0; index < chunks.length; index += 1) {
       const chunkTextValue = chunks[index];

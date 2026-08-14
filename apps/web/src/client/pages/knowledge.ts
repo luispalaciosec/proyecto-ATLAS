@@ -46,7 +46,9 @@ const EXAMPLE_KEYS = [
   'knowledge.example4',
 ] as const;
 
-const SUPPORTED_UPLOAD_EXTENSIONS = ['pdf', 'docx', 'pptx', 'txt', 'md'] as const;
+const SUPPORTED_UPLOAD_EXTENSIONS = ['pdf', 'docx', 'pptx', 'txt', 'md', 'xls', 'xlsx'] as const;
+
+let currentUploadExtension: string | undefined;
 const NEW_FOLDER_OPTION_VALUE = '__new__';
 
 type KnowledgeViewState =
@@ -771,7 +773,9 @@ function uploadPhaseLabel(phase: KnowledgeUploadPhase): string {
     case 'uploading':
       return t('knowledge.uploadPhaseUploading');
     case 'reading':
-      return t('knowledge.uploadPhaseReading');
+      return currentUploadExtension === 'xls' || currentUploadExtension === 'xlsx'
+        ? t('knowledge.uploadPhaseReadingExcel')
+        : t('knowledge.uploadPhaseReading');
     case 'indexing':
       return t('knowledge.uploadPhaseIndexing');
     case 'available':
@@ -828,6 +832,7 @@ function showUploadProgressPanel(
     }
   }
 
+  currentUploadExtension = extension;
   fileNameEl.textContent = fileName;
   fileIconWrap.replaceChildren(createFileTypeIcon(extension ?? 'txt'));
   if (detail !== null) {
@@ -869,7 +874,12 @@ function updateUploadProgress(state: KnowledgeUploadProgress): void {
   }
 }
 
-function showUploadSuccess(fileName: string, workspaceName: string, searchQuery: string): void {
+function showUploadSuccess(
+  fileName: string,
+  workspaceName: string,
+  searchQuery: string,
+  options?: { sheetCount?: number; chunks?: number },
+): void {
   if (boundMain === null) {
     return;
   }
@@ -881,10 +891,19 @@ function showUploadSuccess(fileName: string, workspaceName: string, searchQuery:
 
   if (detail !== null) {
     detail.hidden = false;
-    detail.textContent = t('knowledge.uploadSuccessDetail', {
-      fileName,
-      workspace: workspaceName,
-    });
+    if (options?.sheetCount !== undefined && options.chunks !== undefined) {
+      detail.textContent = t('knowledge.uploadSuccessExcelDetail', {
+        fileName,
+        workspace: workspaceName,
+        sheetCount: options.sheetCount,
+        count: options.chunks,
+      });
+    } else {
+      detail.textContent = t('knowledge.uploadSuccessDetail', {
+        fileName,
+        workspace: workspaceName,
+      });
+    }
   }
 
   if (searchBtn !== null && searchQuery.trim().length > 0) {
@@ -1072,14 +1091,23 @@ async function handleUploadFiles(files: readonly File[]): Promise<void> {
 
       if (supported.length === 1) {
         const successMessage =
-          payload.chunks === 1
-            ? t('knowledge.uploadSuccessOne', { fileName: payload.fileName })
-            : t('knowledge.uploadSuccess', { fileName: payload.fileName, count: payload.chunks });
+          payload.sheetCount !== undefined
+            ? t('knowledge.uploadSuccessExcel', {
+                fileName: payload.fileName,
+                sheetCount: payload.sheetCount,
+                count: payload.chunks,
+              })
+            : payload.chunks === 1
+              ? t('knowledge.uploadSuccessOne', { fileName: payload.fileName })
+              : t('knowledge.uploadSuccess', { fileName: payload.fileName, count: payload.chunks });
 
         showUploadSuccess(
           payload.fileName,
           workspaceName,
           file.name.replace(/\.[^.]+$/, '').trim(),
+          payload.sheetCount !== undefined
+            ? { sheetCount: payload.sheetCount, chunks: payload.chunks }
+            : undefined,
         );
         patchState({ statusText: successMessage });
       }

@@ -107,6 +107,8 @@ export function createFileTypeIcon(
     pptx: Presentation,
     txt: FileText,
     md: FileText,
+    xls: FileText,
+    xlsx: FileText,
   };
 
   return renderIcon(map[extension] ?? FileText, { size: 28, className, strokeWidth: 1.5 });

@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import JSZip from 'jszip';
+import * as XLSX from 'xlsx';
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
 export const FIXTURES_DIR = moduleDirectory;
@@ -68,4 +69,62 @@ startxref
 456
 %%EOF`;
   return Buffer.from(pdf, 'utf8');
+}
+
+export function createXlsxFixture(
+  sheets: Record<string, unknown[][]>,
+  bookType: 'xlsx' | 'xls' = 'xlsx',
+): Buffer {
+  const workbook = XLSX.utils.book_new();
+
+  for (const [sheetName, rows] of Object.entries(sheets)) {
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  }
+
+  return Buffer.from(
+    XLSX.write(workbook, {
+      type: 'buffer',
+      bookType,
+    }),
+  );
+}
+
+export function createXlsxFixtureWithCells(
+  sheetName: string,
+  cells: Record<string, XLSX.CellObject>,
+  bookType: 'xlsx' | 'xls' = 'xlsx',
+): Buffer {
+  const workbook = XLSX.utils.book_new();
+  const worksheet: XLSX.WorkSheet = { ...cells };
+  const addresses = Object.keys(cells);
+
+  if (addresses.length > 0) {
+    let minRow = Number.POSITIVE_INFINITY;
+    let maxRow = 0;
+    let minCol = Number.POSITIVE_INFINITY;
+    let maxCol = 0;
+
+    for (const address of addresses) {
+      const decoded = XLSX.utils.decode_cell(address);
+      minRow = Math.min(minRow, decoded.r);
+      maxRow = Math.max(maxRow, decoded.r);
+      minCol = Math.min(minCol, decoded.c);
+      maxCol = Math.max(maxCol, decoded.c);
+    }
+
+    worksheet['!ref'] = XLSX.utils.encode_range({
+      s: { r: minRow, c: minCol },
+      e: { r: maxRow, c: maxCol },
+    });
+  }
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+  return Buffer.from(
+    XLSX.write(workbook, {
+      type: 'buffer',
+      bookType,
+    }),
+  );
 }

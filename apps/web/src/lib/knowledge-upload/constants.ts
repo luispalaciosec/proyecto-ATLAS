@@ -1,7 +1,7 @@
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 export const KNOWLEDGE_CHUNK_MAX_CHARS = 6000;
 
-export const SUPPORTED_EXTENSIONS = ['pdf', 'docx', 'pptx', 'txt', 'md'] as const;
+export const SUPPORTED_EXTENSIONS = ['pdf', 'docx', 'pptx', 'txt', 'md', 'xls', 'xlsx'] as const;
 
 export type SupportedExtension = (typeof SUPPORTED_EXTENSIONS)[number];
 
@@ -23,7 +23,7 @@ export function resolveSupportedExtension(fileName: string): SupportedExtension 
 }
 
 export function formatUnsupportedExtensionMessage(extension: string): string {
-  return `Formato no soportado: .${extension}. Formatos válidos: pdf, docx, pptx, txt, md.`;
+  return `Formato no soportado: .${extension}. Formatos válidos: pdf, docx, pptx, txt, md, xls, xlsx.`;
 }
 
 export const EMPTY_EXTRACTION_MESSAGE =

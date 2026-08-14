@@ -6,6 +6,10 @@ import {
   EMPTY_EXTRACTION_MESSAGE,
   type SupportedExtension,
 } from './constants.js';
+import {
+  extractExcelWorkbook,
+  flattenExcelWorkbook,
+} from './extract-excel.js';
 import { KnowledgeUploadError } from './upload-errors.js';
 
 function stripXmlText(xml: string): string {
@@ -82,6 +86,9 @@ export async function extractTextFromBuffer(
       case 'txt':
       case 'md':
         return extractPlainText(buffer);
+      case 'xls':
+      case 'xlsx':
+        return flattenExcelWorkbook(extractExcelWorkbook(buffer, fileName));
       default:
         throw new KnowledgeUploadError(400, `Formato no soportado para ${fileName}.`);
     }
