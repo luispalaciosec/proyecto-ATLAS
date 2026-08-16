@@ -112,6 +112,65 @@ describe('LlmModule', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
+  it('memory_search tool results truncate content and cap record count', async () => {
+    const longTail = 'X'.repeat(1300);
+    const fake = createFakeLlmProviderWithRequests([
+      Object.freeze({
+        message: Object.freeze({
+          role: 'assistant' as const,
+          content: '',
+          toolCalls: Object.freeze([
+            Object.freeze({
+              id: 'toolu_search_long',
+              name: 'memory_search',
+              arguments: Object.freeze({ query: 'longsearch' }),
+            }),
+          ]),
+        }),
+        usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+        stopReason: 'tool_use' as const,
+      }),
+      Object.freeze({
+        message: Object.freeze({ role: 'assistant' as const, content: 'Found truncated records.' }),
+        usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+        stopReason: 'end_turn' as const,
+      }),
+    ]);
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-llm-memory-search-truncate-'));
+    const atlas = createAtlas({
+      memory: { storageFilePath: join(dir, 'memory.json') },
+      llm: { provider: fake.provider },
+    });
+
+    for (let index = 0; index < 9; index += 1) {
+      await atlas.memory.storeContent({
+        content: `longsearch record ${index} ${longTail}`,
+        recordType: 'document',
+      });
+    }
+
+    const result = await atlas.llm.ask('Search long knowledge rows');
+
+    expect(result.success).toBe(true);
+    expect(fake.requests.length).toBeGreaterThanOrEqual(2);
+
+    const toolMessage = fake.requests[1]?.messages.find((message) => message.role === 'tool');
+    expect(toolMessage).toBeDefined();
+
+    const payload = JSON.parse(String(toolMessage?.content)) as {
+      records: Array<{ content: string }>;
+      omitted?: number;
+    };
+
+    expect(payload.records.length).toBeLessThanOrEqual(8);
+    expect(payload.omitted).toBe(1);
+    expect(payload.records[0]?.content.length).toBeLessThanOrEqual(1200);
+    expect(payload.records[0]?.content).toContain('…');
+    expect(String(toolMessage?.content)).not.toContain(longTail);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
   it('ask() can invoke plan_and_execute with the same outcome as planExecuteAndRemember', async () => {
     const { atlas, dir } = createTestAtlas({
       fakeScript: [

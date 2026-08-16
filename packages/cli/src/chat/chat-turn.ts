@@ -1,5 +1,10 @@
 import type { AtlasService } from '../services/atlas-service.js';
-import { captureLastMemorySessionId, type ChatSessionState } from './chat-session.js';
+import {
+  captureLastMemorySessionId,
+  recordTurnMessages,
+  selectRecentTurns,
+  type ChatSessionState,
+} from './chat-session.js';
 import { mapTranscriptToReasoningSteps, type ChatReasoningStepPayload } from './map-reasoning-steps.js';
 import { recordFeedback } from './feedback.js';
 
@@ -81,11 +86,13 @@ async function executeLlmChatTurn(
   session.turnCount += 1;
   const startedAt = performance.now();
 
-  const result = await session.client.llm.ask(goal, { history: session.history });
+  const result = await session.client.llm.ask(goal, { history: selectRecentTurns(session) });
   const elapsedMs = Math.round(performance.now() - startedAt);
 
-  session.history.push(Object.freeze({ role: 'user', content: goal }));
-  session.history.push(...result.transcript);
+  recordTurnMessages(session, [
+    Object.freeze({ role: 'user' as const, content: goal }),
+    ...result.transcript,
+  ]);
 
   session.lastTurn = Object.freeze({
     goal,

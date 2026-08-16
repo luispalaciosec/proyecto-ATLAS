@@ -3,10 +3,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { createAtlas } from '@atlas/sdk';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { createChatSession } from '../src/chat/chat-session.js';
-import { applyCorrection } from '../src/chat/chat-turn.js';
+import {
+  createChatSession,
+  DEFAULT_HISTORY_WINDOW_TURNS,
+  selectRecentTurns,
+} from '../src/chat/chat-session.js';
+import { applyCorrection, executeChatTurn } from '../src/chat/chat-turn.js';
+import { AtlasService } from '../src/services/atlas-service.js';
 
 describe('applyCorrection', () => {
   it('returns usage when correction text is empty', async () => {
@@ -70,5 +75,58 @@ describe('applyCorrection', () => {
     expect(search.total).toBe(1);
 
     rmSync(root, { recursive: true, force: true });
+  });
+});
+
+describe('executeChatTurn history window', () => {
+  it('keeps full session history while sending only recent turns to the LLM', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-chat-turn-window-'));
+    const client = createAtlas({
+      workspace: { name: 'test' },
+      memory: { storageFilePath: join(dir, 'memory.json') },
+      llm: { apiKey: 'test-key', model: 'claude-test' },
+    });
+    const session = createChatSession(client);
+    const atlasService = new AtlasService();
+    const askSpy = vi.spyOn(session.client.llm, 'ask').mockImplementation(async (_goal, _options) => {
+      const turn = askSpy.mock.calls.length;
+
+      return Object.freeze({
+        success: true,
+        finalMessage: `Reply ${turn}`,
+        transcript: Object.freeze([
+          Object.freeze({ role: 'assistant' as const, content: `Reply ${turn}` }),
+        ]),
+        turns: 1,
+        usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+        budgetExceeded: false,
+      });
+    });
+
+    for (let turn = 1; turn <= 6; turn += 1) {
+      await executeChatTurn(atlasService, session, `Goal ${turn}`);
+    }
+
+    expect(session.history.some((message) => message.content === 'Goal 1')).toBe(true);
+    expect(session.history.some((message) => message.content === 'Reply 6')).toBe(true);
+    expect(session.history.length).toBeGreaterThanOrEqual(12);
+
+    const sixthCall = askSpy.mock.calls[5];
+    expect(sixthCall).toBeDefined();
+
+    const sentHistory = sixthCall?.[1]?.history ?? [];
+
+    expect(sentHistory.some((message) => message.content === 'Goal 1')).toBe(false);
+    expect(sentHistory.some((message) => message.content === 'Reply 1')).toBe(false);
+    expect(sentHistory.some((message) => message.content === 'Goal 2')).toBe(true);
+    expect(sentHistory.some((message) => message.content === 'Reply 5')).toBe(true);
+    expect(sentHistory.find((message) => message.content === 'Goal 2')?.role).toBe('user');
+
+    expect(selectRecentTurns(session, DEFAULT_HISTORY_WINDOW_TURNS).some((message) => message.content === 'Goal 1')).toBe(
+      false,
+    );
+
+    askSpy.mockRestore();
+    rmSync(dir, { recursive: true, force: true });
   });
 });

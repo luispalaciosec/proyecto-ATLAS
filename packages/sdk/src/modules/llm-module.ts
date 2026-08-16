@@ -241,18 +241,25 @@ function createAtlasToolExecutors(atlas: Atlas): readonly ToolExecutor[] {
       execute: async (args: Readonly<Record<string, unknown>>) => {
         const query = asString(args.query, 'query');
         const result = await atlas.memory.searchContent({ query });
+        const limitedRecords = result.records.slice(0, KNOWLEDGE_CONTEXT_RECORD_LIMIT);
 
         return JSON.stringify(
           Object.freeze({
             total: result.total,
             query: result.query,
-            records: result.records.map((record) =>
+            records: limitedRecords.map((record) =>
               Object.freeze({
                 id: record.id,
                 type: record.type,
-                content: record.content,
+                content: truncateKnowledgeSnippet(
+                  extractKnowledgeRecordText(record.content),
+                  KNOWLEDGE_CONTEXT_SNIPPET_MAX_LENGTH,
+                ),
               }),
             ),
+            ...(result.records.length > KNOWLEDGE_CONTEXT_RECORD_LIMIT
+              ? { omitted: result.records.length - KNOWLEDGE_CONTEXT_RECORD_LIMIT }
+              : {}),
           }),
         );
       },
