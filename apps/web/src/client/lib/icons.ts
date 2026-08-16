@@ -12,11 +12,11 @@ import {
   Pencil,
   Presentation,
   Search,
+  Send,
   Settings,
   Sun,
   TrendingUp,
   Upload,
-  ArrowUp,
   type IconNode,
 } from 'lucide';
 
@@ -115,9 +115,9 @@ export function createFileTypeIcon(
 }
 
 export function createSendIcon(className = 'chat-composer__send-icon-svg'): SVGElement {
-  return renderIcon(ArrowUp, { size: 18, className, strokeWidth: 2 });
+  return renderIcon(Send, { size: 20, className, strokeWidth: 2.25 });
 }
 
 export function createSendSpinner(className = 'chat-composer__send-spinner-svg'): SVGElement {
-  return renderIcon(LoaderCircle, { size: 18, className, strokeWidth: 2 });
+  return renderIcon(LoaderCircle, { size: 20, className, strokeWidth: 2.25 });
 }

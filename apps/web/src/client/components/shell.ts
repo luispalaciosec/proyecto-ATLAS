@@ -1,6 +1,6 @@
 import logoUrl from '../../../design-system/assets/logo.svg?url';
 import { t } from '../../i18n/index.js';
-import { type AppRoute, getState, resolveBrandDisplayName, setRoute } from '../state/app-state.js';
+import { getState, patchState, resolveBrandDisplayName, setRoute, type AppRoute } from '../state/app-state.js';
 import { createNavIcon, createThemeIcon, type NavIconKey } from '../lib/icons.js';
 import { getTheme, toggleTheme } from '../lib/theme.js';
 
@@ -34,6 +34,8 @@ let panelOpen = false;
 let outsideClickHandler: ((event: MouseEvent) => void) | undefined;
 let sidebarKeydownHandler: ((event: KeyboardEvent) => void) | undefined;
 let lastSidebarOpen = false;
+let statusClearTimer: ReturnType<typeof setTimeout> | undefined;
+let lastRenderedStatusText = '';
 
 function isMobileShell(): boolean {
   return window.matchMedia(MOBILE_SHELL_QUERY).matches;
@@ -121,13 +123,14 @@ export function renderShell(root: HTMLElement): ShellElements {
   }
 
   const main = root.querySelector('#main') as HTMLElement;
-  const status = document.createElement('p');
+  const status = document.createElement('div');
   status.id = 'status-bar';
-  status.className = 'status-bar';
+  status.className = 'app-status-toast';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
   status.setAttribute('aria-atomic', 'true');
-  main.after(status);
+  status.hidden = true;
+  root.append(status);
 
   const elements: ShellElements = {
     root,
@@ -409,7 +412,38 @@ export function updateShellChrome(
     }
   }
 
-  elements.statusBar.textContent = state.statusText;
+  const nextStatusText = state.statusText;
+
+  elements.statusBar.textContent = nextStatusText;
+  elements.statusBar.hidden = nextStatusText.length === 0;
+  elements.statusBar.classList.toggle('app-status-toast--visible', nextStatusText.length > 0);
+
+  if (nextStatusText !== lastRenderedStatusText) {
+    lastRenderedStatusText = nextStatusText;
+
+    if (statusClearTimer !== undefined) {
+      clearTimeout(statusClearTimer);
+      statusClearTimer = undefined;
+    }
+
+    if (
+      nextStatusText.length > 0 &&
+      !state.chatLoading &&
+      !state.chatHistoryLoading
+    ) {
+      statusClearTimer = setTimeout(() => {
+        const current = getState();
+
+        if (
+          current.statusText === nextStatusText &&
+          !current.chatLoading &&
+          !current.chatHistoryLoading
+        ) {
+          patchState({ statusText: '' });
+        }
+      }, 3200);
+    }
+  }
 
   currentLabel.textContent = state.brandsLoaded
     ? resolveBrandDisplayName(state.activeWorkspace)

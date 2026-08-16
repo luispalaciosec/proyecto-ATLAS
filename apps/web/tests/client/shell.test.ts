@@ -32,4 +32,15 @@ describe('renderShell', () => {
     expect(labels).toContain('Actividad');
     expect(labels).not.toContain('workspace');
   });
+
+  it('renders a global status toast outside the page layout', () => {
+    const elements = renderShell(root);
+    const toast = root.querySelector('#status-bar');
+
+    expect(toast).not.toBeNull();
+    expect(toast?.parentElement).toBe(root);
+    expect(toast?.classList.contains('app-status-toast')).toBe(true);
+    expect(root.querySelector('.shell')?.contains(toast ?? null)).toBe(false);
+    expect(elements.statusBar).toBe(toast);
+  });
 });

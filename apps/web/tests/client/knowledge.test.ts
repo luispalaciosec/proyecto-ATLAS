@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyPendingChatDraftToComposer,
+  bindKnowledgeDialogRoot,
   renderKnowledge,
   resetKnowledgePageStateForTests,
 } from '../../src/client/pages/knowledge.js';
@@ -398,6 +399,147 @@ describe('renderKnowledge', () => {
 
     expect(getState().activeWorkspace).toBe('geeks');
     expect(main.textContent).toContain('Tu conocimiento está aquí para ayudarte.');
+  });
+
+  it('shows a normal success message for a new file name', async () => {
+    fetchKnowledgeDocuments.mockResolvedValue({
+      workspace: 'default',
+      folders: ['General'],
+      total: 0,
+      documents: [],
+    });
+    uploadKnowledgeDocument.mockResolvedValue({
+      documentId: 'doc.new',
+      fileName: 'nuevo-manual.txt',
+      folder: 'General',
+      chunks: 1,
+      recordIds: ['a'],
+    });
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderKnowledge(main);
+    await flushUi();
+    await flushUi();
+
+    const fileInput = main.querySelector('#knowledge-upload-input') as HTMLInputElement;
+    Object.defineProperty(fileInput, 'files', {
+      value: [new File(['contenido'], 'nuevo-manual.txt', { type: 'text/plain' })],
+    });
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await flushUi();
+    await flushUi();
+
+    expect(getState().statusText).toContain('nuevo-manual.txt');
+    expect((main.querySelector('#knowledge-upload-notice') as HTMLElement | null)?.hidden).toBe(true);
+  });
+
+  it('shows a duplicate confirmation dialog and persistent notice for an exact file name repeat', async () => {
+    document.body.insertAdjacentHTML('beforeend', '<div id="shell-dialog-root"></div>');
+    bindKnowledgeDialogRoot(document.querySelector('#shell-dialog-root') as HTMLElement);
+
+    fetchKnowledgeDocuments.mockResolvedValue({
+      workspace: 'default',
+      folders: ['General'],
+      total: 1,
+      documents: [
+        {
+          documentId: 'doc.existing',
+          fileName: 'manual.txt',
+          fileType: 'txt',
+          folder: 'General',
+          chunks: 2,
+          uploadedAt: '2026-08-16T10:00:00.000Z',
+          recordIds: ['a', 'b'],
+        },
+      ],
+    });
+    uploadKnowledgeDocument.mockResolvedValue({
+      documentId: 'doc.repeat',
+      fileName: 'manual.txt',
+      folder: 'General',
+      chunks: 1,
+      recordIds: ['c'],
+    });
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderKnowledge(main);
+    await flushUi();
+    await flushUi();
+
+    const fileInput = main.querySelector('#knowledge-upload-input') as HTMLInputElement;
+    Object.defineProperty(fileInput, 'files', {
+      value: [new File(['contenido'], 'manual.txt', { type: 'text/plain' })],
+    });
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await flushUi();
+    await flushUi();
+
+    expect(document.body.textContent).toContain('¿Actualizar conocimiento existente?');
+    expect(document.body.textContent).toContain('manual.txt coincide con manual.txt');
+
+    (document.querySelector('#knowledge-duplicate-continue') as HTMLButtonElement).click();
+    await flushUi();
+    await flushUi();
+
+    expect(uploadKnowledgeDocument).toHaveBeenCalled();
+    expect(getState().statusText).not.toContain('Se incorporó manual.txt');
+    expect((main.querySelector('#knowledge-upload-notice') as HTMLElement | null)?.hidden).toBe(false);
+    expect(main.textContent).toContain('Conocimiento actualizado');
+  });
+
+  it('detects a similar file name before upload and shows the duplicate notice afterward', async () => {
+    document.body.insertAdjacentHTML('beforeend', '<div id="shell-dialog-root"></div>');
+    bindKnowledgeDialogRoot(document.querySelector('#shell-dialog-root') as HTMLElement);
+
+    fetchKnowledgeDocuments.mockResolvedValue({
+      workspace: 'default',
+      folders: ['General'],
+      total: 1,
+      documents: [
+        {
+          documentId: 'doc.price-2024',
+          fileName: 'lista_precios_2024.pdf',
+          fileType: 'pdf',
+          folder: 'General',
+          chunks: 3,
+          uploadedAt: '2026-08-16T10:00:00.000Z',
+          recordIds: ['a', 'b', 'c'],
+        },
+      ],
+    });
+    uploadKnowledgeDocument.mockResolvedValue({
+      documentId: 'doc.price-2025',
+      fileName: 'lista_precios_2025.pdf',
+      folder: 'General',
+      chunks: 2,
+      recordIds: ['d', 'e'],
+    });
+
+    const main = document.querySelector('#main') as HTMLElement;
+    renderKnowledge(main);
+    await flushUi();
+    await flushUi();
+
+    const fileInput = main.querySelector('#knowledge-upload-input') as HTMLInputElement;
+    Object.defineProperty(fileInput, 'files', {
+      value: [new File(['pdf'], 'lista_precios_2025.pdf', { type: 'application/pdf' })],
+    });
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await flushUi();
+    await flushUi();
+
+    expect(document.body.textContent).toContain('parece una versión de lista_precios_2024.pdf');
+
+    (document.querySelector('#knowledge-duplicate-continue') as HTMLButtonElement).click();
+    await flushUi();
+    await flushUi();
+
+    expect(uploadKnowledgeDocument).toHaveBeenCalled();
+    expect((main.querySelector('#knowledge-upload-notice') as HTMLElement | null)?.hidden).toBe(false);
+    expect(main.textContent).toContain('lista_precios_2024.pdf');
   });
 });
 

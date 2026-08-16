@@ -6,6 +6,7 @@ import { renderChat, refreshChatView } from './pages/chat.js';
 import { renderHome, refreshHomeView } from './pages/home.js';
 import {
   applyPendingChatDraftToComposer,
+  bindKnowledgeDialogRoot,
   renderKnowledge,
   refreshKnowledgeView,
 } from './pages/knowledge.js';
@@ -62,6 +63,7 @@ function refreshCurrentRouteView(): void {
 export async function mountApp(root: HTMLElement): Promise<void> {
   shellElements = renderShell(root);
 
+  bindKnowledgeDialogRoot(shellElements.dialogRoot);
   bindWorkspaceSwitch(shellElements, renderCurrentRoute);
 
   bindShellEvents(shellElements, {

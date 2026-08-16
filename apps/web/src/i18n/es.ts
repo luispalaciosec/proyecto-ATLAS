@@ -310,6 +310,18 @@ export const es = {
     uploadBatchSkipped: 'Se omitieron {count} archivos con formato no soportado.',
     uploadBatchFailedOne: 'No se pudo incorporar {fileName}.',
     uploadBatchFailedMany: 'No se pudieron incorporar {count} documentos.',
+    uploadDuplicateDialogTitle: '¿Actualizar conocimiento existente?',
+    uploadDuplicateDialogBody:
+      'Estos archivos parecen actualizar documentos que ya están en Conocimiento:',
+    uploadDuplicateDialogExactItem:
+      '{fileName} coincide con {existingFileName} ({chunks} fragmento(s) existentes)',
+    uploadDuplicateDialogSimilarItem:
+      '{fileName} parece una versión de {existingFileName} ({chunks} fragmento(s) existentes)',
+    uploadDuplicateDialogContinue: 'Continuar con la subida',
+    uploadDuplicateNoticeTitle: 'Conocimiento actualizado',
+    uploadDuplicateNoticeBody:
+      'Esto parece actualizar un conocimiento ya existente: {existingFileName} (ya había {chunks} fragmento(s) subidos). El archivo nuevo se agregará como conocimiento adicional — el chat priorizará lo más reciente automáticamente, pero ambas versiones quedan guardadas.',
+    uploadDuplicateNoticeDismiss: 'Entendido',
     examplesTitle: 'Prueba con:',
     example1: 'Clientes VIP',
     example2: 'Pedidos de Ana García',

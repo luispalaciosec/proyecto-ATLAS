@@ -14,6 +14,12 @@ import { DEFAULT_KNOWLEDGE_FOLDER } from '../../lib/knowledge-upload/folder.js';
 import { partitionUploadFiles } from '../../lib/knowledge-upload/partition-upload-files.js';
 import { formatUserError } from '../../presentation/format-error.js';
 import { formatWorkingContext } from '../lib/brand-context.js';
+import { mountDialogRoot } from '../lib/dialog.js';
+import {
+  findKnowledgeDuplicateMatch,
+  type KnowledgeDuplicateMatch,
+} from '../lib/knowledge-duplicate-file-name.js';
+import { getShellBodyElement } from '../components/shell.js';
 import { appendExpandableDetails } from '../lib/expandable-details.js';
 import {
   createFileTypeIcon,
@@ -47,6 +53,7 @@ const EXAMPLE_KEYS = [
 ] as const;
 
 const SUPPORTED_UPLOAD_EXTENSIONS = ['pdf', 'docx', 'pptx', 'txt', 'md', 'xls', 'xlsx'] as const;
+const SUPPORTED_UPLOAD_ACCEPT = SUPPORTED_UPLOAD_EXTENSIONS.map((ext) => `.${ext}`).join(',');
 
 let currentUploadExtension: string | undefined;
 const NEW_FOLDER_OPTION_VALUE = '__new__';
@@ -78,6 +85,9 @@ interface KnowledgeLibraryState {
 let boundMain: HTMLElement | null = null;
 let uploadInProgress = false;
 let uploadResetTimer: ReturnType<typeof setTimeout> | undefined;
+let dialogRootRef: HTMLElement | undefined;
+let unmountDuplicateDialog: (() => void) | undefined;
+let duplicateDialogRestoreFocus: HTMLElement | null = null;
 let pageState: KnowledgePageState = {
   view: 'idle',
   query: '',
@@ -88,6 +98,153 @@ let libraryState: KnowledgeLibraryState = {
   workspace: 'default',
   activeFolder: 'all',
 };
+
+export function bindKnowledgeDialogRoot(root: HTMLElement): void {
+  dialogRootRef = root;
+}
+
+function closeDuplicateUploadDialog(): void {
+  unmountDuplicateDialog?.();
+  unmountDuplicateDialog = undefined;
+  dialogRootRef?.replaceChildren();
+
+  if (duplicateDialogRestoreFocus !== null) {
+    duplicateDialogRestoreFocus.focus();
+    duplicateDialogRestoreFocus = null;
+  }
+}
+
+function confirmDuplicateUploadDialog(
+  entries: ReadonlyArray<{ file: File; match: KnowledgeDuplicateMatch }>,
+): Promise<boolean> {
+  if (dialogRootRef === undefined || entries.length === 0) {
+    return Promise.resolve(true);
+  }
+
+  return new Promise((resolve) => {
+    const root = dialogRootRef;
+
+    if (root === undefined) {
+      resolve(true);
+      return;
+    }
+
+    closeDuplicateUploadDialog();
+
+    duplicateDialogRestoreFocus =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'dialog-backdrop';
+
+    const dialog = document.createElement('div');
+    dialog.className = 'dialog';
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-labelledby', 'knowledge-duplicate-dialog-title');
+
+    const listItems = entries
+      .map((entry) => {
+        const label =
+          entry.match.kind === 'exact'
+            ? t('knowledge.uploadDuplicateDialogExactItem', {
+                fileName: entry.file.name,
+                existingFileName: entry.match.existingFileName,
+                chunks: entry.match.chunks,
+              })
+            : t('knowledge.uploadDuplicateDialogSimilarItem', {
+                fileName: entry.file.name,
+                existingFileName: entry.match.existingFileName,
+                chunks: entry.match.chunks,
+              });
+
+        return `<li>${escapeHtml(label)}</li>`;
+      })
+      .join('');
+
+    dialog.innerHTML = `
+      <header class="dialog__header">
+        <h2 id="knowledge-duplicate-dialog-title" class="dialog__title">${t('knowledge.uploadDuplicateDialogTitle')}</h2>
+        <p class="dialog__subtitle">${t('knowledge.uploadDuplicateDialogBody')}</p>
+      </header>
+      <ul class="knowledge-upload-notice__list">${listItems}</ul>
+      <p class="dialog__note">${t('knowledge.uploadDuplicateNoticeBody', {
+        existingFileName: entries[0]?.match.existingFileName ?? '',
+        chunks: entries[0]?.match.chunks ?? 0,
+      })}</p>
+      <div class="dialog__actions">
+        <button type="button" class="btn btn--ghost" id="knowledge-duplicate-cancel">${t('common.cancel')}</button>
+        <button type="button" class="btn btn--primary" id="knowledge-duplicate-continue">${t('knowledge.uploadDuplicateDialogContinue')}</button>
+      </div>
+    `;
+
+    backdrop.append(dialog);
+
+    const cancelButton = dialog.querySelector('#knowledge-duplicate-cancel') as HTMLButtonElement;
+    const continueButton = dialog.querySelector('#knowledge-duplicate-continue') as HTMLButtonElement;
+
+    const finish = (accepted: boolean): void => {
+      closeDuplicateUploadDialog();
+      resolve(accepted);
+    };
+
+    cancelButton.addEventListener('click', () => {
+      finish(false);
+    });
+
+    continueButton.addEventListener('click', () => {
+      finish(true);
+    });
+
+    const shellRoot = root.parentElement ?? root;
+    const shellBody = getShellBodyElement(shellRoot);
+
+    unmountDuplicateDialog = mountDialogRoot(root, backdrop, {
+      restoreFocusTo: duplicateDialogRestoreFocus,
+      inertTarget: shellBody,
+      initialFocus: continueButton,
+      onBackdropClick: () => {
+        finish(false);
+      },
+      onEscape: () => {
+        finish(false);
+      },
+    });
+  });
+}
+
+function hideUploadDuplicateNotice(): void {
+  if (boundMain === null) {
+    return;
+  }
+
+  const notice = boundMain.querySelector('#knowledge-upload-notice') as HTMLElement | null;
+  if (notice !== null) {
+    notice.hidden = true;
+  }
+}
+
+function showUploadDuplicateNotice(match: KnowledgeDuplicateMatch): void {
+  if (boundMain === null) {
+    return;
+  }
+
+  const notice = boundMain.querySelector('#knowledge-upload-notice') as HTMLElement | null;
+  const title = boundMain.querySelector('#knowledge-upload-notice-title') as HTMLElement | null;
+  const body = boundMain.querySelector('#knowledge-upload-notice-body') as HTMLElement | null;
+
+  if (notice === null || title === null || body === null) {
+    return;
+  }
+
+  title.textContent = t('knowledge.uploadDuplicateNoticeTitle');
+  body.textContent = t('knowledge.uploadDuplicateNoticeBody', {
+    existingFileName: match.existingFileName,
+    chunks: match.chunks,
+  });
+  notice.hidden = false;
+  notice.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
 
 export function renderKnowledge(main: HTMLElement): void {
   boundMain = main;
@@ -193,12 +350,25 @@ export function renderKnowledge(main: HTMLElement): void {
             type="file"
             id="knowledge-upload-input"
             class="knowledge-upload__input"
-            accept=".pdf,.docx,.pptx,.txt,.md"
+            accept="${SUPPORTED_UPLOAD_ACCEPT}"
             multiple
             hidden
           />
         </div>
         <p class="knowledge-upload__status" id="knowledge-upload-status" hidden aria-live="polite"></p>
+        <section
+          class="knowledge-upload-notice"
+          id="knowledge-upload-notice"
+          hidden
+          role="alert"
+          aria-live="assertive"
+        >
+          <h3 class="knowledge-upload-notice__title" id="knowledge-upload-notice-title"></h3>
+          <p class="knowledge-upload-notice__body" id="knowledge-upload-notice-body"></p>
+          <button type="button" class="btn btn--secondary" id="knowledge-upload-notice-dismiss">
+            ${t('knowledge.uploadDuplicateNoticeDismiss')}
+          </button>
+        </section>
       </section>
 
       <section class="knowledge-library" id="knowledge-library">
@@ -480,6 +650,11 @@ function bindUploadEvents(main: HTMLElement): void {
     if (files.length > 0) {
       void handleUploadFiles(files);
     }
+  });
+
+  const duplicateDismiss = main.querySelector('#knowledge-upload-notice-dismiss') as HTMLButtonElement | null;
+  duplicateDismiss?.addEventListener('click', () => {
+    hideUploadDuplicateNotice();
   });
 }
 
@@ -1046,15 +1221,47 @@ async function handleUploadFiles(files: readonly File[]): Promise<void> {
     return;
   }
 
+  const workspace = getState().activeWorkspace;
+  const workspaceName = resolveBrandDisplayName(workspace);
+  const folder = resolveUploadFolderValue();
+
+  let existingDocuments: readonly KnowledgeDocumentProduct[] = [];
+
+  try {
+    const documentsPayload = await fetchKnowledgeDocuments(workspace, folder);
+    existingDocuments = [...documentsPayload.documents];
+  } catch {
+    existingDocuments = libraryState.payload?.documents ?? [];
+  }
+
+  const duplicateEntries = supported.flatMap((file) => {
+    const match = findKnowledgeDuplicateMatch(file.name, existingDocuments, folder);
+
+    if (match === undefined) {
+      return [];
+    }
+
+    return [{ file, match }];
+  });
+
+  if (duplicateEntries.length > 0) {
+    const confirmed = await confirmDuplicateUploadDialog(duplicateEntries);
+
+    if (!confirmed) {
+      return;
+    }
+  }
+
+  const duplicateMatchesByFileName = new Map(
+    duplicateEntries.map((entry) => [entry.file.name.toLowerCase(), entry.match]),
+  );
+
   if (uploadResetTimer !== undefined) {
     clearTimeout(uploadResetTimer);
     uploadResetTimer = undefined;
   }
 
   uploadInProgress = true;
-  const workspace = getState().activeWorkspace;
-  const workspaceName = resolveBrandDisplayName(workspace);
-  const folder = resolveUploadFolderValue();
   const chooseButton = boundMain?.querySelector('#knowledge-upload-button') as HTMLButtonElement | null;
 
   setSearchDisabled(true);
@@ -1089,6 +1296,8 @@ async function handleUploadFiles(files: readonly File[]): Promise<void> {
       succeeded.push(payload.fileName);
       lastFolder = payload.folder;
 
+      const duplicateMatch = duplicateMatchesByFileName.get(file.name.toLowerCase());
+
       if (supported.length === 1) {
         const successMessage =
           payload.sheetCount !== undefined
@@ -1109,7 +1318,15 @@ async function handleUploadFiles(files: readonly File[]): Promise<void> {
             ? { sheetCount: payload.sheetCount, chunks: payload.chunks }
             : undefined,
         );
-        patchState({ statusText: successMessage });
+
+        if (duplicateMatch !== undefined) {
+          showUploadDuplicateNotice(duplicateMatch);
+        } else {
+          hideUploadDuplicateNotice();
+          patchState({ statusText: successMessage });
+        }
+      } else if (duplicateMatch !== undefined) {
+        showUploadDuplicateNotice(duplicateMatch);
       }
     } catch (error) {
       failed.push(file.name);
@@ -1133,7 +1350,28 @@ async function handleUploadFiles(files: readonly File[]): Promise<void> {
     if (succeeded.length > 0) {
       const lastFile = succeeded[succeeded.length - 1] ?? '';
       showUploadSuccess(lastFile, workspaceName, '');
-      patchState({ statusText: summary });
+
+      const hadDuplicate = succeeded.some((fileName) =>
+        duplicateMatchesByFileName.has(fileName.toLowerCase()),
+      );
+
+      if (hadDuplicate) {
+        const lastDuplicateName = [...duplicateMatchesByFileName.keys()].find((fileName) =>
+          succeeded.some((uploaded) => uploaded.toLowerCase() === fileName),
+        );
+        const lastDuplicateMatch =
+          lastDuplicateName !== undefined
+            ? duplicateMatchesByFileName.get(lastDuplicateName)
+            : undefined;
+
+        if (lastDuplicateMatch !== undefined) {
+          showUploadDuplicateNotice(lastDuplicateMatch);
+        }
+      } else {
+        hideUploadDuplicateNotice();
+        patchState({ statusText: summary });
+      }
+
       setUploadStatus(summary, failed.length > 0);
     } else {
       updateUploadProgress({
@@ -1443,6 +1681,7 @@ export function refreshKnowledgeView(): void {
 
 /** Resets module state between tests. */
 export function resetKnowledgePageStateForTests(): void {
+  closeDuplicateUploadDialog();
   pageState = {
     view: 'idle',
     query: '',
