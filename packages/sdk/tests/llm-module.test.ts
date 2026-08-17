@@ -6,6 +6,7 @@ import { createFakeLlmProvider, createFakeLlmProviderWithRequests } from '@atlas
 import { describe, expect, it, vi } from 'vitest';
 
 import { createArtifact, createAtlas, planExecuteAndRemember } from '../src/index.js';
+import { seedCase1DiscountGraph } from '../src/org/fixtures.js';
 
 function createTestAtlas(options?: {
   readonly fakeScript?: Parameters<typeof createFakeLlmProvider>[0];
@@ -167,6 +168,52 @@ describe('LlmModule', () => {
     expect(payload.records[0]?.content.length).toBeLessThanOrEqual(1200);
     expect(payload.records[0]?.content).toContain('…');
     expect(String(toolMessage?.content)).not.toContain(longTail);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('ask() can invoke org_evaluate_discount and surface the 10% limit and SalesDirector approval', async () => {
+    const { atlas, dir } = createTestAtlas({
+      fakeScript: [
+        Object.freeze({
+          message: Object.freeze({
+            role: 'assistant' as const,
+            content: '',
+            toolCalls: Object.freeze([
+              Object.freeze({
+                id: 'toolu_org_discount',
+                name: 'org_evaluate_discount',
+                arguments: Object.freeze({
+                  clientLegalName: 'Constructora Andes S.A.',
+                  requestedPercent: 12,
+                }),
+              }),
+            ]),
+          }),
+          usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+          stopReason: 'tool_use' as const,
+        }),
+        Object.freeze({
+          message: Object.freeze({
+            role: 'assistant' as const,
+            content:
+              'No puedes aplicar 12% de forma autónoma. Límite autónomo: 10%. Requiere aprobación de SalesDirector.',
+          }),
+          usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+          stopReason: 'end_turn' as const,
+        }),
+      ],
+    });
+
+    await seedCase1DiscountGraph(atlas);
+
+    const result = await atlas.llm.ask(
+      '¿Puedo ofrecerle 12% de descuento a Constructora Andes?',
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.finalMessage).toContain('10%');
+    expect(result.finalMessage).toContain('SalesDirector');
 
     rmSync(dir, { recursive: true, force: true });
   });

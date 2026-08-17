@@ -13,6 +13,16 @@ import {
 
 import type { Atlas } from '../atlas/atlas.js';
 import type { AtlasLlmOptions, AtlasWorkspaceOptions } from '../atlas/options.js';
+import {
+  formatCurrentWarrantyPolicy,
+  formatDiscountEvaluation,
+  formatWarrantyPolicyHistory,
+} from '../org/policy-answer.js';
+import { evaluateDiscountRequest } from '../org/policy-evaluator.js';
+import {
+  resolveCurrentWarrantyByCode,
+  resolvePolicyHistory,
+} from '../org/version-resolver.js';
 import { planExecuteAndRemember } from '../plan/plan-execution-memory.js';
 import type { SearchMemoryContentResult } from './memory-module.js';
 
@@ -221,6 +231,26 @@ function asString(value: unknown, fieldName: string): string {
   return value.trim();
 }
 
+function asNumber(value: unknown, fieldName: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error(`${fieldName} must be a finite number`);
+  }
+
+  return value;
+}
+
+function asOptionalBoolean(value: unknown, fieldName: string): boolean {
+  if (value === undefined) {
+    return false;
+  }
+
+  if (typeof value !== 'boolean') {
+    throw new Error(`${fieldName} must be a boolean when provided`);
+  }
+
+  return value;
+}
+
 function createAtlasToolExecutors(atlas: Atlas): readonly ToolExecutor[] {
   return Object.freeze([
     Object.freeze({
@@ -321,6 +351,68 @@ function createAtlasToolExecutors(atlas: Atlas): readonly ToolExecutor[] {
             memoryRecordId: result.memory.recordId,
           }),
         );
+      },
+    }),
+    Object.freeze({
+      definition: Object.freeze({
+        name: 'org_evaluate_discount',
+        description:
+          'Evaluate whether a discount percentage for a client can be applied autonomously or requires approval.',
+        parameters: Object.freeze({
+          type: 'object' as const,
+          properties: Object.freeze({
+            clientLegalName: Object.freeze({
+              type: 'string',
+              description: 'Legal name of the client to evaluate.',
+            }),
+            requestedPercent: Object.freeze({
+              type: 'number',
+              description: 'Requested discount percentage.',
+            }),
+          }),
+          required: Object.freeze(['clientLegalName', 'requestedPercent']),
+        }),
+      }),
+      execute: async (args: Readonly<Record<string, unknown>>) => {
+        const clientLegalName = asString(args.clientLegalName, 'clientLegalName');
+        const requestedPercent = asNumber(args.requestedPercent, 'requestedPercent');
+        const evaluation = await evaluateDiscountRequest(atlas, clientLegalName, requestedPercent);
+
+        return formatDiscountEvaluation(evaluation);
+      },
+    }),
+    Object.freeze({
+      definition: Object.freeze({
+        name: 'org_resolve_policy',
+        description:
+          'Resolve the current warranty policy by policy code and optionally include audited version history.',
+        parameters: Object.freeze({
+          type: 'object' as const,
+          properties: Object.freeze({
+            policyCode: Object.freeze({
+              type: 'string',
+              description: 'Policy code to resolve (for example WARRANTY-STD).',
+            }),
+            includeHistory: Object.freeze({
+              type: 'boolean',
+              description: 'When true, include immutable historical policy revisions.',
+            }),
+          }),
+          required: Object.freeze(['policyCode']),
+        }),
+      }),
+      execute: async (args: Readonly<Record<string, unknown>>) => {
+        const policyCode = asString(args.policyCode, 'policyCode');
+        const includeHistory = asOptionalBoolean(args.includeHistory, 'includeHistory');
+        const current = await resolveCurrentWarrantyByCode(atlas, policyCode);
+
+        if (!includeHistory) {
+          return formatCurrentWarrantyPolicy(current);
+        }
+
+        const history = await resolvePolicyHistory(atlas, current.entityId);
+
+        return formatWarrantyPolicyHistory(current, history);
       },
     }),
   ]);
