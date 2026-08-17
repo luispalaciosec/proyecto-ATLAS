@@ -4,6 +4,7 @@ import { CompilerModule } from '../modules/compiler-module.js';
 import { EventsModule } from '../modules/events-module.js';
 import { LlmModule } from '../modules/llm-module.js';
 import { MemoryModule } from '../modules/memory-module.js';
+import { OrgMemoryModule } from '../modules/org-memory-module.js';
 import { PlanningModule } from '../modules/planning-module.js';
 import { RetrievalModule } from '../modules/retrieval-module.js';
 import { RuntimeModule } from '../modules/runtime-module.js';
@@ -22,6 +23,7 @@ export class Atlas {
   readonly planning: PlanningModule;
   readonly workflow: WorkflowModule;
   readonly llm: LlmModule;
+  readonly org: OrgMemoryModule;
   readonly events: EventsModule;
 
   constructor(options: AtlasOptions = {}) {
@@ -40,6 +42,7 @@ export class Atlas {
     this.planning = new PlanningModule(bus, options.planning, options.workspace);
     this.workflow = new WorkflowModule(bus, options.workflow, options.workspace);
     this.llm = new LlmModule(bus, options.llm, this, options.workspace);
+    this.org = new OrgMemoryModule(this);
   }
 }
 

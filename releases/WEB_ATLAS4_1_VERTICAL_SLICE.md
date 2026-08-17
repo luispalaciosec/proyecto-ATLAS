@@ -203,3 +203,17 @@ No implementado en ATLAS 4.1 (aunque parezca cercano):
 1. Commit ATLAS 4.1 en rama dedicada.
 2. Validación en worktree aislado (mismo protocolo que fixes anteriores).
 3. Evaluar ADR-0006 si se decide eliminar el bypass plano y activar repos internos del engine.
+
+---
+
+## Actualización: OrgMemoryModule conectado a Atlas
+
+**Fecha:** 2026-08-17
+
+`OrgMemoryModule` queda expuesto en la facade pública como `atlas.org`, siguiendo el mismo patrón que `atlas.memory` y `atlas.llm`:
+
+- `packages/sdk/src/atlas/atlas.ts` — `readonly org: OrgMemoryModule`, instanciado tras `LlmModule`.
+- `packages/sdk/src/modules/llm-module.ts` — las tools `org_evaluate_discount` y `org_resolve_policy` delegan en `atlas.org.*` en lugar de importar funciones sueltas de `../org/*`.
+- `packages/sdk/tests/atlas-org-module.test.ts` — confirma que `atlas.org` existe y que `evaluateDiscountRequest` vía facade reproduce el Caso 1 (12% → `SalesDirector`).
+
+Comportamiento observable de las tools LLM **sin cambios**; los tests existentes de `llm-module.test.ts` pasan sin modificación.

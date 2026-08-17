@@ -13,16 +13,6 @@ import {
 
 import type { Atlas } from '../atlas/atlas.js';
 import type { AtlasLlmOptions, AtlasWorkspaceOptions } from '../atlas/options.js';
-import {
-  formatCurrentWarrantyPolicy,
-  formatDiscountEvaluation,
-  formatWarrantyPolicyHistory,
-} from '../org/policy-answer.js';
-import { evaluateDiscountRequest } from '../org/policy-evaluator.js';
-import {
-  resolveCurrentWarrantyByCode,
-  resolvePolicyHistory,
-} from '../org/version-resolver.js';
 import { planExecuteAndRemember } from '../plan/plan-execution-memory.js';
 import type { SearchMemoryContentResult } from './memory-module.js';
 
@@ -376,9 +366,12 @@ function createAtlasToolExecutors(atlas: Atlas): readonly ToolExecutor[] {
       execute: async (args: Readonly<Record<string, unknown>>) => {
         const clientLegalName = asString(args.clientLegalName, 'clientLegalName');
         const requestedPercent = asNumber(args.requestedPercent, 'requestedPercent');
-        const evaluation = await evaluateDiscountRequest(atlas, clientLegalName, requestedPercent);
+        const evaluation = await atlas.org.evaluateDiscountRequest(
+          clientLegalName,
+          requestedPercent,
+        );
 
-        return formatDiscountEvaluation(evaluation);
+        return atlas.org.formatDiscountEvaluation(evaluation);
       },
     }),
     Object.freeze({
@@ -404,15 +397,13 @@ function createAtlasToolExecutors(atlas: Atlas): readonly ToolExecutor[] {
       execute: async (args: Readonly<Record<string, unknown>>) => {
         const policyCode = asString(args.policyCode, 'policyCode');
         const includeHistory = asOptionalBoolean(args.includeHistory, 'includeHistory');
-        const current = await resolveCurrentWarrantyByCode(atlas, policyCode);
 
         if (!includeHistory) {
-          return formatCurrentWarrantyPolicy(current);
+          const current = await atlas.org.resolveCurrentWarrantyByCode(policyCode);
+          return atlas.org.formatCurrentWarrantyPolicy(current);
         }
 
-        const history = await resolvePolicyHistory(atlas, current.entityId);
-
-        return formatWarrantyPolicyHistory(current, history);
+        return atlas.org.formatWarrantyWithHistory(policyCode);
       },
     }),
   ]);
