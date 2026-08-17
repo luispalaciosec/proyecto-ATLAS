@@ -28,3 +28,20 @@ export const ORG_POLICY_RECORD_TYPES = Object.freeze([
   ORG_RECORD_TYPE_DISCOUNT_POLICY,
   ORG_RECORD_TYPE_WARRANTY_POLICY,
 ] as const);
+
+export const ORG_RECORD_TYPE_DECISION = 'Decision';
+export const ORG_RECORD_TYPE_EVIDENCE = 'Evidence';
+
+export const ORG_JOURNAL_RECORD_TYPES = Object.freeze([
+  ORG_RECORD_TYPE_DECISION,
+  ORG_RECORD_TYPE_EVIDENCE,
+] as const);
+
+export type OrgJournalRecordType = (typeof ORG_JOURNAL_RECORD_TYPES)[number];
+
+export type OrgResolvableRecordType = OrgEntityRecordType | OrgJournalRecordType;
+
+export const ORG_RELATIONSHIP_RESOLVES = 'resolves';
+export const ORG_RELATIONSHIP_CITES = 'cites';
+
+export const ORG_COLLECTION_DECISIONS = 'org.decisions';

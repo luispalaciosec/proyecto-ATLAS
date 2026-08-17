@@ -266,6 +266,107 @@ describe('LlmModule', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
+  it('ask() can record and resolve a Decision with Evidence via org tools', async () => {
+    const { atlas, dir } = createTestAtlas({
+      fakeScript: [
+        Object.freeze({
+          message: Object.freeze({
+            role: 'assistant' as const,
+            content: '',
+            toolCalls: Object.freeze([
+              Object.freeze({
+                id: 'toolu_record_evidence',
+                name: 'org_record_evidence',
+                arguments: Object.freeze({
+                  entityId: 'record.evidence.andes-renewal-2023',
+                  content: 'cliente en renovación continua desde 2023, sin incidentes de pago',
+                  sourceType: 'manual',
+                  recordedBy: 'SalesDirector',
+                }),
+              }),
+            ]),
+          }),
+          usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+          stopReason: 'tool_use' as const,
+        }),
+        Object.freeze({
+          message: Object.freeze({
+            role: 'assistant' as const,
+            content: '',
+            toolCalls: Object.freeze([
+              Object.freeze({
+                id: 'toolu_record_decision',
+                name: 'org_record_decision',
+                arguments: Object.freeze({
+                  entityId: 'record.decision.andes-discount-2026-08-15',
+                  content: Object.freeze({
+                    subjectType: 'discount_request',
+                    clientLegalName: 'Constructora Andes S.A.',
+                    requestedPercent: 12,
+                    outcome: 'approved',
+                    approvedPercent: 12,
+                    decidedBy: 'SalesDirector',
+                    decidedAt: '2026-08-15',
+                  }),
+                  targetEntityId: 'record.client.constructora-andes',
+                  evidenceIds: Object.freeze(['record.evidence.andes-renewal-2023']),
+                }),
+              }),
+            ]),
+          }),
+          usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+          stopReason: 'tool_use' as const,
+        }),
+        Object.freeze({
+          message: Object.freeze({
+            role: 'assistant' as const,
+            content: '',
+            toolCalls: Object.freeze([
+              Object.freeze({
+                id: 'toolu_resolve_decision',
+                name: 'org_resolve_decision',
+                arguments: Object.freeze({
+                  clientLegalName: 'Constructora Andes S.A.',
+                  subjectType: 'discount_request',
+                }),
+              }),
+            ]),
+          }),
+          usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+          stopReason: 'tool_use' as const,
+        }),
+        Object.freeze({
+          message: Object.freeze({
+            role: 'assistant' as const,
+            content:
+              'SalesDirector aprobó el 12% citando la renovación continua desde 2023 sin incidentes de pago.',
+          }),
+          usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+          stopReason: 'end_turn' as const,
+        }),
+      ],
+    });
+
+    await seedCase1DiscountGraph(atlas);
+
+    const result = await atlas.llm.ask(
+      '¿Quién aprobó el descuento de Constructora Andes y por qué?',
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.finalMessage).toContain('SalesDirector');
+    expect(result.finalMessage).toContain('renovación continua desde 2023');
+
+    const resolved = await atlas.org.resolveDecisionWithEvidence(
+      'Constructora Andes S.A.',
+      'discount_request',
+    );
+    expect(resolved).toBeDefined();
+    expect(resolved!.evidence).toHaveLength(1);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
   it('ask() can invoke plan_and_execute with the same outcome as planExecuteAndRemember', async () => {
     const { atlas, dir } = createTestAtlas({
       fakeScript: [

@@ -3,8 +3,9 @@ import type { MemoryRecord } from '@atlas/memory';
 import type { Atlas } from '../atlas/atlas.js';
 import {
   ORG_ENTITY_RECORD_TYPES,
+  ORG_JOURNAL_RECORD_TYPES,
   ORG_RECORD_TYPE_VERSION,
-  type OrgEntityRecordType,
+  type OrgResolvableRecordType,
 } from './constants.js';
 import {
   getEntityId,
@@ -54,7 +55,7 @@ export async function listRecordsByType(
 export async function resolveEntityById(
   atlas: Atlas,
   entityId: string,
-  recordType?: OrgEntityRecordType,
+  recordType?: OrgResolvableRecordType,
 ): Promise<MemoryRecord | undefined> {
   const trimmedEntityId = entityId.trim();
 
@@ -65,6 +66,37 @@ export async function resolveEntityById(
   const recordTypes = recordType !== undefined ? [recordType] : ORG_ENTITY_RECORD_TYPES;
 
   for (const type of recordTypes) {
+    const records = await listRecordsByType(atlas, type);
+    const match = records.find((record) => getEntityId(record) === trimmedEntityId);
+
+    if (match !== undefined) {
+      return match;
+    }
+  }
+
+  return undefined;
+}
+
+export async function resolveAnyEntityById(
+  atlas: Atlas,
+  entityId: string,
+): Promise<MemoryRecord | undefined> {
+  const trimmedEntityId = entityId.trim();
+
+  if (trimmedEntityId.length === 0) {
+    throw new Error('entityId must be a non-empty string');
+  }
+
+  for (const type of ORG_ENTITY_RECORD_TYPES) {
+    const records = await listRecordsByType(atlas, type);
+    const match = records.find((record) => getEntityId(record) === trimmedEntityId);
+
+    if (match !== undefined) {
+      return match;
+    }
+  }
+
+  for (const type of ORG_JOURNAL_RECORD_TYPES) {
     const records = await listRecordsByType(atlas, type);
     const match = records.find((record) => getEntityId(record) === trimmedEntityId);
 

@@ -6,7 +6,7 @@ import {
   ORG_RECORD_TYPE_RELATIONSHIP,
 } from './constants.js';
 import { getEntityId, serializeOrgContent } from './record-content.js';
-import { listRecordsByType, resolveEntityById } from './entity-resolver.js';
+import { listRecordsByType, resolveAnyEntityById } from './entity-resolver.js';
 
 export async function linkEntities(
   atlas: Atlas,
@@ -27,13 +27,13 @@ export async function linkEntities(
     throw new Error('relationshipType must be a non-empty string');
   }
 
-  const sourceRecord = await resolveEntityById(atlas, trimmedSourceId);
+  const sourceRecord = await resolveAnyEntityById(atlas, trimmedSourceId);
 
   if (sourceRecord === undefined) {
     throw new Error(`Source entity "${trimmedSourceId}" was not found`);
   }
 
-  const targetRecord = await resolveEntityById(atlas, trimmedTargetId);
+  const targetRecord = await resolveAnyEntityById(atlas, trimmedTargetId);
 
   if (targetRecord === undefined) {
     throw new Error(`Target entity "${trimmedTargetId}" was not found`);

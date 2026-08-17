@@ -22,6 +22,8 @@ import {
   ORG_RELATIONSHIP_DEPENDENCY,
   ORG_RELATIONSHIP_REFERENCE,
 } from '../org/constants.js';
+import { assertDecision } from '../org/schemas/decision.js';
+import { assertEvidence } from '../org/schemas/evidence.js';
 import type { SearchMemoryContentResult } from './memory-module.js';
 
 const DEFAULT_BUDGET: LlmBudget = Object.freeze({ maxTurns: 6 });
@@ -301,6 +303,45 @@ function asOptionalString(value: unknown, fieldName: string): string | undefined
   return asString(value, fieldName);
 }
 
+function asDecisionContent(value: unknown): Readonly<Record<string, unknown>> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error('content must be an object');
+  }
+
+  const content = Object.freeze({ ...(value as Record<string, unknown>) });
+  assertDecision(content);
+
+  return content;
+}
+
+function asEvidenceFields(value: unknown): Readonly<Record<string, unknown>> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error('evidence payload must be an object');
+  }
+
+  const content = Object.freeze({ ...(value as Record<string, unknown>) });
+  assertEvidence(content);
+
+  return content;
+}
+
+function asOptionalStringArray(
+  value: unknown,
+  fieldName: string,
+): readonly string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`${fieldName} must be an array of strings when provided`);
+  }
+
+  return Object.freeze(
+    value.map((entry, index) => asString(entry, `${fieldName}[${index}]`)),
+  );
+}
+
 function createAtlasToolExecutors(atlas: Atlas): readonly ToolExecutor[] {
   return Object.freeze([
     Object.freeze({
@@ -550,6 +591,129 @@ function createAtlasToolExecutors(atlas: Atlas): readonly ToolExecutor[] {
         await atlas.org.linkEntities(sourceId, targetId, relationshipType);
 
         return `${sourceId} → ${relationshipType} → ${targetId} registrado.`;
+      },
+    }),
+    Object.freeze({
+      definition: Object.freeze({
+        name: 'org_record_evidence',
+        description: 'Record immutable organizational evidence cited in audit decisions.',
+        parameters: Object.freeze({
+          type: 'object' as const,
+          properties: Object.freeze({
+            entityId: Object.freeze({
+              type: 'string',
+              description: 'Stable slug for the evidence (e.g. record.evidence.andes-renewal-2023).',
+            }),
+            content: Object.freeze({
+              type: 'string',
+              description: 'Evidence text content that was cited.',
+            }),
+            sourceType: Object.freeze({
+              type: 'string',
+              description: 'Evidence source type (for example manual or chat).',
+            }),
+            recordedBy: Object.freeze({
+              type: 'string',
+              description: 'Who recorded or cited this evidence.',
+            }),
+          }),
+          required: Object.freeze(['entityId', 'content', 'sourceType', 'recordedBy']),
+        }),
+      }),
+      execute: async (args: Readonly<Record<string, unknown>>) => {
+        const entityId = asString(args.entityId, 'entityId');
+        const evidenceContent = asEvidenceFields(
+          Object.freeze({
+            content: args.content,
+            sourceType: args.sourceType,
+            recordedBy: args.recordedBy,
+            ...(args.recordedAt !== undefined ? { recordedAt: args.recordedAt } : {}),
+            ...(args.sourceLabel !== undefined ? { sourceLabel: args.sourceLabel } : {}),
+          }),
+        );
+
+        await atlas.org.storeEvidence(entityId, evidenceContent);
+
+        return `Evidencia ${entityId} registrada.`;
+      },
+    }),
+    Object.freeze({
+      definition: Object.freeze({
+        name: 'org_record_decision',
+        description:
+          'Record an immutable organizational decision and link it to the resolved entity and cited evidence.',
+        parameters: Object.freeze({
+          type: 'object' as const,
+          properties: Object.freeze({
+            entityId: Object.freeze({
+              type: 'string',
+              description: 'Stable slug for the decision (e.g. record.decision.andes-discount-2026-08-15).',
+            }),
+            content: Object.freeze({
+              type: 'object',
+              description:
+                'Decision payload (subjectType, clientLegalName, requestedPercent, outcome, decidedBy, decidedAt, …).',
+            }),
+            targetEntityId: Object.freeze({
+              type: 'string',
+              description: 'entityId of the entity this decision resolves (e.g. Client).',
+            }),
+            evidenceIds: Object.freeze({
+              type: 'array',
+              items: Object.freeze({ type: 'string' }),
+              description: 'entityIds of Evidence records cited by this decision.',
+            }),
+          }),
+          required: Object.freeze(['entityId', 'content', 'targetEntityId']),
+        }),
+      }),
+      execute: async (args: Readonly<Record<string, unknown>>) => {
+        const entityId = asString(args.entityId, 'entityId');
+        const content = asDecisionContent(args.content);
+        const targetEntityId = asString(args.targetEntityId, 'targetEntityId');
+        const evidenceIds = asOptionalStringArray(args.evidenceIds, 'evidenceIds') ?? [];
+
+        await atlas.org.recordDecision(entityId, content, targetEntityId, evidenceIds);
+
+        const outcome = typeof content.outcome === 'string' ? content.outcome : 'unknown';
+        const decidedBy = typeof content.decidedBy === 'string' ? content.decidedBy : 'unknown';
+
+        return `Decisión ${entityId} registrada: ${outcome} por ${decidedBy}.`;
+      },
+    }),
+    Object.freeze({
+      definition: Object.freeze({
+        name: 'org_resolve_decision',
+        description:
+          'Resolve the most recent organizational decision for a client and return cited evidence.',
+        parameters: Object.freeze({
+          type: 'object' as const,
+          properties: Object.freeze({
+            clientLegalName: Object.freeze({
+              type: 'string',
+              description: 'Legal name of the client whose decision history to resolve.',
+            }),
+            subjectType: Object.freeze({
+              type: 'string',
+              description: 'Optional decision subject type filter (e.g. discount_request).',
+            }),
+          }),
+          required: Object.freeze(['clientLegalName']),
+        }),
+      }),
+      execute: async (args: Readonly<Record<string, unknown>>) => {
+        const clientLegalName = asString(args.clientLegalName, 'clientLegalName');
+        const subjectType = asOptionalString(args.subjectType, 'subjectType');
+        const resolved = await atlas.org.resolveDecisionWithEvidence(
+          clientLegalName,
+          subjectType,
+        );
+
+        if (resolved === undefined) {
+          return `No hay ninguna decisión registrada para ${clientLegalName}.`;
+        }
+
+        return atlas.org.formatDecisionWithEvidence(resolved);
       },
     }),
   ]);

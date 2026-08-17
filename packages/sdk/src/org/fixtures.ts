@@ -8,6 +8,7 @@ import {
   ORG_RELATIONSHIP_REFERENCE,
 } from './constants.js';
 import { storeEntity, storeEntityVersion } from './entity-store.js';
+import { recordDecision, storeEvidence } from './decision-store.js';
 import { linkEntities } from './relationship-store.js';
 
 export async function seedCase1DiscountGraph(atlas: Atlas): Promise<void> {
@@ -56,6 +57,38 @@ export async function seedCase1DiscountGraph(atlas: Atlas): Promise<void> {
     'record.policy.discount.autonomous',
     'record.rule.discount-approval',
     ORG_RELATIONSHIP_DEPENDENCY,
+  );
+}
+
+export async function seedCase1WithApproval(atlas: Atlas): Promise<void> {
+  await seedCase1DiscountGraph(atlas);
+
+  await storeEvidence(
+    atlas,
+    'record.evidence.andes-renewal-2023',
+    Object.freeze({
+      content: 'cliente en renovación continua desde 2023, sin incidentes de pago',
+      sourceType: 'manual',
+      recordedBy: 'SalesDirector',
+      recordedAt: '2026-08-15',
+    }),
+  );
+
+  await recordDecision(
+    atlas,
+    'record.decision.andes-discount-2026-08-15',
+    Object.freeze({
+      subjectType: 'discount_request',
+      clientLegalName: 'Constructora Andes S.A.',
+      requestedPercent: 12,
+      outcome: 'approved',
+      approvedPercent: 12,
+      decidedBy: 'SalesDirector',
+      decidedAt: '2026-08-15',
+      requestId: 'req.andes-discount-2026-08',
+    }),
+    'record.client.constructora-andes',
+    Object.freeze(['record.evidence.andes-renewal-2023']),
   );
 }
 

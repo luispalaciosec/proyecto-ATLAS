@@ -3,7 +3,7 @@ import type { MemoryRecord } from '@atlas/memory';
 import type { Atlas } from '../atlas/atlas.js';
 import { ORG_RECORD_TYPE_RELATIONSHIP } from './constants.js';
 import { isOrgRelationshipContent, parseOrgContent } from './record-content.js';
-import { listRecordsByType, resolveEntityById } from './entity-resolver.js';
+import { listRecordsByType, resolveAnyEntityById } from './entity-resolver.js';
 
 export async function getRelated(
   atlas: Atlas,
@@ -51,7 +51,7 @@ export async function getRelated(
         return undefined;
       }
 
-      return resolveEntityById(atlas, content.targetRecord);
+      return resolveAnyEntityById(atlas, content.targetRecord);
     }),
   );
 

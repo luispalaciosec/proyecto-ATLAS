@@ -1,5 +1,17 @@
 import type { Atlas } from '../atlas/atlas.js';
+import { formatDecisionWithEvidence as formatDecisionWithEvidenceText } from '../org/decision-answer.js';
+import {
+  type ResolvedDecisionWithEvidence,
+  resolveDecisionWithEvidence,
+} from '../org/decision-resolver.js';
+import {
+  recordDecision,
+  storeDecision,
+  storeEvidence,
+} from '../org/decision-store.js';
+import { readEntityPayload } from '../org/entity-resolver.js';
 import { storeEntity, storeEntityVersion, upsertEntity } from '../org/entity-store.js';
+import { parseDecision } from '../org/schemas/decision.js';
 import { getEntityHistory, resolveEntity, resolveEntityById } from '../org/entity-resolver.js';
 import { getRelated } from '../org/graph-traversal.js';
 import {
@@ -49,6 +61,50 @@ export class OrgMemoryModule {
     author?: string,
   ) {
     return upsertEntity(this.#atlas, recordType, entityId, content, author);
+  }
+
+  storeDecision(entityId: string, content: unknown) {
+    return storeDecision(this.#atlas, entityId, content);
+  }
+
+  storeEvidence(entityId: string, content: unknown) {
+    return storeEvidence(this.#atlas, entityId, content);
+  }
+
+  recordDecision(
+    entityId: string,
+    content: Parameters<typeof recordDecision>[2],
+    targetEntityId: string,
+    evidenceIds?: readonly string[],
+  ) {
+    return recordDecision(this.#atlas, entityId, content, targetEntityId, evidenceIds);
+  }
+
+  resolveDecisionWithEvidence(clientLegalName: string, subjectType?: string) {
+    return resolveDecisionWithEvidence(this.#atlas, clientLegalName, subjectType);
+  }
+
+  async formatDecisionWithEvidence(resolved: ResolvedDecisionWithEvidence): Promise<string> {
+    const decision = parseDecision(readEntityPayload(resolved.decision));
+    let policyContextLine: string | undefined;
+
+    if (decision.subjectType === 'discount_request' && decision.outcome === 'approved') {
+      try {
+        const evaluation = await evaluateDiscountRequest(
+          this.#atlas,
+          decision.clientLegalName,
+          decision.requestedPercent,
+        );
+
+        if (!evaluation.autonomous && evaluation.policy !== undefined) {
+          policyContextLine = `Contexto de política (ATLAS 4.1): el ${decision.requestedPercent}% excedía el límite autónomo de ${evaluation.limitPercent}% (${evaluation.policy.policyCode}); la aprobación cubrió ese exceso.`;
+        }
+      } catch {
+        // Policy context is optional enrichment.
+      }
+    }
+
+    return formatDecisionWithEvidenceText(resolved, policyContextLine);
   }
 
   resolveEntity(recordType: string, matcher: Readonly<Record<string, unknown>>) {
