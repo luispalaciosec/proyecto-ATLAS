@@ -217,3 +217,58 @@ No implementado en ATLAS 4.1 (aunque parezca cercano):
 - `packages/sdk/tests/atlas-org-module.test.ts` — confirma que `atlas.org` existe y que `evaluateDiscountRequest` vía facade reproduce el Caso 1 (12% → `SalesDirector`).
 
 Comportamiento observable de las tools LLM **sin cambios**; los tests existentes de `llm-module.test.ts` pasan sin modificación.
+
+---
+
+## Actualización: creación/actualización desde el chat
+
+**Fecha:** 2026-08-17
+
+Se habilita persistir entidades y relaciones organizacionales desde el chat, sin UI ni fixtures manuales.
+
+### Fix de dedupe en `listRecordsByType`
+
+`MemoryModule.storeContent` siempre crea un `MemoryRecord` nuevo (sin update). Repetir `storeEntity` con el mismo `entityId` producía duplicados y `resolveEntityById` podía devolver una versión antigua vía `.find()`.
+
+**Solución:** `listRecordsByType` deduplica por `metadata.entityId`, conservando el registro con `timestamp` ISO más reciente. Afecta a todos los consumidores (`resolveEntity`, `getRelated`, `pickCurrentPolicyRecord`, etc.) sin cambiar firmas públicas.
+
+### Nuevas tools LLM (aditivas)
+
+| Tool | Rol |
+|------|-----|
+| `org_upsert_entity` | Crear o actualizar `Client`, `DiscountPolicy`, `WarrantyPolicy`, `ApprovalRule` |
+| `org_link_entities` | Vincular entidades existentes (`reference` / `dependency`) |
+
+`upsertEntity` en `entity-store.ts`:
+
+- **Crear:** `storeEntity` con `revision: 1`
+- **Actualizar política:** archiva contenido previo como `Version`, incrementa `revision`
+- **Actualizar Client/ApprovalRule:** reemplaza sin historial versionado
+
+`linkEntities` es **idempotente** — repite el mismo par source/target/type sin duplicar.
+
+### Tests SDK
+
+Conteo `@atlas/sdk`: **51 → 56** (+5):
+
+- dedupe en `org-entity-resolver.test.ts`
+- upsert Client y WarrantyPolicy en `org-entity-store.test.ts`
+- idempotencia en `org-graph-traversal.test.ts`
+- `org_upsert_entity` en `llm-module.test.ts`
+
+### Verificación live
+
+Script: `packages/sdk/scripts/verify-atlas41-chat-data-entry.mjs`
+
+Construye el Caso 1 completo (cliente, política, regla, dos relaciones) y la garantía (45 → 60 → 90) **solo** vía `org_upsert_entity` / `org_link_entities` por `/api/chat`, sin `seedFixtures`.
+
+**Respuestas reales (2026-08-17):**
+
+1. **Descuento 12% (grafo construido por chat):**
+   > No puedes aplicar 12% de forma autónoma. Límite autónomo: 10% (política DISCOUNT-VIP-2026). Cliente Constructora Andes S.A. califica (VIP, renovación activa). Requiere aprobación de SalesDirector.
+
+2. **Garantía vigente tras actualizar a 90:**
+   > Política vigente: WARRANTY-STD. Plazo de garantía: 90 días. Vigente desde: 2026-09-01. Revisión actual: 3.
+
+3. **Historial completo (45 → 60 → 90):**
+   > Política vigente: WARRANTY-STD. Plazo de garantía: 90 días. … Historial auditado: Revisión 1: 45 días (desde 2025-01-01), autor legal.ops. Revisión 2: 60 días (desde 2026-06-01), autor chat.

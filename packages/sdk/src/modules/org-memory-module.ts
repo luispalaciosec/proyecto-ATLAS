@@ -1,5 +1,5 @@
 import type { Atlas } from '../atlas/atlas.js';
-import { storeEntity, storeEntityVersion } from '../org/entity-store.js';
+import { storeEntity, storeEntityVersion, upsertEntity } from '../org/entity-store.js';
 import { getEntityHistory, resolveEntity, resolveEntityById } from '../org/entity-resolver.js';
 import { getRelated } from '../org/graph-traversal.js';
 import {
@@ -40,6 +40,15 @@ export class OrgMemoryModule {
     author: string,
   ) {
     return storeEntityVersion(this.#atlas, recordId, previousContent, revision, author);
+  }
+
+  upsertEntity(
+    recordType: string,
+    entityId: string,
+    content: unknown,
+    author?: string,
+  ) {
+    return upsertEntity(this.#atlas, recordType, entityId, content, author);
   }
 
   resolveEntity(recordType: string, matcher: Readonly<Record<string, unknown>>) {

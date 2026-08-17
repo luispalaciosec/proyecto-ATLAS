@@ -14,6 +14,14 @@ import {
 import type { Atlas } from '../atlas/atlas.js';
 import type { AtlasLlmOptions, AtlasWorkspaceOptions } from '../atlas/options.js';
 import { planExecuteAndRemember } from '../plan/plan-execution-memory.js';
+import {
+  ORG_RECORD_TYPE_APPROVAL_RULE,
+  ORG_RECORD_TYPE_CLIENT,
+  ORG_RECORD_TYPE_DISCOUNT_POLICY,
+  ORG_RECORD_TYPE_WARRANTY_POLICY,
+  ORG_RELATIONSHIP_DEPENDENCY,
+  ORG_RELATIONSHIP_REFERENCE,
+} from '../org/constants.js';
 import type { SearchMemoryContentResult } from './memory-module.js';
 
 const DEFAULT_BUDGET: LlmBudget = Object.freeze({ maxTurns: 6 });
@@ -241,6 +249,58 @@ function asOptionalBoolean(value: unknown, fieldName: string): boolean {
   return value;
 }
 
+const ORG_UPSERT_RECORD_TYPES = Object.freeze([
+  ORG_RECORD_TYPE_CLIENT,
+  ORG_RECORD_TYPE_DISCOUNT_POLICY,
+  ORG_RECORD_TYPE_WARRANTY_POLICY,
+  ORG_RECORD_TYPE_APPROVAL_RULE,
+] as const);
+
+const ORG_LINK_RELATIONSHIP_TYPES = Object.freeze([
+  ORG_RELATIONSHIP_REFERENCE,
+  ORG_RELATIONSHIP_DEPENDENCY,
+] as const);
+
+function asObject(value: unknown, fieldName: string): Readonly<Record<string, unknown>> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error(`${fieldName} must be an object`);
+  }
+
+  return Object.freeze({ ...(value as Record<string, unknown>) });
+}
+
+function asOrgUpsertRecordType(value: unknown): (typeof ORG_UPSERT_RECORD_TYPES)[number] {
+  const recordType = asString(value, 'recordType');
+
+  if (!(ORG_UPSERT_RECORD_TYPES as readonly string[]).includes(recordType)) {
+    throw new Error(
+      `recordType must be one of: ${ORG_UPSERT_RECORD_TYPES.join(', ')}`,
+    );
+  }
+
+  return recordType as (typeof ORG_UPSERT_RECORD_TYPES)[number];
+}
+
+function asOrgLinkRelationshipType(value: unknown): (typeof ORG_LINK_RELATIONSHIP_TYPES)[number] {
+  const relationshipType = asString(value, 'relationshipType');
+
+  if (!(ORG_LINK_RELATIONSHIP_TYPES as readonly string[]).includes(relationshipType)) {
+    throw new Error(
+      `relationshipType must be one of: ${ORG_LINK_RELATIONSHIP_TYPES.join(', ')}`,
+    );
+  }
+
+  return relationshipType as (typeof ORG_LINK_RELATIONSHIP_TYPES)[number];
+}
+
+function asOptionalString(value: unknown, fieldName: string): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return asString(value, fieldName);
+}
+
 function createAtlasToolExecutors(atlas: Atlas): readonly ToolExecutor[] {
   return Object.freeze([
     Object.freeze({
@@ -404,6 +464,92 @@ function createAtlasToolExecutors(atlas: Atlas): readonly ToolExecutor[] {
         }
 
         return atlas.org.formatWarrantyWithHistory(policyCode);
+      },
+    }),
+    Object.freeze({
+      definition: Object.freeze({
+        name: 'org_upsert_entity',
+        description:
+          'Create or update an organizational entity (Client, DiscountPolicy, WarrantyPolicy, or ApprovalRule). ' +
+          'Use a short stable entityId in lowercase with hyphens, prefixed by the type in lowercase ' +
+          '(for example client.constructora-andes, policy.warranty.standard). ' +
+          'Reuse the same entityId when the same real-world entity is mentioned again in the conversation.',
+        parameters: Object.freeze({
+          type: 'object' as const,
+          properties: Object.freeze({
+            recordType: Object.freeze({
+              type: 'string',
+              enum: ORG_UPSERT_RECORD_TYPES,
+              description: 'Organizational record type to create or update.',
+            }),
+            entityId: Object.freeze({
+              type: 'string',
+              description:
+                'Stable slug for the entity (lowercase, hyphens, type prefix — e.g. client.constructora-andes).',
+            }),
+            content: Object.freeze({
+              type: 'object',
+              description: 'Entity payload matching the schema for the chosen recordType.',
+            }),
+            author: Object.freeze({
+              type: 'string',
+              description: 'Who reported the change — used for audited policy version history.',
+            }),
+          }),
+          required: Object.freeze(['recordType', 'entityId', 'content']),
+        }),
+      }),
+      execute: async (args: Readonly<Record<string, unknown>>) => {
+        const recordType = asOrgUpsertRecordType(args.recordType);
+        const entityId = asString(args.entityId, 'entityId');
+        const content = asObject(args.content, 'content');
+        const author = asOptionalString(args.author, 'author');
+        const result = await atlas.org.upsertEntity(recordType, entityId, content, author);
+
+        if (result.created) {
+          return `Entidad ${entityId} (${recordType}) creada.`;
+        }
+
+        if (result.versioned) {
+          return `Política ${entityId} actualizada a la revisión ${result.revision}. La versión anterior queda en el historial auditado.`;
+        }
+
+        return `Entidad ${entityId} actualizada.`;
+      },
+    }),
+    Object.freeze({
+      definition: Object.freeze({
+        name: 'org_link_entities',
+        description:
+          'Link two existing organizational entities with a reference or dependency relationship.',
+        parameters: Object.freeze({
+          type: 'object' as const,
+          properties: Object.freeze({
+            sourceId: Object.freeze({
+              type: 'string',
+              description: 'entityId of the source entity.',
+            }),
+            targetId: Object.freeze({
+              type: 'string',
+              description: 'entityId of the target entity.',
+            }),
+            relationshipType: Object.freeze({
+              type: 'string',
+              enum: ORG_LINK_RELATIONSHIP_TYPES,
+              description: 'Relationship semantic: reference or dependency.',
+            }),
+          }),
+          required: Object.freeze(['sourceId', 'targetId', 'relationshipType']),
+        }),
+      }),
+      execute: async (args: Readonly<Record<string, unknown>>) => {
+        const sourceId = asString(args.sourceId, 'sourceId');
+        const targetId = asString(args.targetId, 'targetId');
+        const relationshipType = asOrgLinkRelationshipType(args.relationshipType);
+
+        await atlas.org.linkEntities(sourceId, targetId, relationshipType);
+
+        return `${sourceId} → ${relationshipType} → ${targetId} registrado.`;
       },
     }),
   ]);

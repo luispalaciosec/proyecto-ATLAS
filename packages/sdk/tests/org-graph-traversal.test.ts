@@ -15,6 +15,7 @@ import { getEntityId } from '../src/org/record-content.js';
 import { resolveEntity } from '../src/org/entity-resolver.js';
 import { seedCase1DiscountGraph } from '../src/org/fixtures.js';
 import { getRelated } from '../src/org/graph-traversal.js';
+import { linkEntities } from '../src/org/relationship-store.js';
 import { ORG_RECORD_TYPE_CLIENT } from '../src/org/constants.js';
 
 function createTestAtlas() {
@@ -54,6 +55,34 @@ describe('getRelated', () => {
     );
     expect(approvalRules).toHaveLength(1);
     expect(approvalRules[0]?.type).toBe(ORG_RECORD_TYPE_APPROVAL_RULE);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('linkEntities is idempotent for the same source, target, and relationship type', async () => {
+    const { atlas, dir } = createTestAtlas();
+
+    await seedCase1DiscountGraph(atlas);
+
+    const client = await resolveEntity(atlas, ORG_RECORD_TYPE_CLIENT, {
+      legalName: 'Constructora Andes S.A.',
+    });
+    expect(client).toBeDefined();
+
+    await linkEntities(
+      atlas,
+      getEntityId(client!),
+      'record.policy.discount.autonomous',
+      ORG_RELATIONSHIP_REFERENCE,
+    );
+
+    const related = await getRelated(
+      atlas,
+      getEntityId(client!),
+      ORG_RELATIONSHIP_REFERENCE,
+    );
+
+    expect(related).toHaveLength(1);
 
     rmSync(dir, { recursive: true, force: true });
   });

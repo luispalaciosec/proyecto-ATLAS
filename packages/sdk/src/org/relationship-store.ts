@@ -5,8 +5,8 @@ import {
   ORG_NAMESPACE_ID,
   ORG_RECORD_TYPE_RELATIONSHIP,
 } from './constants.js';
-import { serializeOrgContent } from './record-content.js';
-import { resolveEntityById } from './entity-resolver.js';
+import { getEntityId, serializeOrgContent } from './record-content.js';
+import { listRecordsByType, resolveEntityById } from './entity-resolver.js';
 
 export async function linkEntities(
   atlas: Atlas,
@@ -46,6 +46,18 @@ export async function linkEntities(
   });
 
   const relationshipId = `relationship.${trimmedSourceId}.${trimmedRelationshipType}.${trimmedTargetId}`;
+
+  const existingRelationships = await listRecordsByType(atlas, ORG_RECORD_TYPE_RELATIONSHIP);
+  const existing = existingRelationships.find(
+    (record) => getEntityId(record) === relationshipId,
+  );
+
+  if (existing !== undefined) {
+    return Object.freeze({
+      recordId: existing.id,
+      record: existing,
+    });
+  }
 
   return atlas.memory.storeContent({
     content: serializeOrgContent(relationshipContent),

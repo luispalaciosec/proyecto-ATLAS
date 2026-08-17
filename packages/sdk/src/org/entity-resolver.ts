@@ -25,13 +25,30 @@ function matchesEntityContent(content: unknown, matcher: EntityMatcher): boolean
   return Object.entries(matcher).every(([key, expectedValue]) => candidate[key] === expectedValue);
 }
 
+function dedupeRecordsByEntityId(
+  records: readonly MemoryRecord[],
+): readonly MemoryRecord[] {
+  const latestByEntityId = new Map<string, MemoryRecord>();
+
+  for (const record of records) {
+    const entityId = getEntityId(record);
+    const existing = latestByEntityId.get(entityId);
+
+    if (existing === undefined || record.timestamp.localeCompare(existing.timestamp) > 0) {
+      latestByEntityId.set(entityId, record);
+    }
+  }
+
+  return Object.freeze([...latestByEntityId.values()]);
+}
+
 export async function listRecordsByType(
   atlas: Atlas,
   recordType: string,
 ): Promise<readonly MemoryRecord[]> {
   const result = await atlas.memory.searchContent({ query: '', recordType });
 
-  return result.records;
+  return dedupeRecordsByEntityId(result.records);
 }
 
 export async function resolveEntityById(

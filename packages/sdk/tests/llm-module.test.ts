@@ -218,6 +218,54 @@ describe('LlmModule', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
+  it('ask() can invoke org_upsert_entity to create a new Client', async () => {
+    const { atlas, dir } = createTestAtlas({
+      fakeScript: [
+        Object.freeze({
+          message: Object.freeze({
+            role: 'assistant' as const,
+            content: '',
+            toolCalls: Object.freeze([
+              Object.freeze({
+                id: 'toolu_org_upsert',
+                name: 'org_upsert_entity',
+                arguments: Object.freeze({
+                  recordType: 'Client',
+                  entityId: 'client.nuevo-chat',
+                  content: Object.freeze({
+                    legalName: 'Nuevo Cliente Chat S.A.',
+                    segment: 'Standard',
+                    renewalActive: true,
+                  }),
+                }),
+              }),
+            ]),
+          }),
+          usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+          stopReason: 'tool_use' as const,
+        }),
+        Object.freeze({
+          message: Object.freeze({
+            role: 'assistant' as const,
+            content: 'Entidad client.nuevo-chat (Client) creada correctamente.',
+          }),
+          usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+          stopReason: 'end_turn' as const,
+        }),
+      ],
+    });
+
+    const result = await atlas.llm.ask('Registra a Nuevo Cliente Chat S.A. como cliente Standard');
+
+    expect(result.success).toBe(true);
+    expect(result.finalMessage).toContain('creada');
+
+    const client = await atlas.org.resolveEntityById('client.nuevo-chat');
+    expect(client).toBeDefined();
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
   it('ask() can invoke plan_and_execute with the same outcome as planExecuteAndRemember', async () => {
     const { atlas, dir } = createTestAtlas({
       fakeScript: [

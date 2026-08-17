@@ -4,17 +4,26 @@ import {
   ORG_COLLECTION_ENTITIES,
   ORG_COLLECTION_POLICIES,
   ORG_NAMESPACE_ID,
+  ORG_POLICY_RECORD_TYPES,
   ORG_RECORD_TYPE_APPROVAL_RULE,
   ORG_RECORD_TYPE_CLIENT,
   ORG_RECORD_TYPE_DISCOUNT_POLICY,
   ORG_RECORD_TYPE_VERSION,
   ORG_RECORD_TYPE_WARRANTY_POLICY,
+  type OrgEntityRecordType,
 } from './constants.js';
+import { resolveEntityById, readEntityPayload } from './entity-resolver.js';
 import { assertApprovalRule } from './schemas/approval-rule.js';
 import { assertClient } from './schemas/client.js';
 import { assertDiscountPolicy } from './schemas/discount-policy.js';
 import { assertWarrantyPolicy } from './schemas/warranty-policy.js';
-import { serializeOrgContent } from './record-content.js';
+import { readMetadataNumber, serializeOrgContent } from './record-content.js';
+
+export interface UpsertEntityResult {
+  readonly created: boolean;
+  readonly versioned: boolean;
+  readonly revision: number;
+}
 
 function resolveCollectionId(recordType: string): string {
   if (
@@ -134,4 +143,61 @@ export async function storeEntityVersion(
       status: 'active',
     }),
   });
+}
+
+export async function upsertEntity(
+  atlas: Atlas,
+  recordType: string,
+  entityId: string,
+  content: unknown,
+  author?: string,
+): Promise<UpsertEntityResult> {
+  const trimmedEntityId = entityId.trim();
+
+  if (trimmedEntityId.length === 0) {
+    throw new Error('entityId must be a non-empty string');
+  }
+
+  const existing = await resolveEntityById(
+    atlas,
+    trimmedEntityId,
+    recordType as OrgEntityRecordType,
+  );
+
+  if (existing === undefined) {
+    await storeEntity(atlas, recordType, trimmedEntityId, content, Object.freeze({ revision: 1 }));
+
+    return Object.freeze({ created: true, versioned: false, revision: 1 });
+  }
+
+  const isPolicyType = (ORG_POLICY_RECORD_TYPES as readonly string[]).includes(recordType);
+
+  if (isPolicyType) {
+    const currentRevision = readMetadataNumber(existing, 'revision') ?? 1;
+    const resolvedAuthor = author?.trim() ?? 'chat';
+
+    await storeEntityVersion(
+      atlas,
+      trimmedEntityId,
+      readEntityPayload(existing),
+      currentRevision,
+      resolvedAuthor.length > 0 ? resolvedAuthor : 'chat',
+    );
+
+    const nextRevision = currentRevision + 1;
+
+    await storeEntity(
+      atlas,
+      recordType,
+      trimmedEntityId,
+      content,
+      Object.freeze({ revision: nextRevision }),
+    );
+
+    return Object.freeze({ created: false, versioned: true, revision: nextRevision });
+  }
+
+  await storeEntity(atlas, recordType, trimmedEntityId, content, Object.freeze({ revision: 1 }));
+
+  return Object.freeze({ created: false, versioned: false, revision: 1 });
 }
