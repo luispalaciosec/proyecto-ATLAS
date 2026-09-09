@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <code>0.1.0-alpha</code> · Kernel <code>0.1</code> congelado · Web UI P2.5 entregada · Fase 2 — Producto
+  <code>0.1.0-alpha</code> · Kernel <code>0.1</code> congelado · ATLAS 4.x integrado (INT-001–009) · Web UI P2.5+
 </p>
 
 <p align="center">
@@ -58,10 +58,40 @@ pnpm atlas web
 
 Requiere `ATLAS_LLM_API_KEY` (y proveedor/modelo) en `.env` para respuestas generativas. Ver [`USER_MANUAL.md`](./USER_MANUAL.md).
 
-**Estado Web UI:** Fases 3A–3I completadas — design system integrado, accesibilidad WCAG P0/P1, selector light/dark, piloto listo.  
-**Tests `@atlas/web`:** 147/147 · Informes en [`releases/`](./releases/).
+**Estado Web UI:** Fases 3A–3I completadas — design system integrado, accesibilidad WCAG P0/P1, selector light/dark.  
+**Persistencia Web (INT-008):** conversaciones y actividad por workspace en disco (`conversation.json`, `activity.json`).  
+**Tests `@atlas/web`:** 243/243 · **Tests `@atlas/sdk`:** 158/158 (ver [`VERSION.md`](./VERSION.md)).
 
 Documentación UX: [`docs/WEB_UI_PRODUCT_UX.md`](./docs/WEB_UI_PRODUCT_UX.md)
+
+---
+
+## ATLAS 4.x — Integración (INT-001–009)
+
+Capacidades consolidadas en Git (commits `9c63f70`, `41c1290`) sobre el Kernel congelado v0.1. La integración vive en `@atlas/sdk`, `@atlas/cli`, `@atlas/web` y `@atlas/knowledge` — **sin modificar** `core`, `compiler` ni `retrieval`.
+
+| INT | Capacidad | Superficie principal |
+|-----|-----------|---------------------|
+| INT-001 | Retrieval unificado (`@atlas/retrieval` vía SDK) | `atlas.retrieval.searchContent` |
+| INT-002 | Listado vs búsqueda en Memory | `atlas.memory.listRecords` |
+| INT-003 | Ingesta KnowledgeObject (documentos) | Web Conocimiento + SDK |
+| INT-004 | Context Builder | `AtlasContextBuilder.build` |
+| INT-005 | LLM + Organization (entidades, políticas, tools) | `atlas.org`, tools LLM |
+| INT-006 | Governance + acciones internas | `atlas.governance.execute` |
+| INT-007 | Evento → resultado operacional → Memory | Governance + Memory |
+| INT-008 | Persistencia conversación + actividad | Web (`web-persistence/`) |
+| INT-009 | Feedback → Memory → Retrieval (corrección warranty) | CLI `/correct`, SDK `recordFeedbackCorrection` |
+
+Flujo canónico de chat:
+
+```text
+User (Web/CLI) → executeChatTurn → AtlasContextBuilder → RetrievalModule → LLM + tools
+  → EventBus → operational result → Memory → persist turn (Web: conversation + activity)
+```
+
+Detalle: [`VERSION.md`](./VERSION.md) · [`ATLAS_ARCHITECTURE_MASTER.md`](./ATLAS_ARCHITECTURE_MASTER.md)
+
+**Limitaciones actuales (no ocultar):** feedback estructurado warranty (45→60) es el caso canónico probado; aprendizaje genérico de feedback no está implementado. Sin cloud multi-dispositivo (P2.6 condicional). Kernel-adjacent (`runtime`, `workflow`, `memory`, `intelligence`, `llm`) sin cambios funcionales adicionales requeridos (INT-010-C).
 
 ---
 
@@ -215,8 +245,10 @@ ATLAS/
 | **Architecture + Kernel v0.1** | ✅ | Specs, ADRs, platform congelada |
 | **Stage 2 — Capabilities** | ✅ | Memory, Retrieval, Knowledge, Workflow, Planning, LLM |
 | **P2.5 — Web UI** | ✅ | Producto navegable, marcas, accesibilidad 3I |
+| **ATLAS 4.x — Integración INT-001–009** | ✅ | Retrieval, Context, Org, Governance, persistencia, feedback |
 | **Piloto de uso real** | 🎯 **Actual** | Varias semanas, ≥1 marca real |
 | **P2.6 — Cloud** | ⏸ Condicional | Solo si el piloto lo exige |
+| **INT-010-E — Repo hygiene** | ⏳ Pendiente | Working tree, format drift histórico |
 
 Detalle: [`VERSION.md`](./VERSION.md) · [`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)
 

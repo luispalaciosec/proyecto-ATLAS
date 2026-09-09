@@ -1,9 +1,9 @@
 ---
 id: ATLAS-VERSION-001
 title: Atlas Version Registry
-version: 1.11.0
+version: 1.12.0
 status: active
-last_updated: 2026-08-10
+last_updated: 2026-09-09
 ---
 
 # VERSION.md
@@ -16,8 +16,9 @@ last_updated: 2026-08-10
 | **Kernel Version** | `0.1` |
 | **Kernel Status** | **Frozen** |
 | **Architecture Phase** | **Completed** |
-| **Current Phase** | **Phase 2 — Product (P2.5 Delivered, Product Hardening Checkpoint Closed)** |
-| **Next Sprint** | **Piloto de uso real (varias semanas, ≥1 marca real)** — P2.6 Cloud sigue condicional a necesidad real, no autorizado todavía ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
+| **Current Phase** | **Phase 2 — Product + ATLAS 4.x Integration Closure (INT-001–009 consolidated; INT-010-A/B/C/D complete)** |
+| **Next Sprint** | **Piloto de uso real (varias semanas, ≥1 marca real)** — INT-010-E repo hygiene pendiente; P2.6 Cloud condicional ([`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md)) |
+| **ATLAS 4.x Integration** | **INT-001–009 delivered** — commits `9c63f70` (consolidation), `41c1290` (INT-009 stabilization) |
 | **Product Vision** | [`ATLAS_PRODUCT_VISION_v1.0.md`](./ATLAS_PRODUCT_VISION_v1.0.md) |
 | **Memory Architecture Tag** | `memory-architecture-certified` |
 | **Memory Application Tag** | `memory-application-certified` |
@@ -46,8 +47,8 @@ Versiones publicadas en `package.json` al cierre del Kernel y actualizaciones po
 | `@atlas/compiler` | 0.1.1 | Pipeline de compilación | **Frozen** |
 | `@atlas/events` | 0.1.0 | Eventos de dominio | **Frozen** |
 | `@atlas/runtime` | 0.1.0 | Ejecución de artifacts + Pipeline Engine (Sprint 10D) | **Frozen** |
-| `@atlas/sdk` | 0.3.0 | Fachada pública del Kernel (+ Memory, Planning, Workflow, Retrieval MVP, LLM P2.1–P2.2) | **MVP+** |
-| `@atlas/cli` | 0.1.0 | Interfaz de línea de comandos (+ memory, plan, chat MVP; `ask` P2.1; chat LLM + `atlas` default P2.2; `brand` P2.3; `web` P2.5) | **MVP+** |
+| `@atlas/sdk` | 0.3.0 | Fachada pública (+ Memory, Retrieval, Context, Org, Governance, Feedback, LLM tools; INT-001–009) | **MVP+** |
+| `@atlas/cli` | 0.1.0 | CLI (+ memory, plan, chat, ask, brand, web; feedback `/correct` INT-009) | **MVP+** |
 
 > **Nota de versionado:** La versión de producto Atlas es `0.1.0-alpha` (Kernel v0.1 congelado). Los paquetes npm mantienen semver independiente por componente.
 
@@ -510,14 +511,61 @@ Durante la validación se detectaron y cerraron cuatro hallazgos, además de tre
 **Gaps conocidos, sin resolver todavía:**
 
 - ~~**Bug confirmado, no corregido:** el chip de ejemplo "Clientes VIP"~~ → **Corregido** en fixes UX en vivo (búsqueda por tokens, `packages/sdk`).
-- Modo determinístico con metas que contienen `?` sigue fallando con `CORE_INVALID_IDENTIFIER` si el LLM no está configurado — bug en `packages/sdk` (`planExecuteAndRemember`), fuera de alcance de este hotfix, documentado en el informe del hotfix §7.
+- Modo determinístico con metas que contienen `?` sigue fallando con `CORE_INVALID_IDENTIFIER` si el LLM no está configurado — bug en `packages/sdk` (`planExecuteAndRemember`), documentado en el informe del hotfix §7.
 - Sin edición/eliminación de marca.
-- Historial de chat y timeline de actividad viven en memoria del proceso Web — se pierden si el servidor se reinicia (mismo comportamiento ya conocido desde P2.5, no una regresión nueva).
+- ~~Historial de chat y timeline de actividad se pierden al reiniciar Web~~ → **Corregido (INT-008):** persistencia por workspace en `apps/web/src/lib/web-persistence/` (`conversation.json`, `activity.json`).
 - Página "Configuración" sigue siendo un placeholder ("Próximamente").
+- Feedback genérico de aprendizaje (más allá del caso estructurado warranty 45→60) no está implementado — INT-009 cubre el camino canónico probado.
 
 **Bibliografía completa (histórico, no hace falta releer para entender el estado actual — esta entrada consolidada es la fuente de verdad):** [`WEB_UI_PHASE_3_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3_IMPLEMENTATION.md), [`WEB_UI_PHASE_3D_B_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3D_B_IMPLEMENTATION.md), [`WEB_UI_PHASE_3E_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3E_IMPLEMENTATION.md), [`WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md`](./releases/WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md), [`WEB_UI_PHASE_3F_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3F_IMPLEMENTATION.md), [`WEB_UI_PHASE_3G2_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3G2_IMPLEMENTATION.md), [`WEB_UI_WORLD_CLASS_FINAL_AUDIT.md`](./releases/WEB_UI_WORLD_CLASS_FINAL_AUDIT.md), [`WEB_UI_PHASE_3H_AUDIT.md`](./releases/WEB_UI_PHASE_3H_AUDIT.md), [`WEB_UI_PHASE_3H_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3H_IMPLEMENTATION.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md`](./releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md), [`WEB_UI_NAVIGATION_RENDER_LOOP_FIX.md`](./releases/WEB_UI_NAVIGATION_RENDER_LOOP_FIX.md), [`WEB_UI_THEME_SWITCH_AND_LIGHT_LOGO_FIX.md`](./releases/WEB_UI_THEME_SWITCH_AND_LIGHT_LOGO_FIX.md), [`WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md`](./releases/WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md), [`WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md`](./releases/WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md).
 
 **Verificación de cierre (independiente, no autoreportada):** ejecutada por Claude en esta sesión el 2026-08-10, sobre una copia aislada del repo en el commit real `aeea5f5` (no una versión anterior ni el self-report de Cursor). Confirma: pipeline completo verde, boundary Kernel intacto, conteo de tests exacto, y un gap real (chip "Clientes VIP") encontrado por revisión cruzada contra evidencia visual del propio usuario, no por autoreporte del agente implementador.
+
+---
+
+## ATLAS 4.x — Integration Closure (INT-001–INT-009)
+
+Integración de cierre ATLAS 4.x consolidada en Git. Implementación en capa producto/SDK/Web/Knowledge; **Kernel congelado intacto** (`@atlas/core`, `@atlas/compiler`, `@atlas/retrieval` sin cambios; kernel-adjacent auditado sin cambios requeridos — INT-010-C).
+
+| INT | Entregable | Ubicación principal |
+|-----|------------|---------------------|
+| INT-001 | Retrieval unificado vía `@atlas/retrieval` | `packages/sdk/src/retrieval/` |
+| INT-002 | `listRecords` separado de búsqueda | `packages/sdk/src/modules/memory-module.ts` |
+| INT-003 | Ingesta KnowledgeObject (documentos) | `packages/knowledge/src/ingest/`, SDK ingest |
+| INT-004 | AtlasContextBuilder | `packages/sdk/src/context/` |
+| INT-005 | LLM + Organization (tools, entidades) | `packages/sdk/src/org/`, `org-llm-tools.ts` |
+| INT-006 | Governance gate + acciones internas | `packages/sdk/src/governance/` |
+| INT-007 | Evento → resultado operacional → Memory | `action-operational-result.ts`, events module |
+| INT-008 | Persistencia conversación + actividad (Web) | `apps/web/src/lib/web-persistence/` |
+| INT-009 | Feedback → Memory → Retrieval (warranty 45→60) | `packages/sdk/src/feedback/` |
+
+**Flujo integrado de chat:**
+
+```text
+User Web/CLI → executeChatTurn → AtlasContextBuilder → RetrievalModule → LLM → tools
+  → EventBus → ResultMemory → persist turn
+```
+
+**Commits de cierre:**
+
+| Commit | Descripción |
+|--------|-------------|
+| `9c63f70` | Consolidación INT-001–009 (INT-010-A) |
+| `41c1290` | Estabilización INT-009 dedupe por revisión (INT-010-B) |
+
+**Verificación independiente (2026-09-09, `npx turbo run test --force`):**
+
+| Paquete | Tests |
+|---------|-------|
+| `@atlas/sdk` | 158/158 |
+| `@atlas/web` | 243/243 |
+| `@atlas/cli` | 78/78 |
+| `@atlas/knowledge` | 28/28 |
+| `@atlas/memory` | 128/128 |
+| Turbo tasks | 46/46 |
+| `pnpm atlas doctor` | HEALTHY |
+
+**Limitaciones documentadas:** corrección warranty es el caso canónico INT-009; no hay aprendizaje genérico de feedback. Persistencia Web es local por workspace (no cloud). Format drift histórico en repo (~181 archivos) fuera de alcance INT-010-D — pendiente INT-010-E.
 
 ---
 

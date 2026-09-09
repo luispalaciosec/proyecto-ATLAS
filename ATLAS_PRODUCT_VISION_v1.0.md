@@ -1,14 +1,14 @@
 ---
 id: ATLAS-PRODUCT-VISION-001
 title: ATLAS Product Vision v1.0
-version: 1.1.0
+version: 1.2.0
 status: Active
 created: 2026-08-04
-last_updated: 2026-08-04
+last_updated: 2026-09-09
 owner: Luis Palacios
 supersedes: none
 relationship_to_governance: complementary to ADR-0001–ADR-0005, VERSION.md, ATLAS_ARCHITECTURE_MASTER.md
-changelog: "v1.1.0 — roadmap de Phase 2 revisado de 5 a 6 frentes: LLM Adapter absorbe tool-calling interno; Brands y Workspaces se fusionan en un solo frente; se agrega Feedback Loop (P2.4); Web UI y Cloud pasan a P2.5/P2.6, Cloud condicionado a necesidad real; Plugins queda explícitamente fuera de Phase 2."
+changelog: "v1.2.0 — estado actual ATLAS 4.x (INT-001–009): integración consolidada, LLM+Org+Governance+feedback warranty, persistencia Web; distingue capacidad actual vs visión futura. v1.1.0 — roadmap Phase 2 revisado."
 ---
 
 # ATLAS Product Vision v1.0
@@ -21,15 +21,29 @@ Este documento define **qué es ATLAS para quien lo usa**, no cómo está constr
 
 ## 2. Dónde está ATLAS hoy
 
-Phase 1 cerró con:
+> **Distinción:** esta sección describe el **estado actual del producto** (post INT-001–009, ver `VERSION.md`). Las secciones 7–8 conservan el **roadmap Phase 2 original** como referencia histórica de planificación; varios frentes ya están entregados.
 
-- Kernel Frozen v0.1 (Core, Compiler, Runtime, Events).
-- Cinco ADRs aceptados (namespace de documentos, consolidación de Planning, arquitectura de Memory, modelo de ejecución, reconciliación de Retrieval).
-- Seis capabilities reales y con tests verdes: Memory (persistencia JSON), Retrieval (pipeline sobre Memory), Planning (motor de estrategias), Workflow (compilador de pipelines), Knowledge, Compiler/Runtime.
-- Un CLI funcional: `atlas memory`, `atlas plan`, `atlas chat`, `atlas compile`, `atlas run`, `atlas doctor`.
-- 363 tests ejecutados y pasando en 11 paquetes, verificado de forma independiente el 2026-08-04.
+### Capacidad actual (ATLAS 4.x integrado)
 
-Lo que ATLAS **no tiene todavía**, y es la brecha central de este documento: **ninguna capacidad generativa**. El `PlanningEngine` de hoy es 100% determinista — normaliza un goal, busca una estrategia en un registro fijo, y esa estrategia produce el workflow con reglas predefinidas. No hay una sola llamada a un modelo de lenguaje en ningún punto del pipeline. ATLAS hoy es un motor de orquestación sólido sin inteligencia real dentro.
+- **Kernel Frozen v0.1** — `core`, `compiler`, `retrieval` sin cambios; integración en SDK/CLI/Web/Knowledge.
+- **LLM generativo (P2.1–P2.2)** — `@atlas/llm` con tool-calling; `atlas chat`, Web `/chat`.
+- **Marcas y workspaces (P2.3)** — memoria aislada por marca (`JsonFileStorageProvider` por workspace).
+- **Feedback (P2.4 + INT-009)** — `/correct` en CLI; corrección estructurada warranty (45→60 días) persiste en OrgMemory y es retrievable; señales genéricas en Memory (camino paralelo, no aprendizaje automático general).
+- **Web UI (P2.5 + Fase 3)** — SPA completa; persistencia conversación/actividad por workspace (INT-008).
+- **Organización ATLAS 4.x** — entidades, políticas, decisiones, evidencia, versionado (OrgMemory).
+- **Integración INT-001–009** — Retrieval unificado, Context Builder, Governance, resultados operacionales, ingest KnowledgeObject.
+- **Tests (2026-09-09, `--force`):** SDK 158/158, Web 243/243, CLI 78/78, turbo 46/46 tasks, doctor HEALTHY.
+
+### Lo que ATLAS aún no es (limitaciones reales)
+
+- **No** es aprendizaje genérico de feedback — el caso canónico probado es warranty 45→60.
+- **No** es cloud multi-dispositivo (P2.6 condicional, no autorizado).
+- **No** es multi-usuario / RBAC.
+- **No** es ATLAS 5 — el motor cognitivo completo (Reasoning → Planning estructurado) sigue siendo evolución futura sobre el Kernel congelado.
+
+### Histórico — cierre Phase 1 (2026-08-04)
+
+Al redactar la v1.0 de esta visión, Phase 1 había cerrado con Kernel congelado, capabilities certificadas y CLI MVP, **sin capacidad generativa**. Esa brecha motivó P2.1–P2.5. P2.1+ ya la cerró; el párrafo anterior ya no describe el producto actual.
 
 ## 3. Quién es el usuario
 
@@ -121,7 +135,7 @@ No se activa por defecto ni por completar la lista. Se activa solo si aparece la
 
 **Fuera de v1.0 (explícitamente, no por olvido):**
 
-- Web UI (P2.5) — después de validar el núcleo conversacional en CLI.
+- ~~Web UI (P2.5)~~ — **Entregada** (Fase 3 + persistencia INT-008).
 - Cloud (P2.6) — solo si aparece necesidad real de acceso multi-dispositivo; no es un entregable garantizado de v1.0.
 - **Plugins** — sistema de extensibilidad para terceros. Resuelve un problema de escala que no existe con un solo usuario. No entra en Phase 2; se reevalúa solo si el uso real de 2 meses muestra una necesidad concreta.
 - Multi-usuario / permisos — ATLAS v1.0 es de un solo operador.

@@ -47,6 +47,16 @@ Architecture proposals (RFCs) live in [`proposals/rfc/`](./proposals/rfc/).
 
 **Planned:** `guides/USER_MANUAL.md`, `dev/GETTING_STARTED.md`, `dev/CLI_REFERENCE.md`, static site under `docs/web/`.
 
+## ATLAS 4.x integration (current product state)
+
+| Document | Purpose |
+|----------|---------|
+| [../VERSION.md](../VERSION.md) | Registry oficial — § ATLAS 4.x Integration Closure (INT-001–009) |
+| [../ATLAS_ARCHITECTURE_MASTER.md](../ATLAS_ARCHITECTURE_MASTER.md) | § 21A — Integrated Product Corridor |
+| [../ATLAS_PRODUCT_VISION_v1.0.md](../ATLAS_PRODUCT_VISION_v1.0.md) | § 2 — Capacidad actual vs visión futura |
+| [../README.md](../README.md) | Resumen producto + tabla INT-001–009 |
+| [../packages/sdk/README.md](../packages/sdk/README.md) | Facade modules y exports de integración |
+
 See also: root `README.md`, `VERSION.md`.
 
 See `../spec/foundation/ATLAS-000-README.md` for the official entry point.

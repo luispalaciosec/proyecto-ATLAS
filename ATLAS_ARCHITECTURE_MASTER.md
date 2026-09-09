@@ -1,9 +1,9 @@
 # ATLAS — Master Architecture Document
 
 **Document ID:** ATLAS-000  
-**Version:** 1.0.0-draft  
+**Version:** 1.1.0  
 **Status:** Master Architecture Reference  
-**Last Updated:** 2026-08-01  
+**Last Updated:** 2026-09-09  
 **Owner:** ATLAS Architecture Board
 
 ---
@@ -1107,7 +1107,7 @@ Core ◀──────────────────┘
 
 # 20. Cognitive Dependency Graph
 
-The cognitive architecture follows the pipeline defined in INT-010.
+The cognitive architecture follows the long-term loop defined in Section 20.
 
 ```
 Knowledge
@@ -1173,6 +1173,46 @@ Execution
 Everything below Planning already exists.
 
 Everything above Planning remains under implementation.
+
+---
+
+# 21A. ATLAS 4.x Integrated Product Corridor (Implemented)
+
+This corridor describes the **currently shipped** chat and knowledge integration path (INT-001–INT-009, consolidated in Git at `9c63f70`, stabilized at `41c1290`). It operates entirely above the Frozen Kernel — no changes to `@atlas/core`, `@atlas/compiler`, or `@atlas/retrieval` packages.
+
+```
+User (Web / CLI)
+        │
+        ▼
+executeChatTurn
+        │
+        ▼
+AtlasContextBuilder          ← INT-004
+        │
+        ├── RetrievalModule.searchContent   ← INT-001 (@atlas/retrieval via SDK)
+        ├── OrgMemory (entities, policies)  ← INT-005
+        └── Memory.listRecords / store      ← INT-002, INT-003, INT-007
+        │
+        ▼
+LLM + org tools (ToolExecutor)            ← INT-005
+        │
+        ├── GovernanceGate.execute          ← INT-006
+        └── recordFeedbackCorrection      ← INT-009 (structured warranty path)
+        │
+        ▼
+EventBus → operational result → Memory      ← INT-007
+        │
+        ▼
+Persist turn
+        ├── CLI: workspace memory.json
+        └── Web: conversation.json + activity.json per workspace   ← INT-008
+```
+
+**Kernel-adjacent packages** (`runtime`, `workflow`, `memory`, `intelligence`, `llm`) expose existing public APIs consumed through `@atlas/sdk`. INT-010-C verified no additional functional changes are required in those packages for this corridor.
+
+**Documented limitations:** INT-009 canonical case is structured warranty correction (45→60 days); generic feedback learning is not implemented. Web persistence is local filesystem per workspace, not cloud.
+
+Reference: [`VERSION.md`](./VERSION.md) § ATLAS 4.x — Integration Closure.
 
 ---
 

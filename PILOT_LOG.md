@@ -1,6 +1,6 @@
 # Horizonte 1 — Piloto real de ATLAS
 
-**Estado del código:** congelado para el piloto (P2.1–P2.5). Excepción: bugs reales descubiertos durante el uso (tipo L-01/L-02) se corrigen; features nuevas, no.
+**Estado del código:** baseline de producto ATLAS 4.x (P2.1–P2.5 + INT-001–009 consolidados). Kernel v0.1 congelado. Excepción: bugs reales descubiertos durante el piloto se corrigen; features nuevas fuera de INT-010, no.
 **Duración:** 2–4 semanas.
 **Proyecto piloto:** Banco Amazonas.
 **Workspace:** `geeks-banco-amazonas` (slug dedicado — memoria físicamente aislada, sin mezclar con otros clientes de Geeks).
