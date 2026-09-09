@@ -20,6 +20,9 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# Local design assets (font copies; canonical UI assets live under apps/web/design-system/)
+design/
+
 # IDE
 .idea/
 *.swp
