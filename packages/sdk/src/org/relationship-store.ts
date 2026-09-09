@@ -48,9 +48,7 @@ export async function linkEntities(
   const relationshipId = `relationship.${trimmedSourceId}.${trimmedRelationshipType}.${trimmedTargetId}`;
 
   const existingRelationships = await listRecordsByType(atlas, ORG_RECORD_TYPE_RELATIONSHIP);
-  const existing = existingRelationships.find(
-    (record) => getEntityId(record) === relationshipId,
-  );
+  const existing = existingRelationships.find((record) => getEntityId(record) === relationshipId);
 
   if (existing !== undefined) {
     return Object.freeze({

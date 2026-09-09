@@ -74,7 +74,9 @@ export interface KnowledgeCanonicalSource {
   readonly version: string;
 }
 
-export function serializeKnowledgeCanonicalSource(object: KnowledgeObject): KnowledgeCanonicalSource {
+export function serializeKnowledgeCanonicalSource(
+  object: KnowledgeObject,
+): KnowledgeCanonicalSource {
   return Object.freeze({
     id: object.id.toString(),
     kind: object.kind.name,

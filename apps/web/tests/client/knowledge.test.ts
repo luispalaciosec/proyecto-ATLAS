@@ -79,7 +79,11 @@ describe('renderKnowledge', () => {
 
   it('uploads a supported file and refreshes active search', async () => {
     uploadKnowledgeDocument.mockImplementation(
-      async (_slug: string, file: File, onProgress?: (progress: { phase: string; progress: number; fileName: string }) => void) => {
+      async (
+        _slug: string,
+        file: File,
+        onProgress?: (progress: { phase: string; progress: number; fileName: string }) => void,
+      ) => {
         onProgress?.({ phase: 'uploading', progress: 20, fileName: file.name });
         onProgress?.({ phase: 'indexing', progress: 80, fileName: file.name });
         onProgress?.({ phase: 'available', progress: 100, fileName: file.name });
@@ -134,20 +138,20 @@ describe('renderKnowledge', () => {
     expect(getState().statusText).toContain('manual.txt');
     expect(getState().statusText).toContain('2 fragmentos');
     expect(main.textContent).toContain('Disponible para buscar');
-    expect((main.querySelector('#knowledge-upload-progress') as HTMLElement | null)?.hidden).toBe(false);
+    expect((main.querySelector('#knowledge-upload-progress') as HTMLElement | null)?.hidden).toBe(
+      false,
+    );
     expect(searchKnowledge).toHaveBeenLastCalledWith('default', 'manual');
   });
 
   it('uploads multiple supported files sequentially', async () => {
-    uploadKnowledgeDocument.mockImplementation(
-      async (_slug: string, file: File) => ({
-        documentId: `doc.${file.name}`,
-        fileName: file.name,
-        folder: 'General',
-        chunks: 1,
-        recordIds: [file.name],
-      }),
-    );
+    uploadKnowledgeDocument.mockImplementation(async (_slug: string, file: File) => ({
+      documentId: `doc.${file.name}`,
+      fileName: file.name,
+      folder: 'General',
+      chunks: 1,
+      recordIds: [file.name],
+    }));
 
     const main = document.querySelector('#main') as HTMLElement;
     renderKnowledge(main);
@@ -189,7 +193,11 @@ describe('renderKnowledge', () => {
     });
 
     uploadKnowledgeDocument.mockImplementation(
-      async (_slug: string, file: File, onProgress?: (progress: { phase: string; progress: number; fileName: string }) => void) => {
+      async (
+        _slug: string,
+        file: File,
+        onProgress?: (progress: { phase: string; progress: number; fileName: string }) => void,
+      ) => {
         onProgress?.({ phase: 'uploading', progress: 25, fileName: file.name });
         onProgress?.({ phase: 'reading', progress: 55, fileName: file.name });
         onProgress?.({ phase: 'indexing', progress: 75, fileName: file.name });
@@ -221,7 +229,9 @@ describe('renderKnowledge', () => {
     await flushUi();
 
     expect(main.textContent).toContain('Disponible para buscar');
-    expect((main.querySelector('#knowledge-upload-search-btn') as HTMLButtonElement | null)?.hidden).toBe(false);
+    expect(
+      (main.querySelector('#knowledge-upload-search-btn') as HTMLButtonElement | null)?.hidden,
+    ).toBe(false);
   });
 
   it('creates a folder and refreshes the library', async () => {
@@ -431,7 +441,9 @@ describe('renderKnowledge', () => {
     await flushUi();
 
     expect(getState().statusText).toContain('nuevo-manual.txt');
-    expect((main.querySelector('#knowledge-upload-notice') as HTMLElement | null)?.hidden).toBe(true);
+    expect((main.querySelector('#knowledge-upload-notice') as HTMLElement | null)?.hidden).toBe(
+      true,
+    );
   });
 
   it('shows a duplicate confirmation dialog and persistent notice for an exact file name repeat', async () => {
@@ -485,7 +497,9 @@ describe('renderKnowledge', () => {
 
     expect(uploadKnowledgeDocument).toHaveBeenCalled();
     expect(getState().statusText).not.toContain('Se incorporó manual.txt');
-    expect((main.querySelector('#knowledge-upload-notice') as HTMLElement | null)?.hidden).toBe(false);
+    expect((main.querySelector('#knowledge-upload-notice') as HTMLElement | null)?.hidden).toBe(
+      false,
+    );
     expect(main.textContent).toContain('Conocimiento actualizado');
   });
 
@@ -538,7 +552,9 @@ describe('renderKnowledge', () => {
     await flushUi();
 
     expect(uploadKnowledgeDocument).toHaveBeenCalled();
-    expect((main.querySelector('#knowledge-upload-notice') as HTMLElement | null)?.hidden).toBe(false);
+    expect((main.querySelector('#knowledge-upload-notice') as HTMLElement | null)?.hidden).toBe(
+      false,
+    );
     expect(main.textContent).toContain('lista_precios_2024.pdf');
   });
 });

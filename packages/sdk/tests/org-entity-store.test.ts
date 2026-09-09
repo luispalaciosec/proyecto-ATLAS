@@ -5,18 +5,12 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { createAtlas } from '../src/index.js';
-import {
-  ORG_RECORD_TYPE_CLIENT,
-  ORG_RECORD_TYPE_WARRANTY_POLICY,
-} from '../src/org/constants.js';
+import { ORG_RECORD_TYPE_CLIENT, ORG_RECORD_TYPE_WARRANTY_POLICY } from '../src/org/constants.js';
 import { upsertEntity } from '../src/org/entity-store.js';
 import { readEntityPayload, resolveEntityById } from '../src/org/entity-resolver.js';
 import { parseClient } from '../src/org/schemas/client.js';
 import { parseWarrantyPolicy } from '../src/org/schemas/warranty-policy.js';
-import {
-  resolveCurrentPolicy,
-  resolvePolicyHistory,
-} from '../src/org/version-resolver.js';
+import { resolveCurrentPolicy, resolvePolicyHistory } from '../src/org/version-resolver.js';
 
 function createTestAtlas() {
   const dir = mkdtempSync(join(tmpdir(), 'atlas-org-store-'));

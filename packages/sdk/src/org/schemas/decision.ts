@@ -32,7 +32,10 @@ export function assertDecision(value: unknown): asserts value is Decision {
     throw new Error('Decision.clientLegalName must be a non-empty string');
   }
 
-  if (typeof candidate.requestedPercent !== 'number' || !Number.isFinite(candidate.requestedPercent)) {
+  if (
+    typeof candidate.requestedPercent !== 'number' ||
+    !Number.isFinite(candidate.requestedPercent)
+  ) {
     throw new Error('Decision.requestedPercent must be a finite number');
   }
 

@@ -48,16 +48,14 @@ export const es = {
     switchConfirm:
       '¿Cambiar a {name}? La conversación visible se actualizará con el historial de esa marca.',
     loadError: 'No pudimos cargar las marcas.',
-    sessionScopeNote:
-      'Visible mientras ATLAS Web esté abierto. Se reinicia al cerrar la aplicación.',
+    sessionScopeNote: 'Conservada en este equipo por marca. Se mantiene al reiniciar ATLAS Web.',
   },
   home: {
     title: 'Inicio',
     workingIn: 'Trabajando en {name}',
     workingWith: 'Trabajando con {name}',
     primaryTitle: 'Conversar con ATLAS',
-    primaryBody:
-      'Haz una pregunta, pide ayuda con una tarea o dile qué necesitas resolver.',
+    primaryBody: 'Haz una pregunta, pide ayuda con una tarea o dile qué necesitas resolver.',
     primaryCta: 'Empezar una conversación',
     heroTitle: 'Bienvenido a ATLAS',
     heroSubtitle: 'Tu asistente inteligente de conocimiento empresarial',
@@ -90,12 +88,11 @@ export const es = {
     continueTitle: 'Últimas preguntas de esta sesión',
     continueEmptyTitle: 'Todavía no hay preguntas en esta sesión',
     continueEmptyBody:
-      'Cuando hables con ATLAS, tus últimas preguntas aparecerán aquí mientras la aplicación siga abierta.',
+      'Cuando hables con ATLAS, tus últimas preguntas aparecerán aquí y se conservarán en esta marca.',
     continueAction: 'Abrir conversación',
     historyLoading: 'Recuperando las preguntas de esta sesión…',
     historyError: 'No pudimos cargar las preguntas de esta sesión.',
-    historySessionNote:
-      'Una sola conversación por marca mientras ATLAS Web esté abierto.',
+    historySessionNote: 'Una conversación por marca, persistida localmente en este equipo.',
     knowledgeTitle: 'Conocimiento de tu marca',
     knowledgeBody:
       'Consulta la información que ATLAS tiene disponible para ayudarte a trabajar con esta marca.',
@@ -117,7 +114,8 @@ export const es = {
     emptyTitle: 'Empieza una conversación con ATLAS',
     emptyBody:
       'Puedo ayudarte a consultar información, trabajar con tus marcas y recordar contexto importante. Escribe lo que necesitas.',
-    emptyHint: 'Ejemplo: «¿Qué sabemos del cliente VIP?» o «Prepara un seguimiento para el pedido».',
+    emptyHint:
+      'Ejemplo: «¿Qué sabemos del cliente VIP?» o «Prepara un seguimiento para el pedido».',
     placeholder: '¿En qué puedo ayudarte?',
     send: 'Enviar',
     thinking: 'ATLAS está trabajando…',
@@ -164,8 +162,7 @@ export const es = {
     emptyWorkspace: 'El nombre de la marca no puede estar vacío.',
     rateLimit:
       'El servicio de IA está temporalmente ocupado. Inténtalo nuevamente en unos segundos.',
-    toolFailed:
-      'El asistente de IA tuvo un problema al consultar información. Inténtalo de nuevo.',
+    toolFailed: 'El asistente de IA tuvo un problema al consultar información. Inténtalo de nuevo.',
     connection: 'No hay conexión con ATLAS. Comprueba que la aplicación esté en ejecución.',
     llmRequired:
       'El asistente de IA no está disponible. Pide a quien instaló ATLAS que configure el servicio de IA e inténtalo de nuevo.',
@@ -179,8 +176,7 @@ export const es = {
   },
   activity: {
     subtitle: 'Lo que has hecho recientemente en esta Marca.',
-    scopeNote:
-      'La actividad mostrada corresponde a esta sesión de ATLAS Web. Se reinicia al cerrar la aplicación.',
+    scopeNote: 'Actividad de esta marca en este equipo. Se conserva al reiniciar ATLAS Web.',
     loading: 'Estamos preparando tu actividad…',
     emptyTitle: 'Todavía no hay actividad',
     emptyBody:
@@ -222,8 +218,7 @@ export const es = {
     generalDescription: 'Información que no pertenece a una marca específica.',
     pageSubtitle: 'Organiza el trabajo de ATLAS por empresa, cliente o proyecto.',
     activeContext: 'Estás trabajando con',
-    isolationNote:
-      'El conocimiento y la actividad de cada marca se mantienen separados.',
+    isolationNote: 'El conocimiento y la actividad de cada marca se mantienen separados.',
     createButton: '+ Crear marca',
     loading: 'Estamos cargando tus marcas…',
     loadErrorTitle: 'No pudimos cargar tus marcas',
@@ -262,8 +257,7 @@ export const es = {
     switchDialogTitle: 'Vas a cambiar de marca',
     switchDialogBody:
       'Ahora estás trabajando con {current}. Al cambiar a {target}, ATLAS utilizará el conocimiento y el contexto de esa marca.',
-    switchDialogDraft:
-      'Tienes un mensaje sin enviar. Si continúas, perderás ese borrador.',
+    switchDialogDraft: 'Tienes un mensaje sin enviar. Si continúas, perderás ese borrador.',
     switchDialogConfirm: 'Trabajar con {name}',
     switchSuccess: 'Ahora estás trabajando con {name}.',
     switchSuccessGeneral: 'Ahora estás trabajando en General.',
@@ -376,7 +370,8 @@ export const es = {
     createFolderSuccess: 'Carpeta «{name}» creada.',
     createFolderDuplicate: 'Esa carpeta ya existe.',
     createFolderError: 'No pudimos crear la carpeta.',
-    libraryFoldersHint: 'Las carpetas vacías también aparecen aquí. Selecciona una al subir documentos.',
+    libraryFoldersHint:
+      'Las carpetas vacías también aparecen aquí. Selecciona una al subir documentos.',
   },
 } as const;
 

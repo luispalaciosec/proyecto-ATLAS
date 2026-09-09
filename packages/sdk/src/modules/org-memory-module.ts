@@ -4,11 +4,7 @@ import {
   type ResolvedDecisionWithEvidence,
   resolveDecisionWithEvidence,
 } from '../org/decision-resolver.js';
-import {
-  recordDecision,
-  storeDecision,
-  storeEvidence,
-} from '../org/decision-store.js';
+import { recordDecision, storeDecision, storeEvidence } from '../org/decision-store.js';
 import { readEntityPayload } from '../org/entity-resolver.js';
 import { storeEntity, storeEntityVersion, upsertEntity } from '../org/entity-store.js';
 import { parseDecision } from '../org/schemas/decision.js';
@@ -45,21 +41,11 @@ export class OrgMemoryModule {
     return storeEntity(this.#atlas, recordType, id, content, metadata);
   }
 
-  storeEntityVersion(
-    recordId: string,
-    previousContent: unknown,
-    revision: number,
-    author: string,
-  ) {
+  storeEntityVersion(recordId: string, previousContent: unknown, revision: number, author: string) {
     return storeEntityVersion(this.#atlas, recordId, previousContent, revision, author);
   }
 
-  upsertEntity(
-    recordType: string,
-    entityId: string,
-    content: unknown,
-    author?: string,
-  ) {
+  upsertEntity(recordType: string, entityId: string, content: unknown, author?: string) {
     return upsertEntity(this.#atlas, recordType, entityId, content, author);
   }
 

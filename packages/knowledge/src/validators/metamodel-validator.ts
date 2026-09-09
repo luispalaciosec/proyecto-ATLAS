@@ -1,7 +1,10 @@
 import type { AtlasError } from '@atlas/core';
 
 import { METAMODEL_INVARIANTS } from '../metamodel/metamodel-invariants.js';
-import { getMetaConceptDescriptor, META_CONCEPT_REGISTRY } from '../metamodel/meta-concept-registry.js';
+import {
+  getMetaConceptDescriptor,
+  META_CONCEPT_REGISTRY,
+} from '../metamodel/meta-concept-registry.js';
 import { META_CONCEPT_IDS } from '../metamodel/meta-concept-id.js';
 
 export interface MetamodelValidationIssue {

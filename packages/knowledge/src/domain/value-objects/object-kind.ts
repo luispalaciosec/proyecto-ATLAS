@@ -1,5 +1,8 @@
 import { MetaConceptId } from '../../metamodel/meta-concept-id.js';
-import { DEFAULT_EXTENSION_POLICY, assertExtensionKindAllowed } from '../../metamodel/extension-model.js';
+import {
+  DEFAULT_EXTENSION_POLICY,
+  assertExtensionKindAllowed,
+} from '../../metamodel/extension-model.js';
 import { createKnowledgeError } from '../../errors/create-knowledge-error.js';
 
 export class ObjectKind {
@@ -15,7 +18,10 @@ export class ObjectKind {
     const trimmed = name.trim();
 
     if (trimmed.length === 0) {
-      throw createKnowledgeError('KNOWLEDGE_INVALID_OBJECT_KIND', 'ObjectKind name must be a non-empty string');
+      throw createKnowledgeError(
+        'KNOWLEDGE_INVALID_OBJECT_KIND',
+        'ObjectKind name must be a non-empty string',
+      );
     }
 
     if (!assertExtensionKindAllowed(DEFAULT_EXTENSION_POLICY, trimmed, MetaConceptId.Object)) {

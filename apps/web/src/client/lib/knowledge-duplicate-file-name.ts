@@ -15,7 +15,10 @@ export interface KnowledgeDuplicateMatch {
 }
 
 export function normalizeKnowledgeFileBase(fileName: string): string {
-  const withoutExtension = fileName.replace(/\.[^.]+$/i, '').trim().toLowerCase();
+  const withoutExtension = fileName
+    .replace(/\.[^.]+$/i, '')
+    .trim()
+    .toLowerCase();
 
   let normalized = withoutExtension
     .replace(/[_\-.]+/g, ' ')
@@ -40,10 +43,13 @@ export function findKnowledgeDuplicateMatch(
   folder: string,
 ): KnowledgeDuplicateMatch | undefined {
   const normalizedTarget = normalizeKnowledgeFolder(folder);
-  const scoped = documents.filter((document) => documentMatchesFolder(document.folder, normalizedTarget));
+  const scoped = documents.filter((document) =>
+    documentMatchesFolder(document.folder, normalizedTarget),
+  );
 
   const exact = scoped.find(
-    (document) => document.fileName.localeCompare(fileName, undefined, { sensitivity: 'accent' }) === 0,
+    (document) =>
+      document.fileName.localeCompare(fileName, undefined, { sensitivity: 'accent' }) === 0,
   );
 
   if (exact !== undefined) {

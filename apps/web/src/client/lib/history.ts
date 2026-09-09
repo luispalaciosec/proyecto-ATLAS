@@ -1,7 +1,9 @@
 import type { HistoryMessageProduct } from '../../presentation/map-history.js';
 import type { UiChatMessage } from '../state/app-state.js';
 
-export function mapHistoryMessagesToUi(messages: readonly HistoryMessageProduct[]): UiChatMessage[] {
+export function mapHistoryMessagesToUi(
+  messages: readonly HistoryMessageProduct[],
+): UiChatMessage[] {
   return messages.map((message) => ({
     id: message.id,
     kind: message.role === 'user' ? 'user' : 'assistant',

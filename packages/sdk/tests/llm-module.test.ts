@@ -207,9 +207,7 @@ describe('LlmModule', () => {
 
     await seedCase1DiscountGraph(atlas);
 
-    const result = await atlas.llm.ask(
-      '¿Puedo ofrecerle 12% de descuento a Constructora Andes?',
-    );
+    const result = await atlas.llm.ask('¿Puedo ofrecerle 12% de descuento a Constructora Andes?');
 
     expect(result.success).toBe(true);
     expect(result.finalMessage).toContain('10%');
@@ -530,8 +528,7 @@ describe('LlmModule', () => {
     });
 
     await atlas.memory.storeContent({
-      content:
-        'Un descuento del 15% requiere aprobación escrita del Gerente Comercial.',
+      content: 'Un descuento del 15% requiere aprobación escrita del Gerente Comercial.',
       recordType: 'document',
       metadata: Object.freeze({ fileName: 'Politica_Comercial.md' }),
     });
@@ -611,7 +608,9 @@ describe('LlmModule', () => {
     expect(result.success).toBe(true);
     expect(result.finalMessage).toBe('Qwen reply.');
     expect(fetchImpl).toHaveBeenCalledOnce();
-    expect(String(fetchImpl.mock.calls[0]?.[0])).toBe('https://custom.example.com/v1/chat/completions');
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toBe(
+      'https://custom.example.com/v1/chat/completions',
+    );
 
     vi.unstubAllGlobals();
     rmSync(dir, { recursive: true, force: true });

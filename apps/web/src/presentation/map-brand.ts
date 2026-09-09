@@ -75,10 +75,7 @@ function mapActivityPreview(
   }));
 }
 
-export function mapBrandToProduct(
-  record: RawBrandRecord,
-  activeBrandId: string,
-): BrandProduct {
+export function mapBrandToProduct(record: RawBrandRecord, activeBrandId: string): BrandProduct {
   const isGeneral = record.id === 'default';
   const description = isGeneral
     ? t('brands.generalDescription')

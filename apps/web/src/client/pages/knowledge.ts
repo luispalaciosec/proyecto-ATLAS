@@ -21,11 +21,7 @@ import {
 } from '../lib/knowledge-duplicate-file-name.js';
 import { getShellBodyElement } from '../components/shell.js';
 import { appendExpandableDetails } from '../lib/expandable-details.js';
-import {
-  createFileTypeIcon,
-  createUploadIdleIcon,
-  createUploadSuccessIcon,
-} from '../lib/icons.js';
+import { createFileTypeIcon, createUploadIdleIcon, createUploadSuccessIcon } from '../lib/icons.js';
 import { t } from '../../i18n/index.js';
 import {
   createKnowledgeFolder,
@@ -58,12 +54,7 @@ const SUPPORTED_UPLOAD_ACCEPT = SUPPORTED_UPLOAD_EXTENSIONS.map((ext) => `.${ext
 let currentUploadExtension: string | undefined;
 const NEW_FOLDER_OPTION_VALUE = '__new__';
 
-type KnowledgeViewState =
-  | 'idle'
-  | 'loading'
-  | 'results'
-  | 'empty-results'
-  | 'error';
+type KnowledgeViewState = 'idle' | 'loading' | 'results' | 'empty-results' | 'error';
 
 interface KnowledgePageState {
   view: KnowledgeViewState;
@@ -181,7 +172,9 @@ function confirmDuplicateUploadDialog(
     backdrop.append(dialog);
 
     const cancelButton = dialog.querySelector('#knowledge-duplicate-cancel') as HTMLButtonElement;
-    const continueButton = dialog.querySelector('#knowledge-duplicate-continue') as HTMLButtonElement;
+    const continueButton = dialog.querySelector(
+      '#knowledge-duplicate-continue',
+    ) as HTMLButtonElement;
 
     const finish = (accepted: boolean): void => {
       closeDuplicateUploadDialog();
@@ -482,7 +475,9 @@ function bindCreateFolderForm(main: HTMLElement): void {
 
 function bindUploadFolderSelect(main: HTMLElement): void {
   const select = main.querySelector('#knowledge-upload-folder-select') as HTMLSelectElement | null;
-  const customWrap = main.querySelector('#knowledge-upload-folder-custom-wrap') as HTMLElement | null;
+  const customWrap = main.querySelector(
+    '#knowledge-upload-folder-custom-wrap',
+  ) as HTMLElement | null;
 
   if (select === null || customWrap === null) {
     return;
@@ -493,7 +488,9 @@ function bindUploadFolderSelect(main: HTMLElement): void {
     customWrap.hidden = !isNew;
 
     if (isNew) {
-      const customInput = main.querySelector('#knowledge-upload-folder-custom') as HTMLInputElement | null;
+      const customInput = main.querySelector(
+        '#knowledge-upload-folder-custom',
+      ) as HTMLInputElement | null;
       customInput?.focus();
     }
   });
@@ -534,7 +531,9 @@ async function handleCreateFolder(rawName: string): Promise<void> {
 
   try {
     const payload = await createKnowledgeFolder(workspace, name);
-    const input = boundMain?.querySelector('#knowledge-create-folder-input') as HTMLInputElement | null;
+    const input = boundMain?.querySelector(
+      '#knowledge-create-folder-input',
+    ) as HTMLInputElement | null;
 
     if (input !== null) {
       input.value = '';
@@ -550,7 +549,9 @@ async function handleCreateFolder(rawName: string): Promise<void> {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     setCreateFolderStatus(
-      message.includes('ya existe') ? t('knowledge.createFolderDuplicate') : t('knowledge.createFolderError'),
+      message.includes('ya existe')
+        ? t('knowledge.createFolderDuplicate')
+        : t('knowledge.createFolderError'),
       true,
     );
   }
@@ -579,7 +580,10 @@ function resolveUploadExtension(fileName: string): string | undefined {
 
 function isSupportedUploadFile(fileName: string): boolean {
   const extension = resolveUploadExtension(fileName);
-  return extension !== undefined && SUPPORTED_UPLOAD_EXTENSIONS.includes(extension as (typeof SUPPORTED_UPLOAD_EXTENSIONS)[number]);
+  return (
+    extension !== undefined &&
+    SUPPORTED_UPLOAD_EXTENSIONS.includes(extension as (typeof SUPPORTED_UPLOAD_EXTENSIONS)[number])
+  );
 }
 
 function collectUploadFiles(fileList: FileList | null | undefined): readonly File[] {
@@ -652,7 +656,9 @@ function bindUploadEvents(main: HTMLElement): void {
     }
   });
 
-  const duplicateDismiss = main.querySelector('#knowledge-upload-notice-dismiss') as HTMLButtonElement | null;
+  const duplicateDismiss = main.querySelector(
+    '#knowledge-upload-notice-dismiss',
+  ) as HTMLButtonElement | null;
   duplicateDismiss?.addEventListener('click', () => {
     hideUploadDuplicateNotice();
   });
@@ -673,10 +679,14 @@ function resolveUploadFolderValue(): string {
     return DEFAULT_KNOWLEDGE_FOLDER;
   }
 
-  const select = boundMain.querySelector('#knowledge-upload-folder-select') as HTMLSelectElement | null;
+  const select = boundMain.querySelector(
+    '#knowledge-upload-folder-select',
+  ) as HTMLSelectElement | null;
 
   if (select?.value === NEW_FOLDER_OPTION_VALUE) {
-    const custom = boundMain.querySelector('#knowledge-upload-folder-custom') as HTMLInputElement | null;
+    const custom = boundMain.querySelector(
+      '#knowledge-upload-folder-custom',
+    ) as HTMLInputElement | null;
     const value = custom?.value.trim() ?? '';
     return value.length > 0 ? value : DEFAULT_KNOWLEDGE_FOLDER;
   }
@@ -690,8 +700,12 @@ function syncUploadFolderSelect(folders: readonly string[], selectedFolder?: str
     return;
   }
 
-  const select = boundMain.querySelector('#knowledge-upload-folder-select') as HTMLSelectElement | null;
-  const customWrap = boundMain.querySelector('#knowledge-upload-folder-custom-wrap') as HTMLElement | null;
+  const select = boundMain.querySelector(
+    '#knowledge-upload-folder-select',
+  ) as HTMLSelectElement | null;
+  const customWrap = boundMain.querySelector(
+    '#knowledge-upload-folder-custom-wrap',
+  ) as HTMLElement | null;
 
   if (select === null) {
     return;
@@ -725,7 +739,9 @@ function syncUploadFolderSelect(folders: readonly string[], selectedFolder?: str
     customWrap.hidden = false;
   }
 
-  const customInput = boundMain.querySelector('#knowledge-upload-folder-custom') as HTMLInputElement | null;
+  const customInput = boundMain.querySelector(
+    '#knowledge-upload-folder-custom',
+  ) as HTMLInputElement | null;
   if (customInput !== null) {
     customInput.value = previous === DEFAULT_KNOWLEDGE_FOLDER ? '' : previous;
   }
@@ -793,18 +809,9 @@ function renderLibraryFolderFilters(payload: KnowledgeDocumentsResponseProduct):
     button.className = 'knowledge-folder-chip';
     button.dataset.folder = folder;
     button.setAttribute('role', 'tab');
-    button.setAttribute(
-      'aria-selected',
-      String(libraryState.activeFolder === folder),
-    );
-    button.textContent =
-      folder === 'all'
-        ? t('knowledge.libraryAllFolders')
-        : folder;
-    button.classList.toggle(
-      'knowledge-folder-chip--active',
-      libraryState.activeFolder === folder,
-    );
+    button.setAttribute('aria-selected', String(libraryState.activeFolder === folder));
+    button.textContent = folder === 'all' ? t('knowledge.libraryAllFolders') : folder;
+    button.classList.toggle('knowledge-folder-chip--active', libraryState.activeFolder === folder);
     button.addEventListener('click', () => {
       setLibraryFolder(folder);
     });
@@ -976,7 +983,9 @@ function showUploadProgressPanel(
   const fileNameEl = boundMain.querySelector('#knowledge-upload-file-name') as HTMLElement | null;
   const fileIconWrap = boundMain.querySelector('#knowledge-upload-file-icon') as HTMLElement | null;
   const detail = boundMain.querySelector('#knowledge-upload-detail') as HTMLElement | null;
-  const searchBtn = boundMain.querySelector('#knowledge-upload-search-btn') as HTMLButtonElement | null;
+  const searchBtn = boundMain.querySelector(
+    '#knowledge-upload-search-btn',
+  ) as HTMLButtonElement | null;
 
   if (
     dropzone === null ||
@@ -992,7 +1001,10 @@ function showUploadProgressPanel(
   dropzone.setAttribute('aria-busy', 'true');
   idle.hidden = true;
   progress.hidden = false;
-  progress.classList.remove('knowledge-upload__progress--success', 'knowledge-upload__progress--error');
+  progress.classList.remove(
+    'knowledge-upload__progress--success',
+    'knowledge-upload__progress--error',
+  );
 
   if (batchEl !== null) {
     if (batch !== undefined && batch.total > 1) {
@@ -1027,12 +1039,21 @@ function updateUploadProgress(state: KnowledgeUploadProgress): void {
   }
 
   const phaseEl = boundMain.querySelector('#knowledge-upload-phase') as HTMLElement | null;
-  const progressBar = boundMain.querySelector('#knowledge-upload-progress-bar') as HTMLElement | null;
-  const progressTrack = boundMain.querySelector('#knowledge-upload-progress-track') as HTMLElement | null;
+  const progressBar = boundMain.querySelector(
+    '#knowledge-upload-progress-bar',
+  ) as HTMLElement | null;
+  const progressTrack = boundMain.querySelector(
+    '#knowledge-upload-progress-track',
+  ) as HTMLElement | null;
   const progressPanel = boundMain.querySelector('#knowledge-upload-progress') as HTMLElement | null;
   const fileIconWrap = boundMain.querySelector('#knowledge-upload-file-icon') as HTMLElement | null;
 
-  if (phaseEl === null || progressBar === null || progressTrack === null || progressPanel === null) {
+  if (
+    phaseEl === null ||
+    progressBar === null ||
+    progressTrack === null ||
+    progressPanel === null
+  ) {
     return;
   }
 
@@ -1040,8 +1061,14 @@ function updateUploadProgress(state: KnowledgeUploadProgress): void {
   progressBar.style.width = `${state.progress}%`;
   progressTrack.setAttribute('aria-valuenow', String(state.progress));
   progressTrack.setAttribute('aria-label', uploadPhaseLabel(state.phase));
-  progressPanel.classList.toggle('knowledge-upload__progress--indeterminate', state.phase === 'indexing');
-  progressPanel.classList.toggle('knowledge-upload__progress--success', state.phase === 'available');
+  progressPanel.classList.toggle(
+    'knowledge-upload__progress--indeterminate',
+    state.phase === 'indexing',
+  );
+  progressPanel.classList.toggle(
+    'knowledge-upload__progress--success',
+    state.phase === 'available',
+  );
   progressPanel.classList.toggle('knowledge-upload__progress--error', state.phase === 'error');
 
   if (state.phase === 'available' && fileIconWrap !== null) {
@@ -1060,7 +1087,9 @@ function showUploadSuccess(
   }
 
   const detail = boundMain.querySelector('#knowledge-upload-detail') as HTMLElement | null;
-  const searchBtn = boundMain.querySelector('#knowledge-upload-search-btn') as HTMLButtonElement | null;
+  const searchBtn = boundMain.querySelector(
+    '#knowledge-upload-search-btn',
+  ) as HTMLButtonElement | null;
 
   updateUploadProgress({ phase: 'available', progress: 100, fileName });
 
@@ -1097,8 +1126,12 @@ function resetUploadPanel(): void {
   const dropzone = boundMain.querySelector('#knowledge-upload-dropzone') as HTMLElement | null;
   const idle = boundMain.querySelector('#knowledge-upload-idle') as HTMLElement | null;
   const progress = boundMain.querySelector('#knowledge-upload-progress') as HTMLElement | null;
-  const progressBar = boundMain.querySelector('#knowledge-upload-progress-bar') as HTMLElement | null;
-  const chooseButton = boundMain.querySelector('#knowledge-upload-button') as HTMLButtonElement | null;
+  const progressBar = boundMain.querySelector(
+    '#knowledge-upload-progress-bar',
+  ) as HTMLElement | null;
+  const chooseButton = boundMain.querySelector(
+    '#knowledge-upload-button',
+  ) as HTMLButtonElement | null;
 
   if (dropzone !== null) {
     dropzone.classList.remove('knowledge-upload__dropzone--busy');
@@ -1149,7 +1182,9 @@ function setUploadStatus(message: string | undefined, isError = false): void {
 
   const status = boundMain.querySelector('#knowledge-upload-status') as HTMLElement | null;
   const dropzone = boundMain.querySelector('#knowledge-upload-dropzone') as HTMLElement | null;
-  const chooseButton = boundMain.querySelector('#knowledge-upload-button') as HTMLButtonElement | null;
+  const chooseButton = boundMain.querySelector(
+    '#knowledge-upload-button',
+  ) as HTMLButtonElement | null;
 
   if (status === null) {
     return;
@@ -1262,7 +1297,9 @@ async function handleUploadFiles(files: readonly File[]): Promise<void> {
   }
 
   uploadInProgress = true;
-  const chooseButton = boundMain?.querySelector('#knowledge-upload-button') as HTMLButtonElement | null;
+  const chooseButton = boundMain?.querySelector(
+    '#knowledge-upload-button',
+  ) as HTMLButtonElement | null;
 
   setSearchDisabled(true);
   if (chooseButton !== null) {
@@ -1287,12 +1324,7 @@ async function handleUploadFiles(files: readonly File[]): Promise<void> {
     });
 
     try {
-      const payload = await uploadKnowledgeDocument(
-        workspace,
-        file,
-        updateUploadProgress,
-        folder,
-      );
+      const payload = await uploadKnowledgeDocument(workspace, file, updateUploadProgress, folder);
       succeeded.push(payload.fileName);
       lastFolder = payload.folder;
 
@@ -1619,9 +1651,7 @@ function renderAskAtlasFromSearch(query: string): HTMLElement {
     query.trim().length > 0 ? t('knowledge.notFoundAsk') : t('knowledge.askAtlas');
   button.addEventListener('click', () => {
     const prompt =
-      query.trim().length > 0
-        ? buildKnowledgeSearchChatPrompt(query)
-        : t('chat.placeholder');
+      query.trim().length > 0 ? buildKnowledgeSearchChatPrompt(query) : t('chat.placeholder');
     openChatWithPrompt(prompt);
   });
 

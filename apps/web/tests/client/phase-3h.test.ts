@@ -42,22 +42,19 @@ describe('Phase 3H pilot polish', () => {
     expect(correctionError.message).toContain('instaló ATLAS');
   });
 
-  it('describes session-scoped history honestly on Home', () => {
+  it('describes persisted history on Home', () => {
     expect(t('home.continueTitle')).toContain('sesión');
-    expect(t('home.continueEmptyBody')).toContain('mientras la aplicación siga abierta');
-    expect(t('home.historySessionNote')).toContain('ATLAS Web');
+    expect(t('home.continueEmptyBody')).toContain('conservarán');
+    expect(t('home.historySessionNote')).toContain('persistida');
   });
 
-  it('describes session-scoped activity on Home', () => {
+  it('describes persisted activity scope on Home', () => {
     expect(t('home.activitySessionScope')).toBe('Esta sesión');
-    expect(t('workspace.sessionScopeNote')).toContain('ATLAS Web');
+    expect(t('workspace.sessionScopeNote')).toContain('reiniciar ATLAS Web');
   });
 
   it('includes reduced-motion handling in styles', () => {
-    const tokens = readFileSync(
-      resolve(process.cwd(), 'src/client/styles/tokens.css'),
-      'utf8',
-    );
+    const tokens = readFileSync(resolve(process.cwd(), 'src/client/styles/tokens.css'), 'utf8');
     const appStyles = readFileSync(resolve(process.cwd(), 'src/client/styles/app.css'), 'utf8');
 
     expect(tokens).toContain('prefers-reduced-motion: reduce');

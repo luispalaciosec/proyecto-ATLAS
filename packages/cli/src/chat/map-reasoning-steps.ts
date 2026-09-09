@@ -1,9 +1,5 @@
 export type ChatReasoningStepType =
-  | 'inferencing'
-  | 'memory_search'
-  | 'memory_store'
-  | 'plan_and_execute'
-  | 'composing';
+  'inferencing' | 'memory_search' | 'memory_store' | 'plan_and_execute' | 'composing';
 
 export interface ChatReasoningStepPayload {
   readonly type: ChatReasoningStepType;
@@ -29,7 +25,10 @@ function truncate(value: string, max: number): string {
   return `${trimmed.slice(0, max - 1)}…`;
 }
 
-function summarizeToolPreview(name: string, args: Readonly<Record<string, unknown>>): string | undefined {
+function summarizeToolPreview(
+  name: string,
+  args: Readonly<Record<string, unknown>>,
+): string | undefined {
   if (name === 'memory_search' && typeof args.query === 'string') {
     return truncate(args.query, 80);
   }
@@ -45,7 +44,9 @@ function summarizeToolPreview(name: string, args: Readonly<Record<string, unknow
   return undefined;
 }
 
-function isKnownToolType(name: string): name is Exclude<ChatReasoningStepType, 'inferencing' | 'composing'> {
+function isKnownToolType(
+  name: string,
+): name is Exclude<ChatReasoningStepType, 'inferencing' | 'composing'> {
   return name === 'memory_search' || name === 'memory_store' || name === 'plan_and_execute';
 }
 

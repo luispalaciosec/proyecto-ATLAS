@@ -73,7 +73,14 @@ const statementDescriptor: MetaConceptDescriptor = Object.freeze({
   ]),
   contextApplicability: Object.freeze({
     required: true,
-    dimensions: Object.freeze(['organizational', 'temporal', 'operational', 'geographical', 'technical', 'regulatory']),
+    dimensions: Object.freeze([
+      'organizational',
+      'temporal',
+      'operational',
+      'geographical',
+      'technical',
+      'regulatory',
+    ]),
     description: 'Statements require explicit context',
   }),
 });
@@ -88,7 +95,11 @@ const objectDescriptor: MetaConceptDescriptor = Object.freeze({
   attributes: Object.freeze([
     Object.freeze({ name: 'kind', required: true, description: 'Extensible ObjectKind' }),
     Object.freeze({ name: 'metadata', required: true, description: 'Descriptive metadata' }),
-    Object.freeze({ name: 'statements', required: false, description: 'Organizational assertions' }),
+    Object.freeze({
+      name: 'statements',
+      required: false,
+      description: 'Organizational assertions',
+    }),
     Object.freeze({ name: 'behavior', required: false, description: 'Conceptual intentions' }),
     Object.freeze({ name: 'governance', required: true, description: 'Ownership and lifecycle' }),
     Object.freeze({ name: 'trust', required: false, description: 'Confidence signal' }),
@@ -133,7 +144,14 @@ const objectDescriptor: MetaConceptDescriptor = Object.freeze({
   ]),
   contextApplicability: Object.freeze({
     required: true,
-    dimensions: Object.freeze(['organizational', 'temporal', 'operational', 'geographical', 'technical', 'regulatory']),
+    dimensions: Object.freeze([
+      'organizational',
+      'temporal',
+      'operational',
+      'geographical',
+      'technical',
+      'regulatory',
+    ]),
     description: 'Objects exist within one or more contexts',
   }),
 });
@@ -199,7 +217,14 @@ const contextDescriptor: MetaConceptDescriptor = Object.freeze({
   ]),
   contextApplicability: Object.freeze({
     required: true,
-    dimensions: Object.freeze(['organizational', 'temporal', 'operational', 'geographical', 'technical', 'regulatory']),
+    dimensions: Object.freeze([
+      'organizational',
+      'temporal',
+      'operational',
+      'geographical',
+      'technical',
+      'regulatory',
+    ]),
     description: 'Defines where knowledge applies',
   }),
 });

@@ -16,10 +16,7 @@ import {
   ObjectMetadata,
   StatementContent,
 } from '../../src/domain/value-objects/index.js';
-import {
-  createKnowledgeObject,
-  createKnowledgeStatement,
-} from '../../src/factories/index.js';
+import { createKnowledgeObject, createKnowledgeStatement } from '../../src/factories/index.js';
 
 function asOperational(object: KnowledgeObject): KnowledgeObject {
   return Object.freeze({

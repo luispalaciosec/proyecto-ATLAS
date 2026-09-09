@@ -6,10 +6,7 @@ import {
   formatExcelCellValue,
 } from '../../src/lib/knowledge-upload/extract-excel.js';
 import { KnowledgeUploadError } from '../../src/lib/knowledge-upload/upload-errors.js';
-import {
-  createXlsxFixture,
-  createXlsxFixtureWithCells,
-} from '../fixtures/fixture-utils.js';
+import { createXlsxFixture, createXlsxFixtureWithCells } from '../fixtures/fixture-utils.js';
 
 describe('extractExcelWorkbook', () => {
   it('parses a single sheet with headers and rows', () => {

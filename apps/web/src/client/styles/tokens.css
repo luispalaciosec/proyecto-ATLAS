@@ -52,10 +52,10 @@ html[data-theme='light'] {
   --color-user-bubble: var(--color-primary);
   --color-assistant-bubble: var(--atlas-slate-200);
 
-  --logo-mark-filter: brightness(0) saturate(100%) invert(42%) sepia(89%) saturate(1286%) hue-rotate(226deg)
-    brightness(99%) contrast(101%);
-  --home-rocket-logo-filter: brightness(0) saturate(100%) invert(42%) sepia(89%) saturate(1286%) hue-rotate(226deg)
-    brightness(99%) contrast(101%) drop-shadow(0 0 24px rgb(104 92 255 / 0.35));
+  --logo-mark-filter: brightness(0) saturate(100%) invert(42%) sepia(89%) saturate(1286%)
+    hue-rotate(226deg) brightness(99%) contrast(101%);
+  --home-rocket-logo-filter: brightness(0) saturate(100%) invert(42%) sepia(89%) saturate(1286%)
+    hue-rotate(226deg) brightness(99%) contrast(101%) drop-shadow(0 0 24px rgb(104 92 255 / 0.35));
 
   --color-text: var(--color-text-primary);
   --color-accent: var(--color-primary);

@@ -3,7 +3,11 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { renderShell, bindShellEvents, updateShellChrome } from '../../src/client/components/shell.js';
+import {
+  renderShell,
+  bindShellEvents,
+  updateShellChrome,
+} from '../../src/client/components/shell.js';
 import {
   applyBrandCatalog,
   getState,

@@ -5,11 +5,7 @@ import type { Atlas } from '@atlas/sdk';
 import type { Container } from '../application/container.js';
 import { CliExitError, EXIT_INVALID_ARGUMENTS } from '../output/exit-codes.js';
 import { createChatSession, type ChatSessionState } from './chat-session.js';
-import {
-  applyCorrection,
-  executeChatTurn,
-  type ChatTurnPayload,
-} from './chat-turn.js';
+import { applyCorrection, executeChatTurn, type ChatTurnPayload } from './chat-turn.js';
 import { parseCorrectCommand } from './feedback.js';
 
 export type { ChatTurnPayload } from './chat-turn.js';
@@ -43,7 +39,12 @@ function createReadlineReader(
 function isExitCommand(line: string): boolean {
   const normalized = line.trim().toLowerCase();
 
-  return normalized === '/exit' || normalized === '/quit' || normalized === 'exit' || normalized === 'quit';
+  return (
+    normalized === '/exit' ||
+    normalized === '/quit' ||
+    normalized === 'exit' ||
+    normalized === 'quit'
+  );
 }
 
 function renderTurn(container: Container, payload: ChatTurnPayload, json: boolean): void {
@@ -109,7 +110,10 @@ async function handleCorrectCommand(
   renderFeedbackNotice(container, json, outcome.message, outcome.recordId);
 }
 
-export async function runChatRepl(container: Container, options: RunChatReplOptions = {}): Promise<void> {
+export async function runChatRepl(
+  container: Container,
+  options: RunChatReplOptions = {},
+): Promise<void> {
   const client = options.client ?? container.atlasService.createMemoryClient();
   const session = createChatSession(client);
   const reader = options.reader ?? createReadlineReader();

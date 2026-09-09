@@ -254,7 +254,11 @@ function renderEmptyState(): HTMLElement {
 
   const examples = document.createElement('ul');
   examples.className = 'brands-empty__examples';
-  for (const key of ['brands.emptyExample1', 'brands.emptyExample2', 'brands.emptyExample3'] as const) {
+  for (const key of [
+    'brands.emptyExample1',
+    'brands.emptyExample2',
+    'brands.emptyExample3',
+  ] as const) {
     const item = document.createElement('li');
     item.textContent = t(key);
     examples.append(item);

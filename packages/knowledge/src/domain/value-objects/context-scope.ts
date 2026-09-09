@@ -56,6 +56,8 @@ export class ContextScope {
       return false;
     }
 
-    return leftKeys.every((key) => left[key as ContextDimension] === right[key as ContextDimension]);
+    return leftKeys.every(
+      (key) => left[key as ContextDimension] === right[key as ContextDimension],
+    );
   }
 }

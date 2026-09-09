@@ -15,7 +15,8 @@ import type { ActivityResponseProduct } from '../../src/presentation/map-activit
 import type { HistoryResponseProduct } from '../../src/presentation/map-history.js';
 
 const fetchHistory = vi.fn<(slug: string) => Promise<HistoryResponseProduct>>();
-const fetchActivity = vi.fn<(slug: string, options?: { limit?: number }) => Promise<ActivityResponseProduct>>();
+const fetchActivity =
+  vi.fn<(slug: string, options?: { limit?: number }) => Promise<ActivityResponseProduct>>();
 
 vi.mock('../../src/client/api/client.js', () => ({
   fetchHistory: (slug: string) => fetchHistory(slug),
@@ -100,8 +101,12 @@ describe('renderHome', () => {
     const main = document.querySelector('#main') as HTMLElement;
     renderHome(main);
 
-    expect(main.querySelector('#home-action-knowledge')?.textContent).toContain('Explorar conocimiento');
-    expect(main.querySelector('#home-action-brands')?.textContent).toContain('Trabajar con otra marca');
+    expect(main.querySelector('#home-action-knowledge')?.textContent).toContain(
+      'Explorar conocimiento',
+    );
+    expect(main.querySelector('#home-action-brands')?.textContent).toContain(
+      'Trabajar con otra marca',
+    );
     expect(main.querySelector('#home-action-activity')?.textContent).toContain('Ver actividad');
     expect(main.querySelector('#home-knowledge-cta')?.textContent).toContain('Buscar conocimiento');
     expect(main.querySelector('.home-action-grid')).not.toBeNull();
@@ -132,7 +137,7 @@ describe('renderHome', () => {
 
     expect(main.textContent).toContain('Todavía no hay preguntas en esta sesión');
     expect(main.textContent).toContain(
-      'Cuando hables con ATLAS, tus últimas preguntas aparecerán aquí mientras la aplicación siga abierta.',
+      'Cuando hables con ATLAS, tus últimas preguntas aparecerán aquí y se conservarán en esta marca.',
     );
   });
 

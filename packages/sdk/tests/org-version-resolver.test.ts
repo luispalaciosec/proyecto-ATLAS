@@ -7,10 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { createAtlas } from '../src/index.js';
 import { seedCase2WarrantyPolicy } from '../src/org/fixtures.js';
 import { parseWarrantyPolicy } from '../src/org/schemas/warranty-policy.js';
-import {
-  resolveCurrentWarrantyByCode,
-  resolvePolicyHistory,
-} from '../src/org/version-resolver.js';
+import { resolveCurrentWarrantyByCode, resolvePolicyHistory } from '../src/org/version-resolver.js';
 import { readEntityPayload } from '../src/org/entity-resolver.js';
 
 function createTestAtlas() {

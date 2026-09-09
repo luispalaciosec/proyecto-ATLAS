@@ -85,7 +85,11 @@ export async function createBrand(
   };
 
   if (!response.ok) {
-    throw new BrandApiError(payload.error ?? 'Unable to create brand', response.status, payload.technical);
+    throw new BrandApiError(
+      payload.error ?? 'Unable to create brand',
+      response.status,
+      payload.technical,
+    );
   }
 
   return payload;
@@ -127,7 +131,9 @@ export async function searchKnowledge(
   return payload;
 }
 
-export async function fetchKnowledgeFolders(slug: string): Promise<KnowledgeFoldersResponseProduct> {
+export async function fetchKnowledgeFolders(
+  slug: string,
+): Promise<KnowledgeFoldersResponseProduct> {
   const params = new URLSearchParams();
 
   if (slug !== 'default') {
@@ -302,7 +308,9 @@ export async function uploadKnowledgeDocument(
       let payload: KnowledgeUploadResponseProduct & { error?: string };
 
       try {
-        payload = JSON.parse(xhr.responseText) as KnowledgeUploadResponseProduct & { error?: string };
+        payload = JSON.parse(xhr.responseText) as KnowledgeUploadResponseProduct & {
+          error?: string;
+        };
       } catch {
         report('error', 0);
         reject(new Error('Knowledge upload failed'));
@@ -336,10 +344,7 @@ export async function uploadKnowledgeDocument(
   });
 }
 
-export async function sendChatMessage(
-  slug: string,
-  goal: string,
-): Promise<ChatApiPayload> {
+export async function sendChatMessage(slug: string, goal: string): Promise<ChatApiPayload> {
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },

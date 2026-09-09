@@ -31,7 +31,10 @@ describe('Atlas SDK plan integration', () => {
     const workflowResult = atlas.workflow.compileDefinition(planning.workflow!);
     expect(workflowResult.success).toBe(true);
 
-    const units = atlas.workflow.projectForCompilation(workflowResult.pipeline!, planning.workflow!);
+    const units = atlas.workflow.projectForCompilation(
+      workflowResult.pipeline!,
+      planning.workflow!,
+    );
     const compileResult = await atlas.compiler.compile({ units: [...units] });
     const executionResult = await atlas.runtime.execute({
       artifacts: compileResult.context.artifacts,

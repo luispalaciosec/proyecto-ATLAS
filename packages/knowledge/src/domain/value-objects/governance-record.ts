@@ -28,7 +28,10 @@ export class GovernanceRecord {
 
   static create(data: GovernanceRecordData): GovernanceRecord {
     if (!data.owner) {
-      throw createKnowledgeError('KNOWLEDGE_INVALID_GOVERNANCE', 'GovernanceRecord requires an owner');
+      throw createKnowledgeError(
+        'KNOWLEDGE_INVALID_GOVERNANCE',
+        'GovernanceRecord requires an owner',
+      );
     }
 
     return new GovernanceRecord(data);

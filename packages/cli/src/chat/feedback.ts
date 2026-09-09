@@ -1,30 +1,23 @@
 import type { Atlas } from '@atlas/sdk';
+import {
+  recordFeedbackCorrection,
+  type FeedbackLastTurn,
+  type RecordFeedbackCorrectionOptions,
+  type RecordFeedbackCorrectionResult,
+} from '@atlas/sdk';
 
-export interface LastTurn {
-  readonly goal: string;
-  readonly output: string;
-}
-
-export interface RecordFeedbackResult {
-  readonly recordId: string;
-}
+export type {
+  FeedbackLastTurn as LastTurn,
+  RecordFeedbackCorrectionResult as RecordFeedbackResult,
+};
 
 export async function recordFeedback(
   client: Atlas,
-  lastTurn: LastTurn,
+  lastTurn: FeedbackLastTurn,
   correction: string,
-): Promise<RecordFeedbackResult> {
-  const result = await client.memory.storeContent({
-    content: correction,
-    recordType: 'Feedback',
-    metadata: Object.freeze({
-      originalGoal: lastTurn.goal,
-      originalOutput: lastTurn.output,
-      source: 'atlas-correct',
-    }),
-  });
-
-  return Object.freeze({ recordId: result.recordId });
+  options: RecordFeedbackCorrectionOptions = {},
+): Promise<RecordFeedbackCorrectionResult> {
+  return recordFeedbackCorrection(client, lastTurn, correction, options);
 }
 
 export function parseCorrectCommand(line: string): string | null {

@@ -12,10 +12,7 @@ import { EMPTY_EXTRACTION_MESSAGE } from '../src/lib/knowledge-upload/constants.
 import { createWebServer } from '../src/server.js';
 import { SessionStore } from '../src/session-store.js';
 import { readFixture, createXlsxFixture } from './fixtures/fixture-utils.js';
-import {
-  loadOrCreateBrandProfile,
-  resolveWorkspacePaths,
-} from '@atlas/cli';
+import { loadOrCreateBrandProfile, resolveWorkspacePaths } from '@atlas/cli';
 
 const originalFetch = globalThis.fetch;
 
@@ -42,10 +39,7 @@ function stubLlmFetch(
   );
 }
 
-async function withServer<T>(
-  app: Express,
-  run: (baseUrl: string) => Promise<T>,
-): Promise<T> {
+async function withServer<T>(app: Express, run: (baseUrl: string) => Promise<T>): Promise<T> {
   let server: Server | undefined;
 
   try {
@@ -170,8 +164,9 @@ describe('createWebServer', () => {
     process.env.ATLAS_LLM_API_KEY = 'test-key';
     process.env.ATLAS_LLM_MODEL = 'claude-test-model';
 
-    stubLlmFetch(async () =>
-      new Response(
+    stubLlmFetch(
+      async () =>
+        new Response(
           JSON.stringify({
             content: [{ type: 'text', text: 'Draft campaign copy.' }],
             stop_reason: 'end_turn',
@@ -209,57 +204,59 @@ describe('createWebServer', () => {
 
     let fetchCalls = 0;
     stubLlmFetch(async (_url, init) => {
-        fetchCalls += 1;
-        const body = JSON.parse(String(init?.body)) as { messages?: Array<{ role: string; content: unknown }> };
-        const lastUserMessage = [...(body.messages ?? [])]
-          .reverse()
-          .find((message) => message.role === 'user');
-        const goal = typeof lastUserMessage?.content === 'string' ? lastUserMessage.content : '';
+      fetchCalls += 1;
+      const body = JSON.parse(String(init?.body)) as {
+        messages?: Array<{ role: string; content: unknown }>;
+      };
+      const lastUserMessage = [...(body.messages ?? [])]
+        .reverse()
+        .find((message) => message.role === 'user');
+      const goal = typeof lastUserMessage?.content === 'string' ? lastUserMessage.content : '';
 
-        if (goal.includes('remember geeks-only-secret')) {
-          return new Response(
-            JSON.stringify({
-              content: [
-                {
-                  type: 'tool_use',
-                  id: 'toolu_store',
-                  name: 'memory_store',
-                  input: { content: 'geeks-only-secret', recordType: 'Note' },
-                },
-              ],
-              stop_reason: 'tool_use',
-              usage: { input_tokens: 1, output_tokens: 1 },
-            }),
-            { status: 200, headers: { 'content-type': 'application/json' } },
-          );
-        }
-
-        if (goal.includes('search for geeks-only-secret')) {
-          return new Response(
-            JSON.stringify({
-              content: [
-                {
-                  type: 'tool_use',
-                  id: 'toolu_search',
-                  name: 'memory_search',
-                  input: { query: 'geeks-only-secret' },
-                },
-              ],
-              stop_reason: 'tool_use',
-              usage: { input_tokens: 1, output_tokens: 1 },
-            }),
-            { status: 200, headers: { 'content-type': 'application/json' } },
-          );
-        }
-
+      if (goal.includes('remember geeks-only-secret')) {
         return new Response(
           JSON.stringify({
-            content: [{ type: 'text', text: 'Acknowledged.' }],
-            stop_reason: 'end_turn',
+            content: [
+              {
+                type: 'tool_use',
+                id: 'toolu_store',
+                name: 'memory_store',
+                input: { content: 'geeks-only-secret', recordType: 'Note' },
+              },
+            ],
+            stop_reason: 'tool_use',
             usage: { input_tokens: 1, output_tokens: 1 },
           }),
           { status: 200, headers: { 'content-type': 'application/json' } },
         );
+      }
+
+      if (goal.includes('search for geeks-only-secret')) {
+        return new Response(
+          JSON.stringify({
+            content: [
+              {
+                type: 'tool_use',
+                id: 'toolu_search',
+                name: 'memory_search',
+                input: { query: 'geeks-only-secret' },
+              },
+            ],
+            stop_reason: 'tool_use',
+            usage: { input_tokens: 1, output_tokens: 1 },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          content: [{ type: 'text', text: 'Acknowledged.' }],
+          stop_reason: 'end_turn',
+          usage: { input_tokens: 1, output_tokens: 1 },
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      );
     });
 
     writeFileSync(
@@ -434,15 +431,16 @@ describe('createWebServer', () => {
     process.env.ATLAS_LLM_API_KEY = 'test-key';
     process.env.ATLAS_LLM_MODEL = 'claude-test-model';
 
-    stubLlmFetch(async () =>
-      new Response(
-        JSON.stringify({
-          content: [{ type: 'text', text: 'Hola desde ATLAS.' }],
-          stop_reason: 'end_turn',
-          usage: { input_tokens: 1, output_tokens: 1 },
-        }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      ),
+    stubLlmFetch(
+      async () =>
+        new Response(
+          JSON.stringify({
+            content: [{ type: 'text', text: 'Hola desde ATLAS.' }],
+            stop_reason: 'end_turn',
+            usage: { input_tokens: 1, output_tokens: 1 },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
     );
 
     const app = createWebServer();
@@ -877,7 +875,9 @@ describe('createWebServer', () => {
       expect(upload.status).toBe(200);
 
       for (const term of ['Ferreteria', 'Taladro', '45000', 'Comercial', 'Sierra']) {
-        const search = await fetch(`${baseUrl}/api/knowledge/search?query=${encodeURIComponent(term)}`);
+        const search = await fetch(
+          `${baseUrl}/api/knowledge/search?query=${encodeURIComponent(term)}`,
+        );
         expect(search.status).toBe(200);
         const searchPayload = (await search.json()) as { total: number };
         expect(searchPayload.total).toBeGreaterThan(0);
@@ -948,7 +948,9 @@ describe('createWebServer', () => {
       const formData = new FormData();
       formData.append(
         'file',
-        new Blob([Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04])], { type: 'application/octet-stream' }),
+        new Blob([Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04])], {
+          type: 'application/octet-stream',
+        }),
         'corrupto.xlsx',
       );
 
@@ -1001,8 +1003,14 @@ describe('createWebServer', () => {
       expect(v1Search.status).toBe(200);
       expect(v2Search.status).toBe(200);
 
-      const v1Payload = (await v1Search.json()) as { total: number; records: Array<{ timestamp?: string }> };
-      const v2Payload = (await v2Search.json()) as { total: number; records: Array<{ timestamp?: string }> };
+      const v1Payload = (await v1Search.json()) as {
+        total: number;
+        records: Array<{ timestamp?: string }>;
+      };
+      const v2Payload = (await v2Search.json()) as {
+        total: number;
+        records: Array<{ timestamp?: string }>;
+      };
 
       expect(v1Payload.total).toBeGreaterThan(0);
       expect(v2Payload.total).toBeGreaterThan(0);
@@ -1082,11 +1090,7 @@ describe('createWebServer', () => {
 
       await withServer(app, async (baseUrl) => {
         const formData = new FormData();
-        formData.append(
-          'file',
-          new Blob(['%PDF'], { type: 'application/pdf' }),
-          'escaneado.pdf',
-        );
+        formData.append('file', new Blob(['%PDF'], { type: 'application/pdf' }), 'escaneado.pdf');
 
         const response = await fetch(`${baseUrl}/api/knowledge/upload`, {
           method: 'POST',
@@ -1156,15 +1160,16 @@ describe('createWebServer', () => {
     process.env.ATLAS_LLM_API_KEY = 'test-key';
     process.env.ATLAS_LLM_MODEL = 'claude-test-model';
 
-    stubLlmFetch(async () =>
-      new Response(
-        JSON.stringify({
-          content: [{ type: 'text', text: 'Respuesta previa.' }],
-          stop_reason: 'end_turn',
-          usage: { input_tokens: 1, output_tokens: 1 },
-        }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      ),
+    stubLlmFetch(
+      async () =>
+        new Response(
+          JSON.stringify({
+            content: [{ type: 'text', text: 'Respuesta previa.' }],
+            stop_reason: 'end_turn',
+            usage: { input_tokens: 1, output_tokens: 1 },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
     );
 
     const app = createWebServer();
@@ -1224,7 +1229,7 @@ describe('createWebServer', () => {
 
   it('returns controlled error when activity cannot be loaded', async () => {
     const brokenStore = {
-      getActivity: vi.fn(() => {
+      getActivityWithGovernance: vi.fn(async () => {
         throw new Error('activity unavailable');
       }),
     } as unknown as SessionStore;

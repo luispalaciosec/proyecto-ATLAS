@@ -2,14 +2,8 @@ import mammoth from 'mammoth';
 import JSZip from 'jszip';
 import { PDFParse } from 'pdf-parse';
 
-import {
-  EMPTY_EXTRACTION_MESSAGE,
-  type SupportedExtension,
-} from './constants.js';
-import {
-  extractExcelWorkbook,
-  flattenExcelWorkbook,
-} from './extract-excel.js';
+import { EMPTY_EXTRACTION_MESSAGE, type SupportedExtension } from './constants.js';
+import { extractExcelWorkbook, flattenExcelWorkbook } from './extract-excel.js';
 import { KnowledgeUploadError } from './upload-errors.js';
 
 function stripXmlText(xml: string): string {
@@ -67,7 +61,10 @@ async function extractDocxText(buffer: Buffer): Promise<string> {
 }
 
 function extractPlainText(buffer: Buffer): string {
-  return buffer.toString('utf8').replace(/^\uFEFF/, '').trim();
+  return buffer
+    .toString('utf8')
+    .replace(/^\uFEFF/, '')
+    .trim();
 }
 
 export async function extractTextFromBuffer(

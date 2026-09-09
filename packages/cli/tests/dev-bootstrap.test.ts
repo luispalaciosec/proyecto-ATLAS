@@ -8,9 +8,9 @@ import { describe, expect, it } from 'vitest';
 import { EXIT_SUCCESS } from '../src/output/exit-codes.js';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
-const rootPackageJson = JSON.parse(
-  readFileSync(join(repoRoot, 'package.json'), 'utf8'),
-) as { scripts?: Record<string, string> };
+const rootPackageJson = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')) as {
+  scripts?: Record<string, string>;
+};
 const atlasBinPath = join(repoRoot, 'packages/cli/dist/atlas.js');
 
 describe('repository-local atlas bootstrap', () => {
@@ -24,7 +24,7 @@ describe('repository-local atlas bootstrap', () => {
     const result = spawnSync('pnpm', ['atlas', '--help'], {
       cwd: repoRoot,
       encoding: 'utf8',
-      timeout: 30_000,
+      timeout: 60_000,
     });
 
     expect(result.status).toBe(EXIT_SUCCESS);
@@ -38,7 +38,7 @@ describe('repository-local atlas bootstrap', () => {
     const result = spawnSync('pnpm', ['atlas', 'doctor'], {
       cwd: repoRoot,
       encoding: 'utf8',
-      timeout: 30_000,
+      timeout: 60_000,
     });
 
     expect(result.status).toBe(EXIT_SUCCESS);

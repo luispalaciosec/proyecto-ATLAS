@@ -45,21 +45,32 @@ import {
   formatUnsupportedExtensionMessage,
   resolveSupportedExtension,
 } from './lib/knowledge-upload/constants.js';
-import {
-  extractExcelWorkbook,
-  isExcelExtension,
-} from './lib/knowledge-upload/extract-excel.js';
-import {
-  assertExtractedText,
-  extractTextFromBuffer,
-} from './lib/knowledge-upload/extract-text.js';
+import { extractExcelWorkbook, isExcelExtension } from './lib/knowledge-upload/extract-excel.js';
+import { assertExtractedText, extractTextFromBuffer } from './lib/knowledge-upload/extract-text.js';
 import { KnowledgeUploadError } from './lib/knowledge-upload/upload-errors.js';
+import {
+  prepareIngestedDocumentKnowledge,
+  storeIngestedDocumentChunk,
+  storeIngestedDocumentKnowledgeObject,
+} from '@atlas/sdk';
 import {
   mapActivityEventsToProduct,
   type ActivityItemType,
   type ActivityResponseProduct,
   type RawActivityEvent,
 } from './presentation/map-activity.js';
+import {
+  createInitialConversationMetadata,
+  readPersistedConversation,
+  writePersistedConversation,
+} from './lib/web-persistence/conversation-store.js';
+import {
+  readPersistedActivity,
+  writePersistedActivity,
+} from './lib/web-persistence/activity-store.js';
+import { deriveGovernanceActivityEvents } from './lib/web-persistence/governance-activity.js';
+import type { UiHistoryMessage } from './lib/web-persistence/types.js';
+import { resolveWebWorkspacesRoot } from './lib/web-persistence/workspace-storage-paths.js';
 import {
   BrandDuplicateError,
   BrandReservedError,
@@ -73,8 +84,6 @@ import {
   type RawBrandProfile,
   type RawBrandRecord,
 } from './presentation/map-brand.js';
-
-const MAX_BRAND_NAME_LENGTH = 120;
 
 interface ChatActivityPayload {
   readonly mode?: 'llm' | 'deterministic';
@@ -92,9 +101,12 @@ interface CorrectionActivityOutcome {
   readonly recordId?: string;
 }
 
-export interface UiHistoryMessage {
-  readonly role: 'user' | 'assistant';
-  readonly content: string;
+export type { UiHistoryMessage };
+
+const MAX_BRAND_NAME_LENGTH = 120;
+
+function createChatSessionId(): string {
+  return `chat.${Date.now()}.${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export class SessionStore {
@@ -102,6 +114,12 @@ export class SessionStore {
   readonly #sessions = new Map<string, ChatSessionState>();
   readonly #deterministicHistory = new Map<string, UiHistoryMessage[]>();
   readonly #activityLog = new Map<string, RawActivityEvent[]>();
+  readonly #historyTimestamps = new Map<string, Map<number, string>>();
+  readonly #conversationMeta = new Map<
+    string,
+    { readonly conversationId: string; readonly createdAt: string }
+  >();
+  readonly #bootstrappedWorkspaces = new Set<string>();
 
   #createActivityId(): string {
     return `activity.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`;
@@ -110,13 +128,163 @@ export class SessionStore {
   #appendActivity(workspaceKey: string | undefined, event: RawActivityEvent): void {
     const key = workspaceKey?.trim() || 'default';
     const existing = this.#activityLog.get(key) ?? [];
-    this.#activityLog.set(key, [event, ...existing].slice(0, 200));
+    const merged = [event, ...existing.filter((entry) => entry.id !== event.id)].slice(0, 200);
+    this.#activityLog.set(key, merged);
+    writePersistedActivity(key, merged);
   }
 
-  recordConversationActivity(
-    workspaceKey: string | undefined,
-    payload: ChatActivityPayload,
+  #bootstrapWorkspace(workspaceKey: string | undefined): void {
+    const key = workspaceKey?.trim() || 'default';
+
+    if (this.#bootstrappedWorkspaces.has(key)) {
+      return;
+    }
+
+    const persistedConversation = readPersistedConversation(key);
+
+    if (persistedConversation !== undefined) {
+      this.#conversationMeta.set(key, {
+        conversationId: persistedConversation.conversationId,
+        createdAt: persistedConversation.createdAt,
+      });
+
+      if (persistedConversation.deterministicHistory.length > 0) {
+        this.#deterministicHistory.set(
+          key,
+          persistedConversation.deterministicHistory.map((message) =>
+            Object.freeze({
+              role: message.role,
+              content: message.content,
+            }),
+          ),
+        );
+      }
+    } else {
+      this.#conversationMeta.set(key, createInitialConversationMetadata(key));
+    }
+
+    const persistedActivity = readPersistedActivity(key);
+    this.#activityLog.set(key, [...persistedActivity]);
+
+    this.#bootstrappedWorkspaces.add(key);
+  }
+
+  #applyPersistedConversation(
+    session: ChatSessionState,
+    persisted: NonNullable<ReturnType<typeof readPersistedConversation>>,
   ): void {
+    session.turnCount = persisted.turnCount;
+    session.history.splice(0, session.history.length, ...persisted.history);
+    session.turnBoundaries.splice(0, session.turnBoundaries.length, ...persisted.turnBoundaries);
+    session.lastTurn = persisted.lastTurn;
+    session.lastMemorySessionId = persisted.lastMemorySessionId;
+
+    const stamps = new Map<number, string>();
+
+    for (const [index, message] of persisted.deterministicHistory.entries()) {
+      stamps.set(index, message.createdAt);
+    }
+
+    for (let index = 0; index < persisted.history.length; index += 1) {
+      const message = persisted.history[index];
+
+      if (message === undefined || (message.role !== 'user' && message.role !== 'assistant')) {
+        continue;
+      }
+
+      const persistedMessage = persisted.deterministicHistory.find(
+        (entry) => entry.role === message.role && entry.content.trim() === message.content.trim(),
+      );
+
+      if (persistedMessage !== undefined) {
+        stamps.set(index, persistedMessage.createdAt);
+      }
+    }
+
+    this.#historyTimestamps.set(persisted.workspace, stamps);
+  }
+
+  persistSession(workspaceKey: string | undefined, session: ChatSessionState): void {
+    const key = workspaceKey?.trim() || 'default';
+    this.#bootstrapWorkspace(key);
+
+    const meta = this.#conversationMeta.get(key) ?? createInitialConversationMetadata(key);
+    this.#conversationMeta.set(key, meta);
+
+    const stamps = this.#historyTimestamps.get(key) ?? new Map<number, string>();
+    const now = new Date().toISOString();
+
+    for (let index = 0; index < session.history.length; index += 1) {
+      if (!stamps.has(index)) {
+        stamps.set(index, now);
+      }
+    }
+
+    this.#historyTimestamps.set(key, stamps);
+
+    writePersistedConversation({
+      workspaceKey: key,
+      brand: key === 'default' ? undefined : key,
+      conversationId: meta.conversationId,
+      createdAt: meta.createdAt,
+      sessionId: session.sessionId,
+      turnCount: session.turnCount,
+      ...(session.lastMemorySessionId !== undefined
+        ? { lastMemorySessionId: session.lastMemorySessionId }
+        : {}),
+      history: session.history,
+      turnBoundaries: session.turnBoundaries,
+      ...(session.lastTurn !== undefined ? { lastTurn: session.lastTurn } : {}),
+      deterministicHistory: this.#deterministicHistory.get(key) ?? [],
+      historyTimestamps: stamps,
+    });
+  }
+
+  #persistDeterministicConversation(workspaceKey: string | undefined): void {
+    const key = workspaceKey?.trim() || 'default';
+    const session = this.#sessions.get(key);
+
+    if (session === undefined) {
+      const meta = this.#conversationMeta.get(key) ?? createInitialConversationMetadata(key);
+      writePersistedConversation({
+        workspaceKey: key,
+        brand: key === 'default' ? undefined : key,
+        conversationId: meta.conversationId,
+        createdAt: meta.createdAt,
+        sessionId: createChatSessionId(),
+        turnCount: 0,
+        history: Object.freeze([]),
+        turnBoundaries: Object.freeze([]),
+        deterministicHistory: this.#deterministicHistory.get(key) ?? [],
+        historyTimestamps: new Map<number, string>(),
+      });
+      return;
+    }
+
+    this.persistSession(workspaceKey, session);
+  }
+
+  async #mergeGovernanceActivity(workspaceKey: string | undefined): Promise<void> {
+    const key = workspaceKey?.trim() || 'default';
+    const session = await this.getOrCreate(workspaceKey);
+    const derived = await deriveGovernanceActivityEvents(session.client, key);
+    const existing = this.#activityLog.get(key) ?? [];
+    const merged = [...derived, ...existing];
+    const byId = new Map<string, RawActivityEvent>();
+
+    for (const event of merged) {
+      byId.set(event.id, event);
+    }
+
+    this.#activityLog.set(
+      key,
+      [...byId.values()].sort(
+        (left, right) => Date.parse(right.occurredAt) - Date.parse(left.occurredAt),
+      ),
+    );
+  }
+
+  recordConversationActivity(workspaceKey: string | undefined, payload: ChatActivityPayload): void {
     const workspace = workspaceKey?.trim() || 'default';
     const success = payload.success !== false;
     const status: RawActivityEvent['status'] = success ? 'success' : 'warning';
@@ -221,13 +389,26 @@ export class SessionStore {
     options?: { limit?: number; type?: ActivityItemType },
   ): ActivityResponseProduct {
     const key = workspaceKey?.trim() || 'default';
+    this.#bootstrapWorkspace(key);
+
     const events = this.#activityLog.get(key) ?? [];
 
     return mapActivityEventsToProduct(key, events, options);
   }
 
+  async getActivityWithGovernance(
+    workspaceKey: string | undefined,
+    options?: { limit?: number; type?: ActivityItemType },
+  ): Promise<ActivityResponseProduct> {
+    this.#bootstrapWorkspace(workspaceKey);
+    await this.#mergeGovernanceActivity(workspaceKey);
+
+    return this.getActivity(workspaceKey, options);
+  }
+
   async getOrCreate(workspaceKey: string | undefined): Promise<ChatSessionState> {
     const key = workspaceKey?.trim() || 'default';
+    this.#bootstrapWorkspace(key);
 
     const existing = this.#sessions.get(key);
 
@@ -240,14 +421,20 @@ export class SessionStore {
         ? this.#atlasService.createMemoryClient()
         : await this.#buildBrandClient(key);
 
-    const session = createChatSession(client);
+    const persisted = readPersistedConversation(key);
+    const session = createChatSession(client, persisted?.sessionId ?? createChatSessionId());
+
+    if (persisted !== undefined) {
+      this.#applyPersistedConversation(session, persisted);
+    }
+
     this.#sessions.set(key, session);
 
     return session;
   }
 
   async #buildBrandClient(slug: string) {
-    const paths = resolveWorkspacePaths(slug);
+    const paths = resolveWorkspacePaths(slug, resolveWebWorkspacesRoot());
     const profile = loadOrCreateBrandProfile(paths, slug);
     const feedbackContext = await loadRecentFeedbackContext(paths.memoryFilePath);
     const contextPrompt = combineBrandContextPrompt(
@@ -275,6 +462,8 @@ export class SessionStore {
       { role: 'user', content: userContent.trim() },
       { role: 'assistant', content: assistantContent.trim() },
     ]);
+
+    this.#persistDeterministicConversation(workspaceKey);
   }
 
   getConversationHistory(
@@ -282,12 +471,24 @@ export class SessionStore {
     workspaceKey: string | undefined,
   ): HistoryResponseProduct {
     const key = workspaceKey?.trim() || 'default';
-    const fromSession = session.history.map((message) => ({
-      role: message.role,
-      content: message.content,
-    }));
+    this.#bootstrapWorkspace(key);
+    const stamps = this.#historyTimestamps.get(key) ?? new Map<number, string>();
 
-    if (fromSession.some((message) => message.content.trim().length > 0)) {
+    const fromSession = session.history
+      .map((message, index) =>
+        Object.freeze({
+          role: message.role,
+          content: message.content,
+          ...(stamps.has(index) ? { createdAt: stamps.get(index) } : {}),
+        }),
+      )
+      .filter(
+        (message) =>
+          (message.role === 'user' || message.role === 'assistant') &&
+          message.content.trim().length > 0,
+      );
+
+    if (fromSession.length > 0) {
       return mapSessionHistoryToProduct(
         key,
         fromSession,
@@ -295,7 +496,16 @@ export class SessionStore {
       );
     }
 
-    const deterministic = this.#deterministicHistory.get(key) ?? [];
+    const persisted = readPersistedConversation(key);
+    const deterministic =
+      persisted?.deterministicHistory ??
+      (this.#deterministicHistory.get(key) ?? []).map((message, index) =>
+        Object.freeze({
+          role: message.role,
+          content: message.content,
+          createdAt: new Date(Date.parse('2026-01-01T00:00:00.000Z') + index * 1000).toISOString(),
+        }),
+      );
 
     return mapSessionHistoryToProduct(key, deterministic, false);
   }
@@ -316,7 +526,7 @@ export class SessionStore {
     }
 
     const session = await this.getOrCreate(workspaceKey);
-    const result = await session.client.memory.searchContent({ query: trimmedQuery });
+    const result = await session.client.retrieval.searchContent({ query: trimmedQuery });
 
     return mapKnowledgeSearchToProduct(key, result);
   }
@@ -327,10 +537,7 @@ export class SessionStore {
   ): Promise<KnowledgeDocumentsResponseProduct> {
     const key = workspaceKey?.trim() || 'default';
     const session = await this.getOrCreate(workspaceKey);
-    const result = await session.client.memory.searchContent({
-      query: '',
-      recordType: 'document',
-    });
+    const result = await session.client.memory.listRecords({ recordType: 'document' });
     const mapped = mapKnowledgeDocumentsToProduct(key, result.records, folderFilter);
     const folders = mergeKnowledgeFolderLists(
       listStoredKnowledgeFolders(workspaceKey),
@@ -386,6 +593,17 @@ export class SessionStore {
     const folder = resolveKnowledgeFolder(folderInput);
     const documentId = this.#createKnowledgeDocumentId();
     registerKnowledgeFolderIfMissing(workspaceKey, folder);
+    const workspace = workspaceKey?.trim() || 'default';
+    const ingest = prepareIngestedDocumentKnowledge({
+      documentId,
+      fileName,
+      fileType: extension,
+      folder,
+      workspace,
+      uploadedAt,
+    });
+
+    await storeIngestedDocumentKnowledgeObject(session.client.memory, ingest);
 
     if (isExcelExtension(extension)) {
       const workbook = extractExcelWorkbook(buffer, fileName);
@@ -402,24 +620,18 @@ export class SessionStore {
           continue;
         }
 
-        const stored = await session.client.memory.storeContent({
+        const stored = await storeIngestedDocumentChunk(session.client.memory, {
+          ingest,
           content: excelChunk.content,
-          recordType: 'document',
-          metadata: Object.freeze({
-            source: 'upload',
-            documentId,
-            fileName,
-            fileType: extension,
-            folder,
+          chunk: {
             chunkIndex: index,
             totalChunks: excelChunks.length,
-            uploadedAt,
             sheetName: excelChunk.sheetName,
             sheetIndex: excelChunk.sheetIndex,
             totalSheets: excelChunk.totalSheets,
             rowStart: excelChunk.rowStart,
             rowEnd: excelChunk.rowEnd,
-          }),
+          },
         });
 
         recordIds.push(stored.recordId);
@@ -451,19 +663,13 @@ export class SessionStore {
         continue;
       }
 
-      const stored = await session.client.memory.storeContent({
+      const stored = await storeIngestedDocumentChunk(session.client.memory, {
+        ingest,
         content: chunkTextValue,
-        recordType: 'document',
-        metadata: Object.freeze({
-          source: 'upload',
-          documentId,
-          fileName,
-          fileType: extension,
-          folder,
+        chunk: {
           chunkIndex: index,
           totalChunks: chunks.length,
-          uploadedAt,
-        }),
+        },
       });
 
       recordIds.push(stored.recordId);
@@ -544,7 +750,7 @@ export class SessionStore {
         rules: [],
       };
     } else {
-      const paths = resolveWorkspacePaths(id);
+      const paths = resolveWorkspacePaths(id, resolveWebWorkspacesRoot());
       profile = this.#toRawBrandProfile(loadOrCreateBrandProfile(paths, id));
     }
 
@@ -553,13 +759,13 @@ export class SessionStore {
 
     try {
       const session = await this.getOrCreate(workspaceKey);
-      const result = await session.client.memory.searchContent({ query: '' });
-      knowledgeCount = result.total;
+      const result = await session.client.memory.listRecords();
+      knowledgeCount = result.records.filter((record) => record.type !== 'KnowledgeObject').length;
     } catch {
       knowledgeCount = undefined;
     }
 
-    const activity = this.getActivity(workspaceKey, { limit: 3 });
+    const activity = await this.getActivityWithGovernance(workspaceKey, { limit: 3 });
     const recentActivity = activity.items.length > 0 ? activity.items : undefined;
 
     return {
@@ -574,7 +780,7 @@ export class SessionStore {
     const active = this.#normalizeBrandId(activeBrandId);
     const records: RawBrandRecord[] = [await this.#buildBrandRecord('default')];
 
-    for (const slug of listWorkspaces()) {
+    for (const slug of listWorkspaces(resolveWebWorkspacesRoot())) {
       records.push(await this.#buildBrandRecord(slug));
     }
 
@@ -591,18 +797,19 @@ export class SessionStore {
     let paths: WorkspacePaths;
 
     try {
-      paths = resolveWorkspacePaths(trimmedName);
+      paths = resolveWorkspacePaths(trimmedName, resolveWebWorkspacesRoot());
     } catch {
       throw new BrandValidationError('Revisa el nombre e inténtalo nuevamente.');
     }
 
     const slug = paths.slug;
+    const workspacesRoot = resolveWebWorkspacesRoot();
 
     if (slug === 'default') {
       throw new BrandReservedError();
     }
 
-    if (listWorkspaces().includes(slug)) {
+    if (listWorkspaces(workspacesRoot).includes(slug)) {
       throw new BrandDuplicateError();
     }
 

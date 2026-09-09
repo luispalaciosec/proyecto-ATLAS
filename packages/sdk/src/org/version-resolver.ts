@@ -68,9 +68,7 @@ export async function resolveCurrentPolicy(
 
   const payload = readEntityPayload(currentRecord);
   const content =
-    recordType === 'WarrantyPolicy'
-      ? parseWarrantyPolicy(payload)
-      : parseDiscountPolicy(payload);
+    recordType === 'WarrantyPolicy' ? parseWarrantyPolicy(payload) : parseDiscountPolicy(payload);
 
   return Object.freeze({
     record: currentRecord,
@@ -83,7 +81,9 @@ export async function resolveCurrentPolicy(
 export async function resolvePolicyHistory(
   atlas: Atlas,
   recordId: string,
-): Promise<readonly { readonly revision: number; readonly content: unknown; readonly author: string }[]> {
+): Promise<
+  readonly { readonly revision: number; readonly content: unknown; readonly author: string }[]
+> {
   const historyRecords = await getEntityHistory(atlas, recordId);
 
   return Object.freeze(

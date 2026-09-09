@@ -39,7 +39,9 @@ describe('knowledge upload helpers', () => {
 
   it('formats unsupported extension messages', () => {
     expect(formatUnsupportedExtensionMessage('zip')).toContain('.zip');
-    expect(formatUnsupportedExtensionMessage('zip')).toContain('pdf, docx, pptx, txt, md, xls, xlsx');
+    expect(formatUnsupportedExtensionMessage('zip')).toContain(
+      'pdf, docx, pptx, txt, md, xls, xlsx',
+    );
   });
 
   it('chunks long text on paragraph boundaries', () => {

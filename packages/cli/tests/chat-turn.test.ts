@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createAtlas } from '@atlas/sdk';
+import { AtlasContextBuilder, createAtlas } from '@atlas/sdk';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -88,20 +88,22 @@ describe('executeChatTurn history window', () => {
     });
     const session = createChatSession(client);
     const atlasService = new AtlasService();
-    const askSpy = vi.spyOn(session.client.llm, 'ask').mockImplementation(async (_goal, _options) => {
-      const turn = askSpy.mock.calls.length;
+    const askSpy = vi
+      .spyOn(session.client.llm, 'ask')
+      .mockImplementation(async (_goal, _options) => {
+        const turn = askSpy.mock.calls.length;
 
-      return Object.freeze({
-        success: true,
-        finalMessage: `Reply ${turn}`,
-        transcript: Object.freeze([
-          Object.freeze({ role: 'assistant' as const, content: `Reply ${turn}` }),
-        ]),
-        turns: 1,
-        usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
-        budgetExceeded: false,
+        return Object.freeze({
+          success: true,
+          finalMessage: `Reply ${turn}`,
+          transcript: Object.freeze([
+            Object.freeze({ role: 'assistant' as const, content: `Reply ${turn}` }),
+          ]),
+          turns: 1,
+          usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+          budgetExceeded: false,
+        });
       });
-    });
 
     for (let turn = 1; turn <= 6; turn += 1) {
       await executeChatTurn(atlasService, session, `Goal ${turn}`);
@@ -122,10 +124,53 @@ describe('executeChatTurn history window', () => {
     expect(sentHistory.some((message) => message.content === 'Reply 5')).toBe(true);
     expect(sentHistory.find((message) => message.content === 'Goal 2')?.role).toBe('user');
 
-    expect(selectRecentTurns(session, DEFAULT_HISTORY_WINDOW_TURNS).some((message) => message.content === 'Goal 1')).toBe(
-      false,
+    expect(
+      selectRecentTurns(session, DEFAULT_HISTORY_WINDOW_TURNS).some(
+        (message) => message.content === 'Goal 1',
+      ),
+    ).toBe(false);
+
+    askSpy.mockRestore();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('INT-004-G: executeChatTurn builds context through AtlasContextBuilder before llm.ask', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'atlas-chat-turn-context-'));
+    const client = createAtlas({
+      workspace: { name: 'brand-geeks' },
+      memory: { storageFilePath: join(dir, 'memory.json') },
+      llm: { apiKey: 'test-key', model: 'claude-test' },
+    });
+    const session = createChatSession(client);
+    const atlasService = new AtlasService();
+    const buildSpy = vi.spyOn(AtlasContextBuilder, 'build');
+    const askSpy = vi.spyOn(session.client.llm, 'ask').mockResolvedValue(
+      Object.freeze({
+        success: true,
+        finalMessage: 'Reply',
+        transcript: Object.freeze([
+          Object.freeze({ role: 'assistant' as const, content: 'Reply' }),
+        ]),
+        turns: 1,
+        usage: Object.freeze({ inputTokens: 1, outputTokens: 1 }),
+        budgetExceeded: false,
+      }),
     );
 
+    await executeChatTurn(atlasService, session, 'Goal with builder');
+
+    expect(buildSpy).toHaveBeenCalledTimes(1);
+    expect(askSpy).toHaveBeenCalledWith(
+      'Goal with builder',
+      expect.objectContaining({
+        contextPackage: expect.objectContaining({
+          goal: 'Goal with builder',
+          workspace: 'brand-geeks',
+        }),
+      }),
+    );
+
+    buildSpy.mockRestore();
     askSpy.mockRestore();
     rmSync(dir, { recursive: true, force: true });
   });

@@ -1,8 +1,5 @@
 import { formatWorkingContext } from '../lib/brand-context.js';
-import {
-  renderCompletedReasoningSummary,
-  startSimulatedReasoning,
-} from '../lib/chat-reasoning.js';
+import { renderCompletedReasoningSummary, startSimulatedReasoning } from '../lib/chat-reasoning.js';
 import { copyTextToClipboard } from '../lib/copy-text.js';
 import { renderMessageMetrics } from '../lib/format-chat-metrics.js';
 import { appendExpandableDetails } from '../lib/expandable-details.js';
@@ -288,7 +285,11 @@ function renderMessageElement(message: UiChatMessage): HTMLElement {
     element.textContent = message.text;
   }
 
-  if (message.kind === 'assistant' && message.id === lastCorrectableMessageId && getState().canCorrect) {
+  if (
+    message.kind === 'assistant' &&
+    message.id === lastCorrectableMessageId &&
+    getState().canCorrect
+  ) {
     const actions = document.createElement('div');
     actions.className = 'message__actions';
 
@@ -326,7 +327,9 @@ function renderMessageElement(message: UiChatMessage): HTMLElement {
       event.stopPropagation();
 
       const panel = boundMain?.querySelector('#correction-panel') as HTMLElement | null;
-      const correctionInput = boundMain?.querySelector('#correction-input') as HTMLTextAreaElement | null;
+      const correctionInput = boundMain?.querySelector(
+        '#correction-input',
+      ) as HTMLTextAreaElement | null;
 
       if (panel !== null) {
         panel.hidden = false;

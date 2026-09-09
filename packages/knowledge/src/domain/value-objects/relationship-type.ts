@@ -1,5 +1,8 @@
 import { MetaConceptId } from '../../metamodel/meta-concept-id.js';
-import { DEFAULT_EXTENSION_POLICY, assertExtensionKindAllowed } from '../../metamodel/extension-model.js';
+import {
+  DEFAULT_EXTENSION_POLICY,
+  assertExtensionKindAllowed,
+} from '../../metamodel/extension-model.js';
 import { createKnowledgeError } from '../../errors/create-knowledge-error.js';
 
 export class RelationshipType {
@@ -21,7 +24,9 @@ export class RelationshipType {
       );
     }
 
-    if (!assertExtensionKindAllowed(DEFAULT_EXTENSION_POLICY, trimmed, MetaConceptId.Relationship)) {
+    if (
+      !assertExtensionKindAllowed(DEFAULT_EXTENSION_POLICY, trimmed, MetaConceptId.Relationship)
+    ) {
       throw createKnowledgeError(
         'KNOWLEDGE_INVALID_RELATIONSHIP_TYPE',
         `RelationshipType "${trimmed}" is not allowed by extension policy`,

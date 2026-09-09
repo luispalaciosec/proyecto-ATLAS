@@ -106,11 +106,7 @@ describe('decision-store', () => {
     );
 
     const decisionId = 'record.decision.andes-discount-2026-08-15';
-    const resolvedTargets = await getRelated(
-      atlas,
-      decisionId,
-      ORG_RELATIONSHIP_RESOLVES,
-    );
+    const resolvedTargets = await getRelated(atlas, decisionId, ORG_RELATIONSHIP_RESOLVES);
     const citedEvidence = await getRelated(atlas, decisionId, ORG_RELATIONSHIP_CITES);
 
     expect(resolvedTargets).toHaveLength(1);

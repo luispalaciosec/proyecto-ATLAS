@@ -7,6 +7,13 @@ import {
 } from '@atlas/retrieval';
 
 import type { AtlasRetrievalOptions, AtlasWorkspaceOptions } from '../atlas/options.js';
+import type { SearchMemoryContentResult } from './memory-module.js';
+import { searchContentViaRetrieval } from '../retrieval/retrieval-content-search.js';
+
+export interface SearchContentOptions {
+  readonly query: string;
+  readonly limit?: number;
+}
 
 export interface RetrieveForGoalOptions {
   readonly namespaceId?: string;
@@ -43,6 +50,14 @@ export class RetrievalModule {
     });
 
     return runRetrievalPipeline(this.#memoryEngine, request);
+  }
+
+  searchContent(options: SearchContentOptions): Promise<SearchMemoryContentResult> {
+    return searchContentViaRetrieval(this.#memoryEngine, {
+      query: options.query,
+      namespaceId: this.#defaultNamespaceId,
+      ...(options.limit !== undefined ? { limit: options.limit } : {}),
+    });
   }
 
   getDefaultWorkspace(): AtlasWorkspaceOptions {

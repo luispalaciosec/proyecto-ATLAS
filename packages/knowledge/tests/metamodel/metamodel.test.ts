@@ -55,9 +55,9 @@ describe('Knowledge Metamodel', () => {
   });
 
   it('allows custom object kinds but not core concept names', () => {
-    expect(assertExtensionKindAllowed(DEFAULT_EXTENSION_POLICY, 'Policy', MetaConceptId.Object)).toBe(
-      true,
-    );
+    expect(
+      assertExtensionKindAllowed(DEFAULT_EXTENSION_POLICY, 'Policy', MetaConceptId.Object),
+    ).toBe(true);
     expect(
       assertExtensionKindAllowed(
         DEFAULT_EXTENSION_POLICY,

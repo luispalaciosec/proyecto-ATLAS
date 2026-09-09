@@ -49,7 +49,9 @@ export class AtlasService {
       ...(typeof providerId === 'string' && providerId.trim().length > 0
         ? { providerId: providerId.trim() }
         : {}),
-      ...(typeof baseUrl === 'string' && baseUrl.trim().length > 0 ? { baseUrl: baseUrl.trim() } : {}),
+      ...(typeof baseUrl === 'string' && baseUrl.trim().length > 0
+        ? { baseUrl: baseUrl.trim() }
+        : {}),
     });
   }
 

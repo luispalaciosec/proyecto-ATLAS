@@ -39,10 +39,7 @@ export async function resolveDecisionsForClient(
         return false;
       }
 
-      if (
-        normalizedSubjectType !== undefined &&
-        decision.subjectType !== normalizedSubjectType
-      ) {
+      if (normalizedSubjectType !== undefined && decision.subjectType !== normalizedSubjectType) {
         return false;
       }
 

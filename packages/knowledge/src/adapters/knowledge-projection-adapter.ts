@@ -3,10 +3,7 @@ import type { CreateCompilationUnitParams } from '@atlas/compiler';
 import { MetaConceptId } from '../metamodel/meta-concept-id.js';
 import type { KnowledgeObject } from '../domain/aggregates/knowledge-object.js';
 import { LifecycleState } from '../domain/value-objects/lifecycle-state.js';
-import {
-  computeSourceChecksum,
-  serializeKnowledgeCanonicalSource,
-} from './canonical-source.js';
+import { computeSourceChecksum, serializeKnowledgeCanonicalSource } from './canonical-source.js';
 import { KnowledgeProjectionError } from './knowledge-projection-error.js';
 import type {
   ProjectionBatchResult,

@@ -50,6 +50,11 @@ export interface RawActivityEvent {
   readonly correctionStatus?: string;
   readonly errorMessage?: string;
   readonly recordId?: string;
+  readonly governanceStatus?: 'executed' | 'blocked';
+  readonly resultRecordId?: string;
+  readonly decisionId?: string;
+  readonly policyId?: string;
+  readonly eventId?: string;
 }
 
 function truncate(text: string, maxLength: number): string {

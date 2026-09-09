@@ -15,7 +15,10 @@ import {
 } from '../../src/domain/value-objects/index.js';
 import { createKnowledgeError } from '../../src/errors/create-knowledge-error.js';
 import { getMetamodelInvariant } from '../../src/metamodel/metamodel-invariants.js';
-import { assertExtensionKindAllowed, DEFAULT_EXTENSION_POLICY } from '../../src/metamodel/extension-model.js';
+import {
+  assertExtensionKindAllowed,
+  DEFAULT_EXTENSION_POLICY,
+} from '../../src/metamodel/extension-model.js';
 import { MetaConceptId } from '../../src/metamodel/meta-concept-id.js';
 import {
   assertUniqueId,
@@ -73,9 +76,9 @@ describe('Knowledge validators — extended', () => {
       target,
     });
 
-    expect(assertExtensionKindAllowed(DEFAULT_EXTENSION_POLICY, 'Policy', MetaConceptId.Object)).toBe(
-      true,
-    );
+    expect(
+      assertExtensionKindAllowed(DEFAULT_EXTENSION_POLICY, 'Policy', MetaConceptId.Object),
+    ).toBe(true);
     expect(
       assertExtensionKindAllowed(
         DEFAULT_EXTENSION_POLICY,
@@ -110,9 +113,13 @@ describe('Knowledge validators — extended', () => {
       validateKnowledgeRelationship(relationship as never, new Set([source.toString()])),
     ).toThrow();
 
-    expect(assertExtensionKindAllowed(DEFAULT_EXTENSION_POLICY, 'depends_on', MetaConceptId.Relationship)).toBe(
-      true,
-    );
+    expect(
+      assertExtensionKindAllowed(
+        DEFAULT_EXTENSION_POLICY,
+        'depends_on',
+        MetaConceptId.Relationship,
+      ),
+    ).toBe(true);
 
     const content = StatementContent.create({ assertion: 'Same' });
     expect(content.equals(StatementContent.create({ assertion: 'Same' }))).toBe(true);

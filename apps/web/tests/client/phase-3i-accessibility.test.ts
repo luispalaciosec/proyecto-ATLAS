@@ -109,7 +109,9 @@ describe('Phase 3I accessibility', () => {
     updateShellChrome(elements);
 
     elements.brandSwitcherTrigger.click();
-    const options = [...elements.brandSwitcherPanel.querySelectorAll<HTMLButtonElement>('.brand-switcher__option')];
+    const options = [
+      ...elements.brandSwitcherPanel.querySelectorAll<HTMLButtonElement>('.brand-switcher__option'),
+    ];
     options[0]?.focus();
 
     elements.brandSwitcherPanel.dispatchEvent(

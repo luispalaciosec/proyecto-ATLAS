@@ -1,7 +1,12 @@
 import { t } from '../i18n/index.js';
 import { loadBrandCatalog } from './lib/brand-catalog.js';
 import { bindWorkspaceSwitch, switchWorkspace } from './lib/workspace-switch.js';
-import { bindShellEvents, renderShell, updateShellChrome, type ShellElements } from './components/shell.js';
+import {
+  bindShellEvents,
+  renderShell,
+  updateShellChrome,
+  type ShellElements,
+} from './components/shell.js';
 import { renderChat, refreshChatView } from './pages/chat.js';
 import { renderHome, refreshHomeView } from './pages/home.js';
 import {

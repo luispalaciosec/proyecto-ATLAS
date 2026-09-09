@@ -50,9 +50,10 @@ describe('AtlasService.createBrandClient', () => {
 
     loadOrCreateBrandProfile(geeksPaths, 'Geeks');
 
-    const geeksClient = service.createBrandClient(geeksPaths, renderProfileAsContext(
-      loadOrCreateBrandProfile(geeksPaths, 'Geeks'),
-    ));
+    const geeksClient = service.createBrandClient(
+      geeksPaths,
+      renderProfileAsContext(loadOrCreateBrandProfile(geeksPaths, 'Geeks')),
+    );
     await geeksClient.memory.storeContent({ content: 'geeks-only-secret' });
 
     const revitalClient = service.createBrandClient(
@@ -246,7 +247,9 @@ describe('atlas brand LLM context', () => {
       reader: new ScriptLineReader(['search for geeks-only-secret', '/exit']),
     });
 
-    const searchTurn = revitalPayloads.find((payload) => payload.llm_message?.includes('Nothing found'));
+    const searchTurn = revitalPayloads.find((payload) =>
+      payload.llm_message?.includes('Nothing found'),
+    );
     expect(searchTurn).toBeDefined();
 
     const geeksSearch = await geeksClient.memory.searchContent({ query: 'geeks-only-secret' });
@@ -302,15 +305,16 @@ describe('atlas brand proactive feedback context', () => {
 
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            content: [{ type: 'text', text: 'Draft campaign copy.' }],
-            stop_reason: 'end_turn',
-            usage: { input_tokens: 1, output_tokens: 1 },
-          }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        ),
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              content: [{ type: 'text', text: 'Draft campaign copy.' }],
+              stop_reason: 'end_turn',
+              usage: { input_tokens: 1, output_tokens: 1 },
+            }),
+            { status: 200, headers: { 'content-type': 'application/json' } },
+          ),
       ),
     );
 
@@ -319,11 +323,7 @@ describe('atlas brand proactive feedback context', () => {
     await runChatRepl(container, {
       client: firstClient,
       json: true,
-      reader: new ScriptLineReader([
-        'draft campaign',
-        '/correct mention free shipping',
-        '/exit',
-      ]),
+      reader: new ScriptLineReader(['draft campaign', '/correct mention free shipping', '/exit']),
     });
 
     const feedbackContext = await loadRecentFeedbackContext(geeksPaths.memoryFilePath);

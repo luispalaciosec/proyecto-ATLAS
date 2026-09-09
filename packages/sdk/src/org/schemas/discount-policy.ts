@@ -15,7 +15,10 @@ export function assertDiscountPolicy(value: unknown): asserts value is DiscountP
     throw new Error('DiscountPolicy.policyCode must be a non-empty string');
   }
 
-  if (typeof candidate.autonomousMaxPercent !== 'number' || !Number.isFinite(candidate.autonomousMaxPercent)) {
+  if (
+    typeof candidate.autonomousMaxPercent !== 'number' ||
+    !Number.isFinite(candidate.autonomousMaxPercent)
+  ) {
     throw new Error('DiscountPolicy.autonomousMaxPercent must be a finite number');
   }
 

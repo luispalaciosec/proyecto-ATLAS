@@ -14,7 +14,11 @@ export {
   EXIT_SUCCESS,
   EXIT_VALIDATION_ERROR,
 } from './output/exit-codes.js';
-export { createChatSession, type ChatSessionState } from './chat/chat-session.js';
+export {
+  createChatSession,
+  createChatSessionId,
+  type ChatSessionState,
+} from './chat/chat-session.js';
 export {
   executeChatTurn,
   applyCorrection,
@@ -31,4 +35,7 @@ export {
   type WorkspaceProfile,
   type WorkspacePaths,
 } from './workspace/brand-profile.js';
-export { loadRecentFeedbackContext, combineBrandContextPrompt } from './workspace/feedback-context.js';
+export {
+  loadRecentFeedbackContext,
+  combineBrandContextPrompt,
+} from './workspace/feedback-context.js';

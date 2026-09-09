@@ -68,9 +68,9 @@ describe('planExecuteAndRemember with retrieval', () => {
     const second = await planExecuteAndRemember(atlas, 'procesar pedido urgente');
 
     expect(second.retrieval.context.items.length).toBeGreaterThan(0);
-    expect(second.retrieval.context.items.some((item) => item.text.includes('procesar pedido'))).toBe(
-      true,
-    );
+    expect(
+      second.retrieval.context.items.some((item) => item.text.includes('procesar pedido')),
+    ).toBe(true);
 
     rmSync(dir, { recursive: true, force: true });
   });

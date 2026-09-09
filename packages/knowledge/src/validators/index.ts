@@ -1,4 +1,8 @@
-export { validateMetamodelRegistry, assertMetamodelRegistryValid, getConceptSemanticType } from './metamodel-validator.js';
+export {
+  validateMetamodelRegistry,
+  assertMetamodelRegistryValid,
+  getConceptSemanticType,
+} from './metamodel-validator.js';
 export type { MetamodelValidationIssue, MetamodelValidationResult } from './metamodel-validator.js';
 export {
   validateIdentityValue,

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { assertMetamodelRegistryValid, validateMetamodelRegistry } from '../../src/validators/index.js';
+import {
+  assertMetamodelRegistryValid,
+  validateMetamodelRegistry,
+} from '../../src/validators/index.js';
 
 describe('Knowledge validators', () => {
   it('runs metamodel validator successfully', () => {

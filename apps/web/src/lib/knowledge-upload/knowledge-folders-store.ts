@@ -3,6 +3,8 @@ import { dirname, join } from 'node:path';
 
 import { resolveWorkspacePaths } from '@atlas/cli';
 
+import { resolveWebWorkspacesRoot } from '../web-persistence/workspace-storage-paths.js';
+
 import { KnowledgeUploadError } from './upload-errors.js';
 import {
   DEFAULT_KNOWLEDGE_FOLDER,
@@ -27,7 +29,10 @@ function resolveKnowledgeFoldersPath(workspaceKey: string | undefined): string {
     return join(dirname(memoryPath), 'knowledge-folders.json');
   }
 
-  return join(resolveWorkspacePaths(key).directory, 'knowledge-folders.json');
+  return join(
+    resolveWorkspacePaths(key, resolveWebWorkspacesRoot()).directory,
+    'knowledge-folders.json',
+  );
 }
 
 function sortFolders(folders: Iterable<string>): readonly string[] {
@@ -67,11 +72,7 @@ function readFoldersFile(filePath: string): readonly string[] {
 
 function writeFoldersFile(filePath: string, folders: readonly string[]): void {
   mkdirSync(dirname(filePath), { recursive: true });
-  writeFileSync(
-    filePath,
-    `${JSON.stringify({ folders: [...folders] }, null, 2)}\n`,
-    'utf8',
-  );
+  writeFileSync(filePath, `${JSON.stringify({ folders: [...folders] }, null, 2)}\n`, 'utf8');
 }
 
 export function listStoredKnowledgeFolders(workspaceKey: string | undefined): readonly string[] {

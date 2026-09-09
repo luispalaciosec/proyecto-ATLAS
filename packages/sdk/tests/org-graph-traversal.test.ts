@@ -76,11 +76,7 @@ describe('getRelated', () => {
       ORG_RELATIONSHIP_REFERENCE,
     );
 
-    const related = await getRelated(
-      atlas,
-      getEntityId(client!),
-      ORG_RELATIONSHIP_REFERENCE,
-    );
+    const related = await getRelated(atlas, getEntityId(client!), ORG_RELATIONSHIP_REFERENCE);
 
     expect(related).toHaveLength(1);
 

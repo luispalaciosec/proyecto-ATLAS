@@ -4,13 +4,7 @@ import { t } from '../../i18n/index.js';
 const STORAGE_KEY = 'atlas.activeWorkspace';
 
 export type AppRoute =
-  | '/'
-  | '/chat'
-  | '/conocimiento'
-  | '/memoria'
-  | '/actividad'
-  | '/marcas'
-  | '/configuracion';
+  '/' | '/chat' | '/conocimiento' | '/memoria' | '/actividad' | '/marcas' | '/configuracion';
 
 export type ChatMessageKind = 'user' | 'assistant' | 'system' | 'error' | 'loading';
 

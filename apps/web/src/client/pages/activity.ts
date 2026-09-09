@@ -1,13 +1,16 @@
 import type { ActivityItemProduct, ActivityItemType } from '../../presentation/map-activity.js';
-import {
-  formatActivityTime,
-  groupActivityItemsByDate,
-} from '../../presentation/map-activity.js';
+import { formatActivityTime, groupActivityItemsByDate } from '../../presentation/map-activity.js';
 import { formatWorkingContext } from '../lib/brand-context.js';
 import { appendExpandableDetails } from '../lib/expandable-details.js';
 import { t } from '../../i18n/index.js';
 import { fetchActivity } from '../api/client.js';
-import { getState, resolveBrandDisplayName, setPendingChatDraft, setPendingKnowledgeQuery, setRoute } from '../state/app-state.js';
+import {
+  getState,
+  resolveBrandDisplayName,
+  setPendingChatDraft,
+  setPendingKnowledgeQuery,
+  setRoute,
+} from '../state/app-state.js';
 
 type ActivityFilter = 'all' | ActivityItemType;
 
@@ -115,7 +118,12 @@ async function loadActivity(): Promise<void> {
     return;
   }
 
-  pageState = { ...pageState, loading: true, error: undefined, workspace: getState().activeWorkspace };
+  pageState = {
+    ...pageState,
+    loading: true,
+    error: undefined,
+    workspace: getState().activeWorkspace,
+  };
   paintActivityContent();
 
   try {

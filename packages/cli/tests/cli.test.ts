@@ -188,38 +188,34 @@ describe('atlas plan', () => {
 });
 
 describe('atlas plan retrieval integration', () => {
-  it(
-    'shows retrieved memory in plan json output for similar goals',
-    () => {
-      const memoryFile = join(tmpdir(), `atlas-retrieval-plan-${Date.now()}.json`);
-      const env = { ...process.env, ATLAS_MEMORY_FILE: memoryFile };
+  it('shows retrieved memory in plan json output for similar goals', () => {
+    const memoryFile = join(tmpdir(), `atlas-retrieval-plan-${Date.now()}.json`);
+    const env = { ...process.env, ATLAS_MEMORY_FILE: memoryFile };
 
-      const first = spawnSync(
-        process.execPath,
-        [atlasBinPath, 'plan', '--goal', 'procesar pedido cliente', '--json'],
-        { env, encoding: 'utf8', timeout: 30_000 },
-      );
-      expect(first.status).toBe(EXIT_SUCCESS);
+    const first = spawnSync(
+      process.execPath,
+      [atlasBinPath, 'plan', '--goal', 'procesar pedido cliente', '--json'],
+      { env, encoding: 'utf8', timeout: 30_000 },
+    );
+    expect(first.status).toBe(EXIT_SUCCESS);
 
-      const second = spawnSync(
-        process.execPath,
-        [atlasBinPath, 'plan', '--goal', 'procesar pedido urgente', '--json'],
-        { env, encoding: 'utf8', timeout: 30_000 },
-      );
-      expect(second.status).toBe(EXIT_SUCCESS);
+    const second = spawnSync(
+      process.execPath,
+      [atlasBinPath, 'plan', '--goal', 'procesar pedido urgente', '--json'],
+      { env, encoding: 'utf8', timeout: 30_000 },
+    );
+    expect(second.status).toBe(EXIT_SUCCESS);
 
-      const payload = JSON.parse(second.stdout) as {
-        retrieval: { selected: number; prior_goals: string[] };
-      };
-      expect(payload.retrieval.selected).toBeGreaterThan(0);
-      expect(payload.retrieval.prior_goals.some((goal) => goal.includes('procesar pedido'))).toBe(
-        true,
-      );
+    const payload = JSON.parse(second.stdout) as {
+      retrieval: { selected: number; prior_goals: string[] };
+    };
+    expect(payload.retrieval.selected).toBeGreaterThan(0);
+    expect(payload.retrieval.prior_goals.some((goal) => goal.includes('procesar pedido'))).toBe(
+      true,
+    );
 
-      rmSync(memoryFile, { force: true });
-    },
-    60_000,
-  );
+    rmSync(memoryFile, { force: true });
+  }, 60_000);
 });
 
 describe('atlas plan memory integration', () => {
@@ -229,7 +225,15 @@ describe('atlas plan memory integration', () => {
     const planCode = await app.run(['node', 'atlas', 'plan', '--goal', 'hacer X', '--json']);
     expect(planCode).toBe(EXIT_SUCCESS);
 
-    const searchCode = await app.run(['node', 'atlas', 'memory', 'search', '--query', 'hacer X', '--json']);
+    const searchCode = await app.run([
+      'node',
+      'atlas',
+      'memory',
+      'search',
+      '--query',
+      'hacer X',
+      '--json',
+    ]);
     expect(searchCode).toBe(EXIT_SUCCESS);
   });
 
@@ -243,12 +247,12 @@ describe('atlas plan memory integration', () => {
       EXIT_SUCCESS,
     );
 
-    expect(await app.run(['node', 'atlas', 'memory', 'search', '--query', 'pedido A', '--json'])).toBe(
-      EXIT_SUCCESS,
-    );
-    expect(await app.run(['node', 'atlas', 'memory', 'search', '--query', 'dataset B', '--json'])).toBe(
-      EXIT_SUCCESS,
-    );
+    expect(
+      await app.run(['node', 'atlas', 'memory', 'search', '--query', 'pedido A', '--json']),
+    ).toBe(EXIT_SUCCESS);
+    expect(
+      await app.run(['node', 'atlas', 'memory', 'search', '--query', 'dataset B', '--json']),
+    ).toBe(EXIT_SUCCESS);
   });
 });
 
@@ -317,7 +321,15 @@ describe('atlas ask', () => {
 describe('atlas memory', () => {
   it('stores content and returns a record id', async () => {
     const app = new CliApp();
-    const code = await app.run(['node', 'atlas', 'memory', 'store', '--content', 'hola mundo', '--json']);
+    const code = await app.run([
+      'node',
+      'atlas',
+      'memory',
+      'store',
+      '--content',
+      'hola mundo',
+      '--json',
+    ]);
     expect(code).toBe(EXIT_SUCCESS);
   });
 
@@ -335,7 +347,15 @@ describe('atlas memory', () => {
     ]);
     expect(storeCode).toBe(EXIT_SUCCESS);
 
-    const searchCode = await app.run(['node', 'atlas', 'memory', 'search', '--query', 'hola', '--json']);
+    const searchCode = await app.run([
+      'node',
+      'atlas',
+      'memory',
+      'search',
+      '--query',
+      'hola',
+      '--json',
+    ]);
     expect(searchCode).toBe(EXIT_SUCCESS);
   });
 
@@ -415,37 +435,33 @@ describe('atlas help', () => {
 });
 
 describe('atlas memory persistence', () => {
-  it(
-    'survives separate CLI process restarts',
-    () => {
-      const memoryFile = join(tmpdir(), `atlas-cli-persist-${Date.now()}.json`);
-      const env = { ...process.env, ATLAS_MEMORY_FILE: memoryFile };
+  it('survives separate CLI process restarts', () => {
+    const memoryFile = join(tmpdir(), `atlas-cli-persist-${Date.now()}.json`);
+    const env = { ...process.env, ATLAS_MEMORY_FILE: memoryFile };
 
-      const store = spawnSync(
-        process.execPath,
-        [atlasBinPath, 'memory', 'store', '--content', 'persist across restart', '--json'],
-        { env, encoding: 'utf8', timeout: 30_000 },
-      );
-      expect(store.status).toBe(EXIT_SUCCESS);
+    const store = spawnSync(
+      process.execPath,
+      [atlasBinPath, 'memory', 'store', '--content', 'persist across restart', '--json'],
+      { env, encoding: 'utf8', timeout: 30_000 },
+    );
+    expect(store.status).toBe(EXIT_SUCCESS);
 
-      const search = spawnSync(
-        process.execPath,
-        [atlasBinPath, 'memory', 'search', '--query', 'persist', '--json'],
-        { env, encoding: 'utf8', timeout: 30_000 },
-      );
-      expect(search.status).toBe(EXIT_SUCCESS);
+    const search = spawnSync(
+      process.execPath,
+      [atlasBinPath, 'memory', 'search', '--query', 'persist', '--json'],
+      { env, encoding: 'utf8', timeout: 30_000 },
+    );
+    expect(search.status).toBe(EXIT_SUCCESS);
 
-      const payload = JSON.parse(search.stdout) as {
-        total: number;
-        records: Array<{ content: { text: string } }>;
-      };
-      expect(payload.total).toBe(1);
-      expect(payload.records[0]?.content.text).toBe('persist across restart');
+    const payload = JSON.parse(search.stdout) as {
+      total: number;
+      records: Array<{ content: { text: string } }>;
+    };
+    expect(payload.total).toBe(1);
+    expect(payload.records[0]?.content.text).toBe('persist across restart');
 
-      rmSync(memoryFile, { force: true });
-    },
-    60_000,
-  );
+    rmSync(memoryFile, { force: true });
+  }, 60_000);
 });
 
 describe('kernel dependency boundary', () => {

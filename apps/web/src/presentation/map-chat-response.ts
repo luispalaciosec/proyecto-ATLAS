@@ -60,9 +60,7 @@ function mapReasoningStepProduct(type: string, preview?: string): ChatReasoningS
     case 'memory_store':
       return {
         type,
-        label: preview
-          ? t('chat.reasoningMemoryStore', { preview })
-          : t('chat.reasoningStore'),
+        label: preview ? t('chat.reasoningMemoryStore', { preview }) : t('chat.reasoningStore'),
         preview,
       };
     case 'plan_and_execute':
@@ -78,7 +76,9 @@ function mapReasoningStepProduct(type: string, preview?: string): ChatReasoningS
     default:
       return {
         type: 'inferencing',
-        label: preview ? t('chat.reasoningInferPreview', { preview }) : t('chat.reasoningInferencing'),
+        label: preview
+          ? t('chat.reasoningInferPreview', { preview })
+          : t('chat.reasoningInferencing'),
         preview,
       };
   }

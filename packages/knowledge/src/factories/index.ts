@@ -32,7 +32,9 @@ export interface CreateKnowledgeStatementParams {
   readonly supersedes?: StatementId;
 }
 
-export function createKnowledgeStatement(params: CreateKnowledgeStatementParams): KnowledgeStatement {
+export function createKnowledgeStatement(
+  params: CreateKnowledgeStatementParams,
+): KnowledgeStatement {
   const statement: KnowledgeStatement = Object.freeze({
     metaConcept: MetaConceptId.Statement,
     id: StatementId.create(params.id),

@@ -77,10 +77,7 @@ function renderReasoningStep(step: UiReasoningStep): HTMLElement {
   return item;
 }
 
-export function startSimulatedReasoning(
-  container: HTMLElement,
-  messageId: string,
-): () => void {
+export function startSimulatedReasoning(container: HTMLElement, messageId: string): () => void {
   let phaseIndex = 0;
   let stepIndex = 0;
   const simulatedSteps: UiReasoningStep[] = SIMULATED_PHASE_KEYS.map((key, index) => ({
@@ -103,10 +100,16 @@ export function startSimulatedReasoning(
       return;
     }
 
-    items[stepIndex]?.classList.replace('chat-reasoning__step--active', 'chat-reasoning__step--done');
+    items[stepIndex]?.classList.replace(
+      'chat-reasoning__step--active',
+      'chat-reasoning__step--done',
+    );
 
     stepIndex = Math.min(stepIndex + 1, items.length - 1);
-    items[stepIndex]?.classList.replace('chat-reasoning__step--pending', 'chat-reasoning__step--active');
+    items[stepIndex]?.classList.replace(
+      'chat-reasoning__step--pending',
+      'chat-reasoning__step--active',
+    );
 
     phaseIndex = (phaseIndex + 1) % SIMULATED_PHASE_KEYS.length;
 
@@ -136,7 +139,10 @@ export function renderCompletedReasoningSummary(
   summary.textContent = t('chat.reasoningShow');
 
   const panel = renderReasoningPanel(
-    toUiReasoningSteps(steps, steps.length - 1).map((step) => ({ ...step, status: 'done' as const })),
+    toUiReasoningSteps(steps, steps.length - 1).map((step) => ({
+      ...step,
+      status: 'done' as const,
+    })),
     { title: t('chat.reasoningTitle') },
   );
 

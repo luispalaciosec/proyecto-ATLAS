@@ -22,9 +22,7 @@ export function formatDiscountEvaluation(evaluation: DiscountEvaluation): string
   return lines.join('\n');
 }
 
-export function formatCurrentWarrantyPolicy(
-  resolved: ResolvedPolicy<WarrantyPolicy>,
-): string {
+export function formatCurrentWarrantyPolicy(resolved: ResolvedPolicy<WarrantyPolicy>): string {
   return [
     `Política vigente: ${resolved.content.policyCode}.`,
     `Plazo de garantía: ${resolved.content.warrantyDays} días.`,
@@ -35,14 +33,20 @@ export function formatCurrentWarrantyPolicy(
 
 export function formatWarrantyPolicyHistory(
   resolved: ResolvedPolicy<WarrantyPolicy>,
-  history: readonly { readonly revision: number; readonly content: unknown; readonly author: string }[],
+  history: readonly {
+    readonly revision: number;
+    readonly content: unknown;
+    readonly author: string;
+  }[],
 ): string {
   const lines = [formatCurrentWarrantyPolicy(resolved), '', 'Historial auditado:'];
 
   for (const entry of history) {
     const content = entry.content as Partial<WarrantyPolicy>;
     const days =
-      typeof content.warrantyDays === 'number' ? `${content.warrantyDays} días` : 'valor desconocido';
+      typeof content.warrantyDays === 'number'
+        ? `${content.warrantyDays} días`
+        : 'valor desconocido';
     const effectiveFrom =
       typeof content.effectiveFrom === 'string' ? content.effectiveFrom : 'fecha desconocida';
 

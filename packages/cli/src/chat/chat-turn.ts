@@ -1,3 +1,5 @@
+import { AtlasContextBuilder } from '@atlas/sdk';
+
 import type { AtlasService } from '../services/atlas-service.js';
 import {
   captureLastMemorySessionId,
@@ -5,7 +7,10 @@ import {
   selectRecentTurns,
   type ChatSessionState,
 } from './chat-session.js';
-import { mapTranscriptToReasoningSteps, type ChatReasoningStepPayload } from './map-reasoning-steps.js';
+import {
+  mapTranscriptToReasoningSteps,
+  type ChatReasoningStepPayload,
+} from './map-reasoning-steps.js';
 import { recordFeedback } from './feedback.js';
 
 export interface ChatTurnPayload {
@@ -85,8 +90,19 @@ async function executeLlmChatTurn(
 ): Promise<ChatTurnPayload> {
   session.turnCount += 1;
   const startedAt = performance.now();
+  const history = selectRecentTurns(session);
+  const contextPackage = await AtlasContextBuilder.build({
+    goal,
+    atlas: session.client,
+    contextPrompt: session.client.llm.getContextPrompt(),
+    workspace: session.client.llm.getWorkspaceName(),
+    history,
+  });
 
-  const result = await session.client.llm.ask(goal, { history: selectRecentTurns(session) });
+  const result = await session.client.llm.ask(goal, {
+    history,
+    contextPackage,
+  });
   const elapsedMs = Math.round(performance.now() - startedAt);
 
   recordTurnMessages(session, [
@@ -116,9 +132,9 @@ async function executeLlmChatTurn(
     }),
     budget_exceeded: result.budgetExceeded,
     retrieval: Object.freeze({
-      selected: 0,
-      total_candidates: 0,
-      prior_goals: Object.freeze([]),
+      selected: contextPackage.retrieval.selected,
+      total_candidates: contextPackage.retrieval.totalCandidates,
+      prior_goals: contextPackage.retrieval.priorGoals,
     }),
     execution: Object.freeze({
       lifecycle: result.success ? 'complete' : 'failed',
@@ -165,11 +181,16 @@ export async function applyCorrection(
     });
   }
 
-  const result = await recordFeedback(session.client, session.lastTurn, correctionText);
+  const result = await recordFeedback(session.client, session.lastTurn, correctionText, {
+    workspace: session.client.llm.getWorkspaceName(),
+    sessionId: session.sessionId,
+  });
+
+  const appliedSuffix = result.applied ? ' Canonical state updated.' : '';
 
   return Object.freeze({
     status: 'recorded',
-    message: `Feedback recorded (${result.recordId}).`,
+    message: `Feedback recorded (${result.recordId}).${appliedSuffix}`,
     recordId: result.recordId,
   });
 }

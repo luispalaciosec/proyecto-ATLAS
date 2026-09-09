@@ -86,7 +86,10 @@ export function createActivityIcon(
 }
 
 export function createThemeIcon(mode: 'light' | 'dark'): SVGElement {
-  return renderIcon(mode === 'dark' ? Sun : Moon, { size: 18, className: 'shell__theme-toggle-icon' });
+  return renderIcon(mode === 'dark' ? Sun : Moon, {
+    size: 18,
+    className: 'shell__theme-toggle-icon',
+  });
 }
 
 export function createUploadIdleIcon(className = 'knowledge-upload__idle-icon'): SVGElement {

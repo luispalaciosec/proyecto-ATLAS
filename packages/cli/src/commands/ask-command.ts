@@ -2,7 +2,11 @@ import type { Command } from 'commander';
 
 import type { Container } from '../application/container.js';
 import type { CliCommand } from '../registry/command-registry.js';
-import { CliExitError, EXIT_CONFIGURATION_ERROR, EXIT_INVALID_ARGUMENTS } from '../output/exit-codes.js';
+import {
+  CliExitError,
+  EXIT_CONFIGURATION_ERROR,
+  EXIT_INVALID_ARGUMENTS,
+} from '../output/exit-codes.js';
 
 export class AskCommand implements CliCommand {
   readonly name = 'ask';

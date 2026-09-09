@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createArtifact,
-  createAtlas,
-  planExecuteAndRemember,
-} from '../src/index.js';
+import { createArtifact, createAtlas, planExecuteAndRemember } from '../src/index.js';
 
 describe('planExecuteAndRemember', () => {
   it('plans, executes, and stores the execution in memory', async () => {
@@ -68,8 +64,8 @@ describe('planExecuteAndRemember', () => {
     await planExecuteAndRemember(atlas, 'procesar pedido A');
     await planExecuteAndRemember(atlas, 'analizar dataset B');
 
-    const searchA = await atlas.memory.searchContent({ query: 'pedido A' });
-    const searchB = await atlas.memory.searchContent({ query: 'dataset B' });
+    const searchA = await atlas.memory.searchContent({ query: 'procesar pedido' });
+    const searchB = await atlas.memory.searchContent({ query: 'analizar dataset' });
 
     expect(searchA.total).toBe(1);
     expect(searchB.total).toBe(1);

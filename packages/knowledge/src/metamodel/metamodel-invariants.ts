@@ -53,7 +53,11 @@ export const METAMODEL_INVARIANTS: readonly MetamodelInvariantDefinition[] = Obj
   Object.freeze({
     ruleId: 'MM-INV-009',
     description: 'Historical versions remain immutable',
-    concepts: Object.freeze([MetaConceptId.History, MetaConceptId.Version, MetaConceptId.Statement]),
+    concepts: Object.freeze([
+      MetaConceptId.History,
+      MetaConceptId.Version,
+      MetaConceptId.Statement,
+    ]),
   }),
   Object.freeze({
     ruleId: 'MM-INV-010',
@@ -63,7 +67,11 @@ export const METAMODEL_INVARIANTS: readonly MetamodelInvariantDefinition[] = Obj
   Object.freeze({
     ruleId: 'MM-INV-011',
     description: 'Knowledge Graphs MUST remain internally consistent',
-    concepts: Object.freeze([MetaConceptId.Graph, MetaConceptId.Relationship, MetaConceptId.Object]),
+    concepts: Object.freeze([
+      MetaConceptId.Graph,
+      MetaConceptId.Relationship,
+      MetaConceptId.Object,
+    ]),
   }),
 ]);
 

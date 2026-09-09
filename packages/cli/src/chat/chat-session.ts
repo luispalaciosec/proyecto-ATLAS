@@ -16,7 +16,10 @@ export function createChatSessionId(): string {
   return `chat.${Date.now()}.${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function createChatSession(client: Atlas, sessionId = createChatSessionId()): ChatSessionState {
+export function createChatSession(
+  client: Atlas,
+  sessionId = createChatSessionId(),
+): ChatSessionState {
   return {
     sessionId,
     client,
@@ -29,7 +32,10 @@ export function createChatSession(client: Atlas, sessionId = createChatSessionId
 export const DEFAULT_HISTORY_WINDOW_TURNS = 4;
 
 /** Agrega los mensajes de un turno completo y registra dónde empezó. */
-export function recordTurnMessages(session: ChatSessionState, messages: readonly LlmMessage[]): void {
+export function recordTurnMessages(
+  session: ChatSessionState,
+  messages: readonly LlmMessage[],
+): void {
   session.turnBoundaries.push(session.history.length);
   session.history.push(...messages);
 }

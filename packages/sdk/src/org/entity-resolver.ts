@@ -26,9 +26,7 @@ function matchesEntityContent(content: unknown, matcher: EntityMatcher): boolean
   return Object.entries(matcher).every(([key, expectedValue]) => candidate[key] === expectedValue);
 }
 
-function dedupeRecordsByEntityId(
-  records: readonly MemoryRecord[],
-): readonly MemoryRecord[] {
+function dedupeRecordsByEntityId(records: readonly MemoryRecord[]): readonly MemoryRecord[] {
   const latestByEntityId = new Map<string, MemoryRecord>();
 
   for (const record of records) {
@@ -47,7 +45,7 @@ export async function listRecordsByType(
   atlas: Atlas,
   recordType: string,
 ): Promise<readonly MemoryRecord[]> {
-  const result = await atlas.memory.searchContent({ query: '', recordType });
+  const result = await atlas.memory.listRecords({ recordType });
 
   return dedupeRecordsByEntityId(result.records);
 }

@@ -196,8 +196,7 @@ function stubAnthropicForOrgTools() {
       goal.toLowerCase().includes('descuento') && goal.toLowerCase().includes('andes');
     const wantsHistory =
       goal.toLowerCase().includes('antes') || goal.toLowerCase().includes('anterior');
-    const wantsWarranty =
-      goal.toLowerCase().includes('garant') && !wantsHistory;
+    const wantsWarranty = goal.toLowerCase().includes('garant') && !wantsHistory;
 
     if (wantsDiscount && anthropicCallCount === 1) {
       return Response.json({

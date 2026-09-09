@@ -24,10 +24,8 @@ export class PlanCommand implements CliCommand {
               container.workspaceLoader.load(options.workspace),
             )
           : container.atlasService.createMemoryClient();
-        const { retrieval, planning, compile, execute } = await container.atlasService.planAndExecute(
-          client,
-          options.goal,
-        );
+        const { retrieval, planning, compile, execute } =
+          await container.atlasService.planAndExecute(client, options.goal);
 
         if (options.json) {
           container.renderer.json({
@@ -60,7 +58,9 @@ export class PlanCommand implements CliCommand {
               `Prior:      ${retrieval.context.items.map((item) => item.text).join(' | ')}`,
             );
           }
-          container.renderer.info(`Workflow:   ${planning.workflow?.identity.workflow_id ?? 'n/a'}`);
+          container.renderer.info(
+            `Workflow:   ${planning.workflow?.identity.workflow_id ?? 'n/a'}`,
+          );
           container.renderer.info(`Compilation: ${compile.success ? 'SUCCESS' : 'FAILED'}`);
           container.renderer.info(`Execution:   ${execute.success ? 'SUCCESS' : 'FAILED'}`);
           container.renderer.info(`Lifecycle:   ${execute.context.lifecycle}`);

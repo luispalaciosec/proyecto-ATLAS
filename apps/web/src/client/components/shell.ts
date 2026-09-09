@@ -1,6 +1,12 @@
 import logoUrl from '../../../design-system/assets/logo.svg?url';
 import { t } from '../../i18n/index.js';
-import { getState, patchState, resolveBrandDisplayName, setRoute, type AppRoute } from '../state/app-state.js';
+import {
+  getState,
+  patchState,
+  resolveBrandDisplayName,
+  setRoute,
+  type AppRoute,
+} from '../state/app-state.js';
 import { createNavIcon, createThemeIcon, type NavIconKey } from '../lib/icons.js';
 import { getTheme, toggleTheme } from '../lib/theme.js';
 
@@ -229,7 +235,10 @@ function handleListboxKeydown(event: KeyboardEvent, elements: ShellElements): vo
       break;
     case 'Enter':
     case ' ':
-      if (document.activeElement instanceof HTMLButtonElement && document.activeElement.classList.contains('brand-switcher__option')) {
+      if (
+        document.activeElement instanceof HTMLButtonElement &&
+        document.activeElement.classList.contains('brand-switcher__option')
+      ) {
         event.preventDefault();
         document.activeElement.click();
       }
@@ -294,7 +303,9 @@ function populateBrandSwitcherPanel(
   panel.append(divider, manage);
 }
 
-export function closeBrandSwitcherPanel(elements: Pick<ShellElements, 'brandSwitcherPanel' | 'brandSwitcherTrigger'>): void {
+export function closeBrandSwitcherPanel(
+  elements: Pick<ShellElements, 'brandSwitcherPanel' | 'brandSwitcherTrigger'>,
+): void {
   panelOpen = false;
   elements.brandSwitcherPanel.hidden = true;
   elements.brandSwitcherTrigger.setAttribute('aria-expanded', 'false');
@@ -309,7 +320,8 @@ function openBrandSwitcherPanel(
   panelOpen = true;
   elements.brandSwitcherPanel.hidden = false;
   elements.brandSwitcherTrigger.setAttribute('aria-expanded', 'true');
-  const firstOption = elements.brandSwitcherPanel.querySelector<HTMLElement>('.brand-switcher__option');
+  const firstOption =
+    elements.brandSwitcherPanel.querySelector<HTMLElement>('.brand-switcher__option');
   firstOption?.focus();
 }
 
@@ -426,11 +438,7 @@ export function updateShellChrome(
       statusClearTimer = undefined;
     }
 
-    if (
-      nextStatusText.length > 0 &&
-      !state.chatLoading &&
-      !state.chatHistoryLoading
-    ) {
+    if (nextStatusText.length > 0 && !state.chatLoading && !state.chatHistoryLoading) {
       statusClearTimer = setTimeout(() => {
         const current = getState();
 
@@ -454,7 +462,9 @@ export function updateShellChrome(
   syncThemeToggle(elements.themeToggle);
 
   if (panelOpen) {
-    for (const option of elements.brandSwitcherPanel.querySelectorAll<HTMLButtonElement>('.brand-switcher__option')) {
+    for (const option of elements.brandSwitcherPanel.querySelectorAll<HTMLButtonElement>(
+      '.brand-switcher__option',
+    )) {
       const isActive = option.dataset.brandId === state.activeWorkspace;
       option.classList.toggle('is-active', isActive);
       option.setAttribute('aria-selected', String(isActive));

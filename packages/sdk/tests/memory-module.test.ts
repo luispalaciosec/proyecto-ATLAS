@@ -83,7 +83,9 @@ describe('MemoryModule', () => {
   it('matches queries with or without accents', async () => {
     const atlas = createAtlas();
 
-    const stored = await atlas.memory.storeContent({ content: 'Cliente VIP Ana García — pedido laptop' });
+    const stored = await atlas.memory.storeContent({
+      content: 'Cliente VIP Ana García — pedido laptop',
+    });
 
     const withAccent = await atlas.memory.searchContent({ query: 'García' });
     const withoutAccent = await atlas.memory.searchContent({ query: 'Garcia' });

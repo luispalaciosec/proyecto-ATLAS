@@ -26,8 +26,16 @@ describe('loadRecentFeedbackContext', () => {
       memory: { storageFilePath: memoryFilePath },
     });
 
-    await recordFeedback(client, { goal: 'first goal', output: 'first output' }, 'first correction');
-    await recordFeedback(client, { goal: 'second goal', output: 'second output' }, 'second correction');
+    await recordFeedback(
+      client,
+      { goal: 'first goal', output: 'first output' },
+      'first correction',
+    );
+    await recordFeedback(
+      client,
+      { goal: 'second goal', output: 'second output' },
+      'second correction',
+    );
 
     const context = await loadRecentFeedbackContext(memoryFilePath, 5);
 

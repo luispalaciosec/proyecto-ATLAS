@@ -66,9 +66,7 @@ export async function evaluateDiscountRequest(
   }
 
   const policy = parseDiscountPolicy(readEntityPayload(discountPolicyRecord));
-  reasoning.push(
-    `Política ${policy.policyCode}: límite autónomo ${policy.autonomousMaxPercent}%.`,
-  );
+  reasoning.push(`Política ${policy.policyCode}: límite autónomo ${policy.autonomousMaxPercent}%.`);
 
   const autonomous = requestedPercent <= policy.autonomousMaxPercent;
   reasoning.push(

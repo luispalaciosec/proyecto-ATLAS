@@ -56,7 +56,9 @@ describe('switchWorkspace', () => {
     expect(dialog.textContent).toContain('Vas a cambiar de marca');
     expect(dialog.textContent).toContain('mensaje sin enviar');
 
-    dialog.querySelector('.btn--primary')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    dialog
+      .querySelector('.btn--primary')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await confirmPromise;
 
     expect(getState().activeWorkspace).toBe('geeks');
@@ -86,7 +88,9 @@ describe('switchWorkspace', () => {
 
     const confirmPromise = switchWorkspace('geeks');
     const dialog = document.querySelector('[role="dialog"]') as HTMLElement;
-    dialog.querySelector('.btn--primary')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    dialog
+      .querySelector('.btn--primary')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await confirmPromise;
 
     expect(getState().pendingChatDraft).toBeUndefined();

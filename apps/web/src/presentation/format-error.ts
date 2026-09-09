@@ -17,7 +17,11 @@ export function formatUserError(raw: string): UserFacingError {
     return { message: t('errors.toolFailed'), technical };
   }
 
-  if (lower.includes('econnrefused') || lower.includes('fetch failed') || lower.includes('network')) {
+  if (
+    lower.includes('econnrefused') ||
+    lower.includes('fetch failed') ||
+    lower.includes('network')
+  ) {
     return { message: t('errors.connection'), technical };
   }
 

@@ -54,11 +54,7 @@ describe('runChatRepl', () => {
 
     await runChatRepl(container, {
       json: true,
-      reader: new ScriptLineReader([
-        'procesar pedido cliente',
-        'procesar pedido urgente',
-        '/exit',
-      ]),
+      reader: new ScriptLineReader(['procesar pedido cliente', 'procesar pedido urgente', '/exit']),
       onTurn: (payload) => {
         payloads.push(payload);
       },
@@ -68,9 +64,9 @@ describe('runChatRepl', () => {
     expect(payloads[0]?.session_id).toBe(payloads[1]?.session_id);
     expect(payloads[0]?.retrieval.selected).toBe(0);
     expect(payloads[1]?.retrieval.selected).toBeGreaterThan(0);
-    expect(payloads[1]?.retrieval.prior_goals.some((goal) => goal.includes('procesar pedido'))).toBe(
-      true,
-    );
+    expect(
+      payloads[1]?.retrieval.prior_goals.some((goal) => goal.includes('procesar pedido')),
+    ).toBe(true);
   });
 });
 
@@ -204,15 +200,16 @@ describe('runChatRepl /correct feedback', () => {
 
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            content: [{ type: 'text', text: 'Draft campaign copy.' }],
-            stop_reason: 'end_turn',
-            usage: { input_tokens: 1, output_tokens: 1 },
-          }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        ),
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              content: [{ type: 'text', text: 'Draft campaign copy.' }],
+              stop_reason: 'end_turn',
+              usage: { input_tokens: 1, output_tokens: 1 },
+            }),
+            { status: 200, headers: { 'content-type': 'application/json' } },
+          ),
       ),
     );
 
@@ -235,11 +232,7 @@ describe('runChatRepl /correct feedback', () => {
     await runChatRepl(container, {
       client,
       json: true,
-      reader: new ScriptLineReader([
-        'draft campaign',
-        '/correct mention free shipping',
-        '/exit',
-      ]),
+      reader: new ScriptLineReader(['draft campaign', '/correct mention free shipping', '/exit']),
       onTurn: (payload) => {
         payloads.push(payload);
       },
@@ -287,7 +280,7 @@ describe('runChatRepl /correct feedback', () => {
     expect(events.some((event) => String(event.message).includes('requires LLM mode'))).toBe(true);
 
     const probe = createContainer().atlasService.createMemoryClient();
-    const search = await probe.memory.searchContent({ query: '', recordType: 'Feedback' });
+    const search = await probe.memory.listRecords({ recordType: 'Feedback' });
     expect(search.total).toBe(0);
 
     rmSync(memoryFile, { force: true });
@@ -326,7 +319,7 @@ describe('runChatRepl /correct feedback', () => {
       true,
     );
 
-    const search = await client.memory.searchContent({ query: '', recordType: 'Feedback' });
+    const search = await client.memory.listRecords({ recordType: 'Feedback' });
     expect(search.total).toBe(0);
 
     rmSync(memoryFile, { force: true });

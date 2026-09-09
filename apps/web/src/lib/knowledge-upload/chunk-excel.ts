@@ -10,13 +10,8 @@ export interface ExcelChunk {
   readonly rowEnd: number;
 }
 
-function buildChunkPrefix(
-  fileName: string,
-  sheet: ExcelSheetData,
-  totalSheets: number,
-): string {
-  const headerLine =
-    sheet.headers.length > 0 ? sheet.headers.join(' | ') : '(sin encabezados)';
+function buildChunkPrefix(fileName: string, sheet: ExcelSheetData, totalSheets: number): string {
+  const headerLine = sheet.headers.length > 0 ? sheet.headers.join(' | ') : '(sin encabezados)';
 
   return [
     `Archivo: ${fileName}`,

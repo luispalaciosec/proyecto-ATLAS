@@ -25,12 +25,7 @@ function looksLikeExcelBuffer(buffer: Buffer): boolean {
     return true;
   }
 
-  return (
-    buffer[0] === 0xd0 &&
-    buffer[1] === 0xcf &&
-    buffer[2] === 0x11 &&
-    buffer[3] === 0xe0
-  );
+  return buffer[0] === 0xd0 && buffer[1] === 0xcf && buffer[2] === 0x11 && buffer[3] === 0xe0;
 }
 
 function pad2(value: number): string {
@@ -102,9 +97,7 @@ function detectHeaders(rowValues: readonly string[]): readonly string[] {
   const nonEmpty = rowValues.filter((value) => value.length > 0);
 
   if (nonEmpty.length >= 2) {
-    return rowValues.map((value, index) =>
-      value.length > 0 ? value : columnLabel(index),
-    );
+    return rowValues.map((value, index) => (value.length > 0 ? value : columnLabel(index)));
   }
 
   return rowValues.map((_value, index) => columnLabel(index));
@@ -165,7 +158,9 @@ function readSheetRows(
 
   const headers = detectHeaders(matrix[0] ?? []);
   const dataRows = matrix.slice(1);
-  const rows = dataRows.map((rowValues, index) => `Fila ${index + 1}: ${formatDataRow(headers, rowValues)}`);
+  const rows = dataRows.map(
+    (rowValues, index) => `Fila ${index + 1}: ${formatDataRow(headers, rowValues)}`,
+  );
 
   return Object.freeze({
     sheetName,
@@ -225,7 +220,9 @@ export function extractExcelWorkbook(buffer: Buffer, fileName: string): ExcelWor
 export function flattenExcelWorkbook(workbook: ExcelWorkbookData): string {
   const sections = workbook.sheets.map((sheet) => {
     const headerLine =
-      sheet.headers.length > 0 ? `Headers: ${sheet.headers.join(' | ')}` : 'Headers: (sin encabezados)';
+      sheet.headers.length > 0
+        ? `Headers: ${sheet.headers.join(' | ')}`
+        : 'Headers: (sin encabezados)';
     const body = sheet.rows.length > 0 ? sheet.rows.join('\n') : '(sin filas de datos)';
 
     return `[Hoja: ${sheet.sheetName}]\n${headerLine}\n\n${body}`;

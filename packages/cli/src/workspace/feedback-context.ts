@@ -1,4 +1,6 @@
-import { createAtlas } from '@atlas/sdk';
+import { createAtlas, combineBrandContextPrompt } from '@atlas/sdk';
+
+export { combineBrandContextPrompt };
 
 const DEFAULT_LIMIT = 5;
 
@@ -27,19 +29,10 @@ function extractRecordText(record: FeedbackRecordShape): string {
 
 function renderFeedbackRecord(record: FeedbackRecordShape): string {
   const metadata = record.metadata ?? {};
-  const goal =
-    typeof metadata.originalGoal === 'string' ? metadata.originalGoal : '(unknown goal)';
+  const goal = typeof metadata.originalGoal === 'string' ? metadata.originalGoal : '(unknown goal)';
   const correction = extractRecordText(record);
 
   return `- When asked "${goal}", the correction was: ${correction}`;
-}
-
-export function combineBrandContextPrompt(profileContext: string, feedbackContext: string): string {
-  if (feedbackContext.trim().length === 0) {
-    return profileContext;
-  }
-
-  return `${profileContext}\n\n---\n\n${feedbackContext}`;
 }
 
 export async function loadRecentFeedbackContext(
@@ -51,8 +44,7 @@ export async function loadRecentFeedbackContext(
     memory: { storageFilePath: memoryFilePath },
   });
 
-  const result = await client.memory.searchContent({
-    query: '',
+  const result = await client.memory.listRecords({
     recordType: 'Feedback',
   });
 

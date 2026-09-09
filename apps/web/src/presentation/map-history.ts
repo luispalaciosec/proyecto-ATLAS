@@ -14,6 +14,7 @@ export interface HistoryResponseProduct {
 interface RawHistoryMessage {
   readonly role: string;
   readonly content: string;
+  readonly createdAt?: string;
 }
 
 export function mapSessionHistoryToProduct(
@@ -35,7 +36,10 @@ export function mapSessionHistoryToProduct(
         id: `hist.${workspace}.${index}.${message.role}`,
         role: message.role as 'user' | 'assistant',
         content: message.content.trim(),
-        createdAt: new Date(baseTime + index * 1000).toISOString(),
+        createdAt:
+          typeof message.createdAt === 'string' && message.createdAt.trim().length > 0
+            ? message.createdAt
+            : new Date(baseTime + index * 1000).toISOString(),
       };
       index += 1;
       return entry;

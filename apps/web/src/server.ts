@@ -2,11 +2,7 @@
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import {
-  applyCorrection,
-  executeChatTurn,
-  listWorkspaces,
-} from '@atlas/cli';
+import { applyCorrection, executeChatTurn, listWorkspaces } from '@atlas/cli';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import multer from 'multer';
 
@@ -22,6 +18,7 @@ import {
   BrandValidationError,
 } from './presentation/brand-errors.js';
 import { mapChatResponse } from './presentation/map-chat-response.js';
+import { resolveWebWorkspacesRoot } from './lib/web-persistence/workspace-storage-paths.js';
 import type { ActivityItemType } from './presentation/map-activity.js';
 import { SessionStore } from './session-store.js';
 
@@ -99,7 +96,11 @@ const knowledgeUpload = multer({
   limits: { fileSize: MAX_UPLOAD_BYTES },
 });
 
-function handleKnowledgeUploadError(error: unknown, response: Response, _next: NextFunction): boolean {
+function handleKnowledgeUploadError(
+  error: unknown,
+  response: Response,
+  _next: NextFunction,
+): boolean {
   if (error instanceof KnowledgeUploadError) {
     response.status(error.statusCode).json({ error: error.message });
     return true;
@@ -132,7 +133,7 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
 
   app.get('/api/workspaces', (_request, response) => {
     response.json({
-      workspaces: ['default', ...listWorkspaces()],
+      workspaces: ['default', ...listWorkspaces(resolveWebWorkspacesRoot())],
     });
   });
 
@@ -191,7 +192,7 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
   app.get('/api/activity', async (request, response, next) => {
     try {
       const workspace = resolveWorkspaceParam(request.query.workspace);
-      const payload = sessionStore.getActivity(workspace, {
+      const payload = await sessionStore.getActivityWithGovernance(workspace, {
         limit: resolveLimitParam(request.query.limit),
         type: resolveActivityType(request.query.type),
       });
@@ -295,8 +296,7 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
         }
 
         const workspace = resolveWorkspaceParam(request.body?.workspace);
-        const folder =
-          typeof request.body?.folder === 'string' ? request.body.folder : undefined;
+        const folder = typeof request.body?.folder === 'string' ? request.body.folder : undefined;
         const payload = await sessionStore.uploadKnowledgeDocument(
           workspace,
           file.originalname,
@@ -332,6 +332,8 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
       if (payload.mode === 'deterministic') {
         const view = mapChatResponse(payload);
         sessionStore.recordDeterministicExchange(workspace, goal, view.assistantMessage);
+      } else {
+        sessionStore.persistSession(workspace, session);
       }
 
       sessionStore.recordConversationActivity(workspace, payload);
@@ -365,12 +367,8 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
       const session = await sessionStore.getOrCreate(workspace);
       const outcome = await applyCorrection(session, correction);
 
-      sessionStore.recordCorrectionActivity(
-        workspace,
-        correction,
-        outcome,
-        session.lastTurn?.goal,
-      );
+      sessionStore.recordCorrectionActivity(workspace, correction, outcome, session.lastTurn?.goal);
+      sessionStore.persistSession(workspace, session);
 
       response.json(outcome);
     } catch (error) {
@@ -414,8 +412,7 @@ export function startWebServer(sessionStore?: SessionStore): void {
 }
 
 const isDirectExecution =
-  process.argv[1] !== undefined &&
-  fileURLToPath(import.meta.url) === process.argv[1];
+  process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1];
 
 if (isDirectExecution) {
   startWebServer();

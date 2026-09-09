@@ -9,10 +9,17 @@ import {
 } from '@atlas/memory';
 
 import type { AtlasMemoryOptions, AtlasWorkspaceOptions } from '../atlas/options.js';
+import { searchContentViaRetrieval } from '../retrieval/retrieval-content-search.js';
 
 export interface StoreMemoryContentOptions {
   readonly content: string;
   readonly recordType?: string;
+  readonly metadata?: Readonly<Record<string, unknown>>;
+}
+
+export interface StoreStructuredRecordOptions {
+  readonly recordType: string;
+  readonly content: unknown;
   readonly metadata?: Readonly<Record<string, unknown>>;
 }
 
@@ -40,6 +47,15 @@ export interface SearchMemoryContentResult {
   readonly records: readonly MemoryRecord[];
   readonly total: number;
   readonly query: string;
+}
+
+export interface ListMemoryRecordsOptions {
+  readonly recordType?: string;
+}
+
+export interface ListMemoryRecordsResult {
+  readonly records: readonly MemoryRecord[];
+  readonly total: number;
 }
 
 const DEFAULT_RECORD_TYPE = 'CliMemory';
@@ -77,7 +93,9 @@ const MIN_SEARCH_TOKEN_LENGTH = 3;
 const MAX_SINGULAR_PREFIX_GAP = 2;
 
 function tokenizeForSearch(text: string): readonly string[] {
-  return normalizeForSearch(text).split(/\s+/).filter((token) => token.length > 0);
+  return normalizeForSearch(text)
+    .split(/\s+/)
+    .filter((token) => token.length > 0);
 }
 
 function tokenMatchesQuery(queryToken: string, textTokens: readonly string[]): boolean {
@@ -151,12 +169,13 @@ export class MemoryModule {
     return this.#engine;
   }
 
-  async storeContent(options: StoreMemoryContentOptions): Promise<StoreMemoryContentResult> {
-    const recordType = options.recordType ?? DEFAULT_RECORD_TYPE;
+  async storeStructuredRecord(
+    options: StoreStructuredRecordOptions,
+  ): Promise<StoreMemoryContentResult> {
     const record: MemoryRecord = Object.freeze({
       id: createRecordId(),
-      type: recordType,
-      content: Object.freeze({ text: options.content }),
+      type: options.recordType,
+      content: options.content,
       metadata: Object.freeze({
         namespaceId: DEFAULT_NAMESPACE_ID,
         workspace: this.#defaultWorkspace.name ?? 'default',
@@ -178,6 +197,14 @@ export class MemoryModule {
     });
   }
 
+  async storeContent(options: StoreMemoryContentOptions): Promise<StoreMemoryContentResult> {
+    return this.storeStructuredRecord({
+      recordType: options.recordType ?? DEFAULT_RECORD_TYPE,
+      content: Object.freeze({ text: options.content }),
+      metadata: options.metadata,
+    });
+  }
+
   async storePlanExecution(options: StorePlanExecutionOptions): Promise<StoreMemoryContentResult> {
     return this.storeContent({
       content: options.goal,
@@ -194,7 +221,7 @@ export class MemoryModule {
     });
   }
 
-  async searchContent(options: SearchMemoryContentOptions): Promise<SearchMemoryContentResult> {
+  async listRecords(options: ListMemoryRecordsOptions = {}): Promise<ListMemoryRecordsResult> {
     const query: MemoryQuery = Object.freeze({
       namespaceId: DEFAULT_NAMESPACE_ID,
       ...(options.recordType !== undefined ? { recordType: options.recordType } : {}),
@@ -206,13 +233,45 @@ export class MemoryModule {
       throw new Error(result.error.message);
     }
 
-    const records = Object.freeze(
-      result.value.records.filter((record) => matchesContentQuery(record, options.query)),
-    );
+    const records = Object.freeze(result.value.records);
 
     return Object.freeze({
       records,
       total: records.length,
+    });
+  }
+
+  async searchContent(options: SearchMemoryContentOptions): Promise<SearchMemoryContentResult> {
+    const trimmedQuery = options.query.trim();
+
+    if (trimmedQuery.length > 0) {
+      const retrievalResult = await searchContentViaRetrieval(this.#engine, {
+        query: options.query,
+        namespaceId: DEFAULT_NAMESPACE_ID,
+      });
+
+      if (options.recordType === undefined) {
+        return retrievalResult;
+      }
+
+      const records = Object.freeze(
+        retrievalResult.records.filter((record) => record.type === options.recordType),
+      );
+
+      return Object.freeze({
+        records,
+        total: records.length,
+        query: options.query,
+      });
+    }
+
+    const listed = await this.listRecords(
+      options.recordType !== undefined ? { recordType: options.recordType } : {},
+    );
+
+    return Object.freeze({
+      records: listed.records,
+      total: listed.total,
       query: options.query,
     });
   }

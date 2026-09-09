@@ -22,7 +22,9 @@ describe('findKnowledgeDuplicateMatch', () => {
   ];
 
   it('returns undefined for a new file name', () => {
-    expect(findKnowledgeDuplicateMatch('nuevo-documento.pdf', documents, 'General')).toBeUndefined();
+    expect(
+      findKnowledgeDuplicateMatch('nuevo-documento.pdf', documents, 'General'),
+    ).toBeUndefined();
   });
 
   it('detects an exact duplicate in the same folder', () => {

@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  extractApiErrorMessage,
-  formatAtlasError,
-} from '../src/lib/format-atlas-error.js';
+import { extractApiErrorMessage, formatAtlasError } from '../src/lib/format-atlas-error.js';
 
 describe('formatAtlasError', () => {
   it('returns Error.message for native errors', () => {

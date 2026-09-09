@@ -108,7 +108,9 @@ describe('renderChat', () => {
     await flushUi();
     await flushUi();
 
-    const userMessagesBeforeRetry = getState().chatMessages.filter((message) => message.kind === 'user');
+    const userMessagesBeforeRetry = getState().chatMessages.filter(
+      (message) => message.kind === 'user',
+    );
     expect(userMessagesBeforeRetry).toHaveLength(1);
 
     const retryButton = main.querySelector('.error-panel .btn--primary') as HTMLButtonElement;
@@ -116,7 +118,9 @@ describe('renderChat', () => {
     await flushUi();
     await flushUi();
 
-    const userMessagesAfterRetry = getState().chatMessages.filter((message) => message.kind === 'user');
+    const userMessagesAfterRetry = getState().chatMessages.filter(
+      (message) => message.kind === 'user',
+    );
     expect(userMessagesAfterRetry).toHaveLength(1);
     expect(sendChatMessage).toHaveBeenLastCalledWith('default', 'Mi solicitud original');
     expect(getState().chatMessages.some((message) => message.kind === 'assistant')).toBe(true);
@@ -241,10 +245,7 @@ describe('renderChat', () => {
       llm_turns: 2,
       llm_elapsed_ms: 4200,
       llm_usage: { input_tokens: 300, output_tokens: 180 },
-      llm_reasoning_steps: [
-        { type: 'memory_search', preview: 'contenido' },
-        { type: 'composing' },
-      ],
+      llm_reasoning_steps: [{ type: 'memory_search', preview: 'contenido' }, { type: 'composing' }],
     });
 
     await flushUi();

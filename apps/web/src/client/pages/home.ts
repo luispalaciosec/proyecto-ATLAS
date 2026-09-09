@@ -2,10 +2,7 @@ import type { ActivityItemProduct } from '../../presentation/map-activity.js';
 import { formatActivityTime } from '../../presentation/map-activity.js';
 import logoUrl from '../../../design-system/assets/logo.svg?url';
 import { fetchActivity, fetchHistory } from '../api/client.js';
-import {
-  deriveRecentConversationEntries,
-  type RecentConversationEntry,
-} from '../lib/history.js';
+import { deriveRecentConversationEntries, type RecentConversationEntry } from '../lib/history.js';
 import { formatWorkingContext } from '../lib/brand-context.js';
 import { createActionIcon, createActivityIcon } from '../lib/icons.js';
 import { t } from '../../i18n/index.js';
@@ -335,22 +332,26 @@ function paintHistorySection(main: HTMLElement): void {
   }
 
   if (homeState.historyError !== undefined) {
-    container.append(createErrorPanel(homeState.historyError, () => {
-      homeState = { ...homeState, historyLoading: true, historyError: undefined };
-      void loadHomeData();
-    }));
+    container.append(
+      createErrorPanel(homeState.historyError, () => {
+        homeState = { ...homeState, historyLoading: true, historyError: undefined };
+        void loadHomeData();
+      }),
+    );
     return;
   }
 
   if (homeState.historyItems.length === 0) {
-    container.append(createEmptyPanel(
-      t('home.continueEmptyTitle'),
-      t('home.continueEmptyBody'),
-      t('home.primaryCta'),
-      () => {
-        setRoute('/chat');
-      },
-    ));
+    container.append(
+      createEmptyPanel(
+        t('home.continueEmptyTitle'),
+        t('home.continueEmptyBody'),
+        t('home.primaryCta'),
+        () => {
+          setRoute('/chat');
+        },
+      ),
+    );
     return;
   }
 
@@ -380,22 +381,26 @@ function paintActivitySection(main: HTMLElement): void {
   }
 
   if (homeState.activityError !== undefined) {
-    container.append(createErrorPanel(homeState.activityError, () => {
-      homeState = { ...homeState, activityLoading: true, activityError: undefined };
-      void loadHomeData();
-    }));
+    container.append(
+      createErrorPanel(homeState.activityError, () => {
+        homeState = { ...homeState, activityLoading: true, activityError: undefined };
+        void loadHomeData();
+      }),
+    );
     return;
   }
 
   if (homeState.activityItems.length === 0) {
-    container.append(createEmptyPanel(
-      t('home.activityEmptyTitle'),
-      t('home.activityEmptyBody'),
-      t('home.activityEmptyCta'),
-      () => {
-        setRoute('/actividad');
-      },
-    ));
+    container.append(
+      createEmptyPanel(
+        t('home.activityEmptyTitle'),
+        t('home.activityEmptyBody'),
+        t('home.activityEmptyCta'),
+        () => {
+          setRoute('/actividad');
+        },
+      ),
+    );
     return;
   }
 
