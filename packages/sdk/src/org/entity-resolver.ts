@@ -26,6 +26,23 @@ function matchesEntityContent(content: unknown, matcher: EntityMatcher): boolean
   return Object.entries(matcher).every(([key, expectedValue]) => candidate[key] === expectedValue);
 }
 
+function shouldReplaceEntityRecord(existing: MemoryRecord, candidate: MemoryRecord): boolean {
+  const existingRevision = readMetadataNumber(existing, 'revision') ?? 1;
+  const candidateRevision = readMetadataNumber(candidate, 'revision') ?? 1;
+
+  if (candidateRevision !== existingRevision) {
+    return candidateRevision > existingRevision;
+  }
+
+  const timestampCompare = candidate.timestamp.localeCompare(existing.timestamp);
+
+  if (timestampCompare !== 0) {
+    return timestampCompare > 0;
+  }
+
+  return candidate.id.localeCompare(existing.id) > 0;
+}
+
 function dedupeRecordsByEntityId(records: readonly MemoryRecord[]): readonly MemoryRecord[] {
   const latestByEntityId = new Map<string, MemoryRecord>();
 
@@ -33,7 +50,7 @@ function dedupeRecordsByEntityId(records: readonly MemoryRecord[]): readonly Mem
     const entityId = getEntityId(record);
     const existing = latestByEntityId.get(entityId);
 
-    if (existing === undefined || record.timestamp.localeCompare(existing.timestamp) > 0) {
+    if (existing === undefined || shouldReplaceEntityRecord(existing, record)) {
       latestByEntityId.set(entityId, record);
     }
   }
