@@ -26,6 +26,22 @@ Su propósito consiste en construir una infraestructura permanente para que el c
 
 ---
 
+## Jerarquía de precedencia (única, válida para todo el repositorio)
+
+Ante cualquier contradicción entre documentos, el orden de autoridad es:
+
+1. **Git + tests** — el código en `main`/`origin/main` y el resultado real de los gates (`pnpm build/typecheck/lint/test`). Nada le gana a esto.
+2. **ADRs aceptados** (`adr/*.md`, estado `accepted`) — decisiones arquitectónicas deliberadas.
+3. **`VERSION.md`** — registro oficial de versión de producto.
+4. **`spec/`** — especificaciones normativas (si dos documentos de `spec/` se contradicen entre sí, ninguno gana automáticamente: se reporta como conflicto abierto, no se asume cuál es correcto).
+5. **`ATLAS_ARCHITECTURE_MASTER.md`** — mapa de arquitectura consolidado.
+6. **`ATLAS_ROADMAP_RECONCILIATION.md`** — reconciliación de nomenclatura conceptual entre fuentes.
+7. **Cualquier conversación de chat** (Claude, ChatGPT, Cursor) — nunca autoritativa por sí sola.
+
+Esta jerarquía se actualiza únicamente aquí y en las dos copias idénticas de este bloque (Master, Reconciliación, Foundation README). Si alguna vez diverge entre esos tres lugares, es un bug documental de máxima prioridad.
+
+---
+
 # ¿Qué es Atlas?
 
 Atlas es una plataforma de ingeniería del conocimiento.
@@ -442,17 +458,17 @@ Reportes de sprint, releases e implementation plans viven en [`releases/`](../..
 - ATLAS-INTELLIGENCE-001 … ATLAS-INTELLIGENCE-011 — Intelligence Layer
 - ATLAS-INTELLIGENCE-100 — Intelligence Public API
 - ATLAS-INTELLIGENCE-007 — Workflow (capability spec)
-- [`spec/intelligence/contracts/`](../../intelligence/contracts/) — Intelligence contracts
+- [`spec/intelligence/contracts/`](../intelligence/contracts/) — Intelligence contracts
 
 ## Memory — `spec/memory/`
 
 - ATLAS-MEMORY-001 … ATLAS-MEMORY-008 — Memory Engine
-- [`spec/memory/contracts/`](../../memory/contracts/) — Memory contracts
+- [`spec/memory/contracts/`](../memory/contracts/) — Memory contracts
 
 ## Reasoning — `spec/reasoning/`
 
 - ATLAS-REASONING-001 … ATLAS-REASONING-007 — Reasoning Engine
-- [`spec/reasoning/contracts/`](../../reasoning/contracts/) — Reasoning contracts
+- [`spec/reasoning/contracts/`](../reasoning/contracts/) — Reasoning contracts
 
 ## Product — `spec/product/`
 

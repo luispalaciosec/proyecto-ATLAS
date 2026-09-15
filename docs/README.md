@@ -45,7 +45,7 @@ Architecture proposals (RFCs) live in [`proposals/rfc/`](./proposals/rfc/).
 | [../releases/WEB_UI_WORLD_CLASS_REVIEW.md](../releases/WEB_UI_WORLD_CLASS_REVIEW.md) | Product / Frontend | Revisión técnica complementaria (gaps API, componentes) |
 | [guides/VERIFICATION_PLAYBOOK.md](./guides/VERIFICATION_PLAYBOOK.md) | Owner / QA | Casos de uso manuales antes de publicar docs |
 
-**Planned:** `guides/USER_MANUAL.md`, `dev/GETTING_STARTED.md`, `dev/CLI_REFERENCE.md`, static site under `docs/web/`.
+**Manual operativo vigente:** [../USER_MANUAL.md](../USER_MANUAL.md) (raíz del repo). Un eventual `guides/USER_MANUAL.md` sería un documento distinto y más extenso; no sustituye al manual de raíz. **Planned (opcional):** `dev/GETTING_STARTED.md`, `dev/CLI_REFERENCE.md`, static site under `docs/web/`.
 
 ## ATLAS 4.x integration (current product state)
 

@@ -3,7 +3,7 @@
 **Document ID:** ATLAS-000  
 **Version:** 1.1.0  
 **Status:** Master Architecture Reference  
-**Last Updated:** 2026-09-09  
+**Last Updated:** 2026-09-15  
 **Owner:** ATLAS Architecture Board
 
 ---
@@ -1518,7 +1518,7 @@ Memory Session is now part of the base Memory architecture. Memory becomes the f
 
 Status:
 
-Planned.
+Complete (MVP, ADR-0005).
 
 Retrieval introduces selective access to stored knowledge and experiences.
 
@@ -1832,7 +1832,7 @@ The comprehension corridor will be implemented next.
 
 Phase 5 — Memory is complete (Sprint 11E.2 certified, tag `memory-session-engine-certified`).
 
-The next implementation phase is **Phase 6 — Retrieval**, pending owner authorization.
+Phase 6 — Retrieval is complete (MVP, ADR-0005). Current product state is as recorded in `VERSION.md` (ATLAS 4.x integration closure complete); operational focus is the real-world pilot.
 
 ---
 
@@ -1857,14 +1857,19 @@ Primary references include:
 - Memory Specifications
 - Reasoning Specifications
 
-Whenever discrepancies exist, the precedence order is:
+## Jerarquía de precedencia (única, válida para todo el repositorio)
 
-1. Architecture Decision Records (ADR)
-2. Specifications (`spec/`)
-3. Architecture Master
-4. Releases
-5. README
-6. Source Code
+Ante cualquier contradicción entre documentos, el orden de autoridad es:
+
+1. **Git + tests** — el código en `main`/`origin/main` y el resultado real de los gates (`pnpm build/typecheck/lint/test`). Nada le gana a esto.
+2. **ADRs aceptados** (`adr/*.md`, estado `accepted`) — decisiones arquitectónicas deliberadas.
+3. **`VERSION.md`** — registro oficial de versión de producto.
+4. **`spec/`** — especificaciones normativas (si dos documentos de `spec/` se contradicen entre sí, ninguno gana automáticamente: se reporta como conflicto abierto, no se asume cuál es correcto).
+5. **`ATLAS_ARCHITECTURE_MASTER.md`** — mapa de arquitectura consolidado.
+6. **`ATLAS_ROADMAP_RECONCILIATION.md`** — reconciliación de nomenclatura conceptual entre fuentes.
+7. **Cualquier conversación de chat** (Claude, ChatGPT, Cursor) — nunca autoritativa por sí sola.
+
+Esta jerarquía se actualiza únicamente aquí y en las dos copias idénticas de este bloque (Master, Reconciliación, Foundation README). Si alguna vez diverge entre esos tres lugares, es un bug documental de máxima prioridad.
 
 ---
 
@@ -1931,7 +1936,7 @@ Certified — Sprint 11E.2 (tag `memory-session-engine-certified`, CONTRACT-001 
 
 **Next Implementation Phase**
 
-Pending owner authorization. **Phase 6 — Retrieval**.
+See `VERSION.md` and pilot documentation under `releases/ATLAS_PILOT_*.md` for current operational focus (post ATLAS 4.x closure).
 
 ---
 

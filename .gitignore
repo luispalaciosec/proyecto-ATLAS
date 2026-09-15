@@ -37,3 +37,5 @@ pnpm-debug.log*
 .changeset/*.md
 !.changeset/config.json
 !.changeset/README.md
+
+ATLAS-INVENTARIO.md

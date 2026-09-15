@@ -2,23 +2,26 @@
 
 **Document ID:** ATLAS-RECON-001
 **Versión:** 1.0
-**Fecha:** 2026-08-17
+**Fecha:** 2026-09-15
 **Propósito:** Documento ancla para que cualquier sesión nueva (Claude, ChatGPT, Cursor, o Luis releyendo esto en tres meses) recupere el estado real de ATLAS sin depender de la memoria de ningún chat.
+
+**Nota (2026-09-15):** Corregido por hallazgos de la auditoría documental (saneamiento Fases 1–4): precedencia unificada, cabo suelto RFC 4.2, y alineación con `VERSION.md` / cierre ATLAS 4.x.
 
 ---
 
-## 0. Regla de precedencia
+## Jerarquía de precedencia (única, válida para todo el repositorio)
 
-Si algo dicho en un chat (este, el de ChatGPT, o cualquier otro) contradice este documento o los documentos que cita, **gana el documento**, no el chat. Las fuentes de verdad, en orden:
+Ante cualquier contradicción entre documentos, el orden de autoridad es:
 
-1. `adr/ADR-000X-*.md` — decisiones de arquitectura aceptadas.
-2. `git log` / `git tag` sobre `origin/main` — lo que realmente está comiteado y pusheado.
-3. `VERSION.md` (raíz del repo) — registro de versión de producto.
-4. `ATLAS_ARCHITECTURE_MASTER.md` (raíz del repo) — mapa de arquitectura por fases.
-5. Este documento — reconciliación entre lo anterior y las etiquetas conceptuales usadas en conversación.
-6. Cualquier chat — nunca autoritativo por sí solo.
+1. **Git + tests** — el código en `main`/`origin/main` y el resultado real de los gates (`pnpm build/typecheck/lint/test`). Nada le gana a esto.
+2. **ADRs aceptados** (`adr/*.md`, estado `accepted`) — decisiones arquitectónicas deliberadas.
+3. **`VERSION.md`** — registro oficial de versión de producto.
+4. **`spec/`** — especificaciones normativas (si dos documentos de `spec/` se contradicen entre sí, ninguno gana automáticamente: se reporta como conflicto abierto, no se asume cuál es correcto).
+5. **`ATLAS_ARCHITECTURE_MASTER.md`** — mapa de arquitectura consolidado.
+6. **`ATLAS_ROADMAP_RECONCILIATION.md`** — reconciliación de nomenclatura conceptual entre fuentes.
+7. **Cualquier conversación de chat** (Claude, ChatGPT, Cursor) — nunca autoritativa por sí sola.
 
-Este documento se debe actualizar cada vez que se cierre una ronda de trabajo verificada (mismo criterio que `VERSION.md`).
+Esta jerarquía se actualiza únicamente aquí y en las dos copias idénticas de este bloque (Master, Reconciliación, Foundation README). Si alguna vez diverge entre esos tres lugares, es un bug documental de máxima prioridad.
 
 ---
 
@@ -39,7 +42,7 @@ Ninguno de los dos usa "ATLAS 3/4/5...". Esa es la causa de la confusión: no es
 |---|---|---|---|---|
 | **ATLAS 1.x / 2.x** (mencionado en chat, nunca definido por escrito) | No existe como documento formal bajo ese nombre. Lo más cercano: Phase 0 (Platform Foundation, arquitectura) + Phase 1 (Foundation & MVP, producto) | `ATLAS_ARCHITECTURE_MASTER.md` §Phase 0; `VERSION.md` §Phase 1 | Completo, congelado | Kernel v0.1, tag `kernel-v0.1.0-alpha.1`; MVP-1 a MVP-6, commit final `c5db504` |
 | **ATLAS 3 — Knowledge Intelligence** | `@atlas/knowledge` + la biblioteca de conocimiento de la Web UI (ingesta, búsqueda, upload de documentos) | `ATLAS_ARCHITECTURE_MASTER.md` §Phase 1 (Knowledge); `VERSION.md` §P2.5 y §P2.5.x (Web UI, upload de documentos) | Completo | `@atlas/knowledge` v0.2.0 Stable; Web UI knowledge library, commit `aeea5f5` en adelante |
-| **ATLAS 4 — Organizational Intelligence** | El módulo `packages/sdk/src/org/**` construido en esta sesión: Entities, Relationships, Policies versionadas, creación vía chat, Decision + Evidence | **No aparece en `ATLAS_ARCHITECTURE_MASTER.md` ni en `VERSION.md`** — es trabajo nuevo, posterior al último cierre documentado (Product Hardening Checkpoint) | Completo (4.1 + 4.2) | RFC: `ecfb79b`. Vertical slice 4.1: `fef9356`. Wire `atlas.org`: `86daf79`. Chat data entry: `7bd13c7`. Decision+Evidence 4.2: `2388eeb` (en `origin/main`) |
+| **ATLAS 4 — Organizational Intelligence** | Módulo org en `@atlas/sdk` (Entities, Relationships, Policies versionadas, chat data entry, Decision + Evidence); cierre documentado en `VERSION.md` § ATLAS 4.x Integration Closure (INT-001–009) y `ATLAS_ARCHITECTURE_MASTER.md` § 21A | `VERSION.md`, `ATLAS_ARCHITECTURE_MASTER.md` § 21A, RFCs en `releases/RFC_ATLAS4_*.md` | Completo | RFC 4.1: `ecfb79b`; 4.1 slice/wire/chat: `fef9356`, `86daf79`, `7bd13c7`; 4.2: `2388eeb`; hygiene + RFC 4.2 versionado: `bbb857e` |
 | **ATLAS 5 — Decision Intelligence** | Propuesta conceptual, sin RFC todavía | No existe en ningún documento | No iniciado — siguiente paso acordado | — |
 | **ATLAS 6 — Operational Intelligence** | Propuesta conceptual (ChatGPT) | No existe en ningún documento | No iniciado, no comprometido | — |
 | **ATLAS 7 — Autonomous Organizational Intelligence** | Propuesta conceptual (ChatGPT) | No existe en ningún documento | No iniciado, no comprometido | — |
@@ -61,7 +64,7 @@ Ninguno de los dos usa "ATLAS 3/4/5...". Esa es la causa de la confusión: no es
 | 3 | Workflow | Completo, Congelado |
 | 4 | Planning | Completo, Congelado (ADR-0002) |
 | 5 | Memory | Completo — Session Engine Certified (ADR-0003) |
-| 6 | Retrieval | Documento dice "Planned" — **desactualizado**: en realidad ya se implementó (ver §4) |
+| 6 | Retrieval | Completo (MVP, ADR-0005) |
 | 7 | Context | Planned — sin implementar (`@atlas/context` en `0.0.0`) |
 | 8 | Reasoning | Planned — sin implementar (solo spec, sin paquete) |
 | 9 | Architecture Consolidation | Deferred |
@@ -92,9 +95,9 @@ Ninguno de los dos usa "ATLAS 3/4/5...". Esa es la causa de la confusión: no es
 
 ---
 
-## 5. Cabo suelto encontrado durante esta reconciliación
+## 5. Cabo suelto encontrado durante esta reconciliación (cerrado)
 
-`releases/RFC_ATLAS4_2_DECISION_EVIDENCE.md` fue escrito y usado como base real para la implementación de 4.2 (commit `2388eeb`, ya en `origin/main`), pero **el archivo del RFC nunca se comiteó** — sigue como untracked en el working tree. La implementación que describe sí está mergeada; el documento que la justificó, no. Pendiente: commit de este archivo (y del resto de `SUPERPROMPT_*.md`/RFCs sueltos en `releases/`, que Luis ha decidido dejar para después).
+`releases/RFC_ATLAS4_2_DECISION_EVIDENCE.md` quedó versionado en `bbb857e` (2026-09-08, *chore(atlas): finalize 4.x repository hygiene*). Ya no es untracked ni cabo suelto; la implementación 4.2 (`2388eeb`) y el RFC que la documenta están alineados en `origin/main`.
 
 ---
 

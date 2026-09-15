@@ -2,6 +2,8 @@
 
 **Estado:** Propuesta (investigación + diseño, sin implementación)  
 **Fecha:** 2026-08-17  
+
+Estado: Implementado
 **Base:** ATLAS 4.1 en `main` (commits `fef9356`, `86daf79`, `7bd13c7`)  
 **Alcance:** Completar el modelo de Organizational Intelligence con **Decision** y **Evidence**, apoyándose en el grafo org existente (Entities, Relationships, Policies versionadas).  
 **Caso ancla:** Aprobación del 12% de descuento a Constructora Andes — registrar quién decidió, cuándo, con qué evidencia, y responder por chat.

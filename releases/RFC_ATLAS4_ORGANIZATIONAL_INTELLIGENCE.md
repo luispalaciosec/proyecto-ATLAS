@@ -2,6 +2,8 @@
 
 **Estado:** Propuesta (investigación + diseño, sin implementación)  
 **Fecha:** 2026-08-16  
+
+Estado: Implementado
 **Alcance:** Pasar de razonar sobre documentos a razonar sobre entidades, hechos, relaciones y políticas aplicables.  
 **Casos ancla:** (1) descuento 12% a Constructora Andes; (2) garantía 45→60 días.
 
