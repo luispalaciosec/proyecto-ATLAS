@@ -89,6 +89,6 @@ import { getMetaConceptDescriptor, MetaConceptId } from '@atlas/knowledge/metamo
 
 ## References
 
-- [`releases/KNOWLEDGE_IMPLEMENTATION_PLAN.md`](../../releases/KNOWLEDGE_IMPLEMENTATION_PLAN.md)
-- [`releases/SPRINT9_IMPLEMENTATION_REPORT.md`](../../releases/SPRINT9_IMPLEMENTATION_REPORT.md)
+- [`releases/KNOWLEDGE_IMPLEMENTATION_PLAN.md`](../../releases/archive/KNOWLEDGE_IMPLEMENTATION_PLAN.md)
+- [`releases/SPRINT9_IMPLEMENTATION_REPORT.md`](../../releases/archive/SPRINT9_IMPLEMENTATION_REPORT.md)
 - [`spec/capabilities/knowledge/KNOWLEDGE-002-METAMODEL.md`](../../spec/capabilities/knowledge/KNOWLEDGE-002-METAMODEL.md)

@@ -23,6 +23,6 @@ Cada ADR debe registrar como mínimo:
 
 ## Contexto histórico
 
-La colisión de identificador `ATLAS-002` fue documentada durante el Milestone 2 (Repository Stabilization). Ver `releases/REPOSITORY_MIGRATION_REPORT.md` para el detalle de la migración que originó este directorio.
+La colisión de identificador `ATLAS-002` fue documentada durante el Milestone 2 (Repository Stabilization). Ver `releases/archive/REPOSITORY_MIGRATION_REPORT.md` para el detalle de la migración que originó este directorio.
 
 Este directorio se creó como ampliación de la raíz del repositorio, aprobada explícitamente por el Architecture Board como parte de Milestone 2. Su inclusión formal en `ATLAS-012-REPOSITORY_GOVERNANCE.md §4` queda pendiente de una actualización futura de ese documento.

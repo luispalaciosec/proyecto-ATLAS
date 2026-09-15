@@ -31,7 +31,7 @@ last_updated: 2026-09-09
 | **Retrieval Architecture ADR** | [`adr/ADR-0005-RETRIEVAL_ARCHITECTURE_RECONCILIATION.md`](./adr/ADR-0005-RETRIEVAL_ARCHITECTURE_RECONCILIATION.md) — **Accepted** |
 | **Foundation Phase** | **Completed** |
 | **Repository Stabilization (Milestone 2)** | **Completed** |
-| **Release document** | [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/ATLAS-RELEASE-001-KERNEL_v0.1.md) |
+| **Release document** | [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/archive/ATLAS-RELEASE-001-KERNEL_v0.1.md) |
 | **Architecture reference** | [`ATLAS_ARCHITECTURE_MASTER.md`](./ATLAS_ARCHITECTURE_MASTER.md) |
 | **Internal RC tag** | `kernel-v0.1.0-alpha.1` |
 
@@ -250,7 +250,7 @@ Open Issues activos derivados de este ADR: `OI-0001` (relación Memory Provider 
 
 ## MVP Implementation (Sprints MVP-1–MVP-6)
 
-Primer MVP funcional de ATLAS entregado sobre arquitectura congelada (ADR-0001–ADR-0005). Plan de referencia: [`releases/MVP_IMPLEMENTATION_PLAN.md`](./releases/MVP_IMPLEMENTATION_PLAN.md).
+Primer MVP funcional de ATLAS entregado sobre arquitectura congelada (ADR-0001–ADR-0005). Plan de referencia: [`releases/MVP_IMPLEMENTATION_PLAN.md`](./releases/archive/MVP_IMPLEMENTATION_PLAN.md).
 
 | Sprint | Entregable | Commit | Status |
 |--------|------------|--------|--------|
@@ -295,7 +295,7 @@ Phase 1 agrupa la fundación arquitectónica (ADR-0001–ADR-0005, Kernel Frozen
 
 ## P2.1 — LLM Adapter + Tool Calling (Phase 2)
 
-Primer entregable de Phase 2 — Product: capacidad generativa con tool-calling sobre capabilities certificadas, sin modificar Memory, Workflow, Intelligence ni Retrieval por dentro. Plan de referencia: [`releases/P2_1_LLM_ADAPTER_IMPLEMENTATION_PLAN.md`](./releases/P2_1_LLM_ADAPTER_IMPLEMENTATION_PLAN.md).
+Primer entregable de Phase 2 — Product: capacidad generativa con tool-calling sobre capabilities certificadas, sin modificar Memory, Workflow, Intelligence ni Retrieval por dentro. Plan de referencia: [`releases/P2_1_LLM_ADAPTER_IMPLEMENTATION_PLAN.md`](./releases/archive/P2_1_LLM_ADAPTER_IMPLEMENTATION_PLAN.md).
 
 | Sprint | Entregable | Status |
 |--------|------------|--------|
@@ -373,7 +373,7 @@ pnpm atlas ask --goal "..."
 
 ## P2.2 — Conversación (Phase 2)
 
-Segundo entregable de Phase 2: `atlas chat` conversacional con LLM cuando está configurado, fallback determinista idéntico al MVP cuando no lo está; `atlas` sin subcomando entra en chat. Plan: [`releases/P2_2_CONVERSACION_IMPLEMENTATION_PLAN.md`](./releases/P2_2_CONVERSACION_IMPLEMENTATION_PLAN.md).
+Segundo entregable de Phase 2: `atlas chat` conversacional con LLM cuando está configurado, fallback determinista idéntico al MVP cuando no lo está; `atlas` sin subcomando entra en chat. Plan: [`releases/P2_2_CONVERSACION_IMPLEMENTATION_PLAN.md`](./releases/archive/P2_2_CONVERSACION_IMPLEMENTATION_PLAN.md).
 
 | Sprint | Entregable | Status |
 |--------|------------|--------|
@@ -394,7 +394,7 @@ Segundo entregable de Phase 2: `atlas chat` conversacional con LLM cuando está 
 
 ## P2.3 — Brands & Workspaces (Phase 2)
 
-Tercer entregable de Phase 2: workspaces de marca con memoria físicamente aislada (`.atlas/workspaces/<slug>/memory.json`) y perfil de contexto inyectado al LLM vía `contextPrompt`. Plan: [`releases/P2_3_BRANDS_WORKSPACES_IMPLEMENTATION_PLAN.md`](./releases/P2_3_BRANDS_WORKSPACES_IMPLEMENTATION_PLAN.md).
+Tercer entregable de Phase 2: workspaces de marca con memoria físicamente aislada (`.atlas/workspaces/<slug>/memory.json`) y perfil de contexto inyectado al LLM vía `contextPrompt`. Plan: [`releases/P2_3_BRANDS_WORKSPACES_IMPLEMENTATION_PLAN.md`](./releases/archive/P2_3_BRANDS_WORKSPACES_IMPLEMENTATION_PLAN.md).
 
 | Sprint | Entregable | Status |
 |--------|------------|--------|
@@ -415,7 +415,7 @@ Tercer entregable de Phase 2: workspaces de marca con memoria físicamente aisla
 
 ## P2.4 — Feedback Loop (Phase 2)
 
-Cuarto entregable del núcleo conversacional Phase 2: comando `/correct` en el REPL (modo LLM) persiste correcciones como `recordType: 'Feedback'`, y `atlas brand` carga proactivamente correcciones previas en el `contextPrompt`. Plan: [`releases/P2_4_FEEDBACK_LOOP_IMPLEMENTATION_PLAN.md`](./releases/P2_4_FEEDBACK_LOOP_IMPLEMENTATION_PLAN.md).
+Cuarto entregable del núcleo conversacional Phase 2: comando `/correct` en el REPL (modo LLM) persiste correcciones como `recordType: 'Feedback'`, y `atlas brand` carga proactivamente correcciones previas en el `contextPrompt`. Plan: [`releases/P2_4_FEEDBACK_LOOP_IMPLEMENTATION_PLAN.md`](./releases/archive/P2_4_FEEDBACK_LOOP_IMPLEMENTATION_PLAN.md).
 
 | Sprint | Entregable | Status |
 |--------|------------|--------|
@@ -435,7 +435,7 @@ Cuarto entregable del núcleo conversacional Phase 2: comando `/correct` en el R
 
 ## P2.5 — Web UI (Phase 2)
 
-Quinto entregable Phase 2: interfaz web local (`@atlas/web`) que expone `atlas chat`/`atlas brand`/`/correct` vía HTTP sobre la lógica compartida exportada desde `@atlas/cli`. Plan: [`releases/P2_5_WEB_UI_IMPLEMENTATION_PLAN.md`](./releases/P2_5_WEB_UI_IMPLEMENTATION_PLAN.md).
+Quinto entregable Phase 2: interfaz web local (`@atlas/web`) que expone `atlas chat`/`atlas brand`/`/correct` vía HTTP sobre la lógica compartida exportada desde `@atlas/cli`. Plan: [`releases/P2_5_WEB_UI_IMPLEMENTATION_PLAN.md`](./releases/archive/P2_5_WEB_UI_IMPLEMENTATION_PLAN.md).
 
 | Sprint | Entregable | Status |
 |--------|------------|--------|
@@ -451,13 +451,13 @@ Quinto entregable Phase 2: interfaz web local (`@atlas/web`) que expone `atlas c
 
 **Nota checkpoint:** Owner autorizó avanzar a P2.5 sin esperar evaluación formal del criterio Vision §10.
 
-**Verificación de cierre (independiente, no autoreportada):** el reporte inicial de P2.5 declaraba `pnpm --filter @atlas/cli test` 69/69 y `pnpm --filter @atlas/web test` 7/7, pero no ejecutaba `turbo run build`/`turbo run test` en la raíz. La verificación independiente detectó una dependencia circular real `@atlas/cli` ↔ `@atlas/web` (el comando estándar `pnpm run build` fallaba con cycle-detection, exit 1) y, tras corregirla, un test flaky en `feedback-context.test.ts` (colisión de timestamp en milisegundo, ~50% de fallos). Ambos corregidos ([`releases/P2_5_FIX_CIRCULAR_DEPENDENCY.md`](./releases/P2_5_FIX_CIRCULAR_DEPENDENCY.md), [`releases/P2_5_FIX_FEEDBACK_ORDER_FLAKY_TEST.md`](./releases/P2_5_FIX_FEEDBACK_ORDER_FLAKY_TEST.md)) y reverificados desde una copia limpia: `pnpm run build` en raíz — 23/23 tareas, sin warning de ciclo; `pnpm run test` en raíz — 46/46; `feedback-context.test.ts` — 0 fallos en 30 corridas repetidas.
+**Verificación de cierre (independiente, no autoreportada):** el reporte inicial de P2.5 declaraba `pnpm --filter @atlas/cli test` 69/69 y `pnpm --filter @atlas/web test` 7/7, pero no ejecutaba `turbo run build`/`turbo run test` en la raíz. La verificación independiente detectó una dependencia circular real `@atlas/cli` ↔ `@atlas/web` (el comando estándar `pnpm run build` fallaba con cycle-detection, exit 1) y, tras corregirla, un test flaky en `feedback-context.test.ts` (colisión de timestamp en milisegundo, ~50% de fallos). Ambos corregidos ([`releases/P2_5_FIX_CIRCULAR_DEPENDENCY.md`](./releases/archive/P2_5_FIX_CIRCULAR_DEPENDENCY.md), [`releases/P2_5_FIX_FEEDBACK_ORDER_FLAKY_TEST.md`](./releases/archive/P2_5_FIX_FEEDBACK_ORDER_FLAKY_TEST.md)) y reverificados desde una copia limpia: `pnpm run build` en raíz — 23/23 tareas, sin warning de ciclo; `pnpm run test` en raíz — 46/46; `feedback-context.test.ts` — 0 fallos en 30 corridas repetidas.
 
 ---
 
 ## Checkpoint — Product Hardening post-P2.5 (validación manual + fixes)
 
-En P2.4 quedó registrado: *"corresponde evaluar el criterio de éxito de ATLAS_PRODUCT_VISION §10 con uso real antes de avanzar a P2.5"*. Esa evaluación no se hizo antes de P2.5 (Owner autorizó avanzar igual), pero se completó ahora, después de P2.5, mediante una batería de 6 ejercicios end-to-end (E1–E6) ejecutados manualmente el 8–9 de agosto de 2026. Informe completo: [`releases/MANUAL_VALIDATION_REPORT_2026-08-09.md`](./releases/MANUAL_VALIDATION_REPORT_2026-08-09.md). Guía de uso resultante: [`USER_MANUAL.md`](./USER_MANUAL.md).
+En P2.4 quedó registrado: *"corresponde evaluar el criterio de éxito de ATLAS_PRODUCT_VISION §10 con uso real antes de avanzar a P2.5"*. Esa evaluación no se hizo antes de P2.5 (Owner autorizó avanzar igual), pero se completó ahora, después de P2.5, mediante una batería de 6 ejercicios end-to-end (E1–E6) ejecutados manualmente el 8–9 de agosto de 2026. Informe completo: [`releases/MANUAL_VALIDATION_REPORT_2026-08-09.md`](./releases/archive/MANUAL_VALIDATION_REPORT_2026-08-09.md). Guía de uso resultante: [`USER_MANUAL.md`](./USER_MANUAL.md).
 
 | Ejercicio | Descripción | Resultado |
 |-----------|-------------|-----------|
@@ -471,9 +471,9 @@ En P2.4 quedó registrado: *"corresponde evaluar el criterio de éxito de ATLAS_
 Durante la validación se detectaron y cerraron cuatro hallazgos, además de tres commits fuera de este proceso que también se reverificaron independientemente:
 
 - **Tres commits sin revisión previa** (`39ac12f` bootstrap `pnpm atlas`, `29e39d4` provider OpenAI-compatible, `a63ed06` búsqueda/plan insensible a tildes) — verificados post-hoc: código correcto, pero `a63ed06` modificó `@atlas/core` y `@atlas/intelligence` (Frozen) sin pasar por ADR. Gap de gobernanza señalado, no bloqueante dado el carácter de bug fix aditivo.
-- **Quality gate roto en la raíz** (`pnpm run typecheck` y `pnpm run lint` fallaban, invisibles porque nunca se corrían completos, solo con `--filter`) — corregido y reverificado: `pnpm run typecheck` 35/35, `pnpm run lint` 35/35. Ver [`releases/QUALITY_GATE_FIX_TYPECHECK_LINT.md`](./releases/QUALITY_GATE_FIX_TYPECHECK_LINT.md).
+- **Quality gate roto en la raíz** (`pnpm run typecheck` y `pnpm run lint` fallaban, invisibles porque nunca se corrían completos, solo con `--filter`) — corregido y reverificado: `pnpm run typecheck` 35/35, `pnpm run lint` 35/35. Ver [`releases/QUALITY_GATE_FIX_TYPECHECK_LINT.md`](./releases/archive/QUALITY_GATE_FIX_TYPECHECK_LINT.md).
 - **L-01 — Groq (`llama-3.3-70b-versatile`) intermitente en tool-calling** (`tool_use_failed`, rate limits) — diagnosticado con un experimento controlado comparando el mismo flujo en Groq vs. Anthropic (`claude-sonnet-5`): el fallo no se reprodujo con Anthropic. Confirmado como limitación del proveedor, no de ATLAS. `USER_MANUAL.md` actualizado recomendando Anthropic como proveedor por defecto.
-- **L-02 — el LLM podía contradecir un resultado de `memory_search` no vacío** (afirmar "no hay datos" existiendo registros) — corregido extendiendo `SYSTEM_PROMPT` en `llm-module.ts` con una instrucción explícita de precedencia de tool results; test unitario nuevo verifica el mensaje real enviado al provider. Ver [`releases/LLM_TOOL_RESULT_PRECEDENCE_FIX.md`](./releases/LLM_TOOL_RESULT_PRECEDENCE_FIX.md).
+- **L-02 — el LLM podía contradecir un resultado de `memory_search` no vacío** (afirmar "no hay datos" existiendo registros) — corregido extendiendo `SYSTEM_PROMPT` en `llm-module.ts` con una instrucción explícita de precedencia de tool results; test unitario nuevo verifica el mensaje real enviado al provider. Ver [`releases/LLM_TOOL_RESULT_PRECEDENCE_FIX.md`](./releases/archive/LLM_TOOL_RESULT_PRECEDENCE_FIX.md).
 
 **Verificación de cierre (independiente):** cada fix anterior fue reverificado desde una copia limpia del repo (no solo el autoreporte) — `pnpm run build` 23/23, `pnpm run test` 46/46 en cada punto de control.
 
@@ -489,9 +489,9 @@ Durante la validación se detectaron y cerraron cuatro hallazgos, además de tre
 
 **Progresión de tests `@atlas/web` a través de las fases (todas verificadas, no autoreportadas):** 26/26 → 42/42 → 60/60 → 74/74 → 152/152 → **165/165** (upload documentos) → **166/166** (UI progreso upload).
 
-**Upload de documentos (post-`aeea5f5`, 2026-08-10):** `POST /api/knowledge/upload` — PDF/DOCX/PPTX/TXT/MD → memoria buscable por marca. Informe: [`WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md`](./releases/WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md). Solo `apps/web/`; PPTX vía `jszip` (OOXML zip, sin binarios nativos).
+**Upload de documentos (post-`aeea5f5`, 2026-08-10):** `POST /api/knowledge/upload` — PDF/DOCX/PPTX/TXT/MD → memoria buscable por marca. Informe: [`WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md`](./releases/archive/WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md). Solo `apps/web/`; PPTX vía `jszip` (OOXML zip, sin binarios nativos).
 
-**Fixes UX revisión en vivo (post-`7569f05`, 2026-08-10):** sidebar sticky escritorio, prompt LLM sin IDs internos, búsqueda Conocimiento por tokens (singular/plural). Informe: [`WEB_UI_LIVE_REVIEW_UX_FIXES.md`](./releases/WEB_UI_LIVE_REVIEW_UX_FIXES.md). Tests `@atlas/sdk` **40/40** (+4).
+**Fixes UX revisión en vivo (post-`7569f05`, 2026-08-10):** sidebar sticky escritorio, prompt LLM sin IDs internos, búsqueda Conocimiento por tokens (singular/plural). Informe: [`WEB_UI_LIVE_REVIEW_UX_FIXES.md`](./releases/archive/WEB_UI_LIVE_REVIEW_UX_FIXES.md). Tests `@atlas/sdk` **40/40** (+4).
 
 **Consolidación fast-forward a `main` (HEAD `3acfbd9` + cierre, 2026-08-10):** la rama `cursor/live-review-ux-fixes` se fusionó en línea recta sobre `origin/main` (`561316d`) sin reescritura de historia. Commits incluidos: `57d16b7` (spec UX polish), `c57fa51` (**hotfix crítico** — `pdf-parse` v2 API `PDFParse`, sin el cual `pnpm atlas web` no arranca), `3acfbd9` (UI de progreso de subida en Conocimiento: icono, barra, fases subiendo/leyendo/indexando/disponible). Verificación independiente post-merge: `pnpm install --frozen-lockfile` OK; build **23/23**; typecheck **35/35**; lint **35/35**; test **46/46** tareas turbo — `@atlas/sdk` **40/40**, `@atlas/memory` **128/128**, `@atlas/cli` **72/72**, `@atlas/web` **166/166** (total suite **633** tests pasando, 5 todo en runtime omitidos). **Arranque real verificado:** `pnpm --filter @atlas/web build && pnpm atlas web` levantó en `http://127.0.0.1:4173` y `curl -sf` devolvió **HTTP 200** (no solo build/typecheck). Rama `cursor/live-review-ux-fixes` eliminada local y remota tras el push.
 
@@ -506,7 +506,7 @@ Durante la validación se detectaron y cerraron cuatro hallazgos, además de tre
 | `pnpm run test` (raíz) | 46/46 tareas — `@atlas/sdk` 36/36, `@atlas/memory` 128/128 (22 archivos), `@atlas/cli` 72/72 (10 archivos), `@atlas/web` 152/152 (24 archivos) |
 | Kernel/Frozen tocado (`packages/{core,compiler,runtime,workflow,intelligence,memory,retrieval}`) desde el inicio de Fase 3 hasta `aeea5f5` | **0 commits** — límite respetado |
 
-**Hotfix más reciente (commit `aeea5f5`, 2026-08-10):** durante uso real con la marca "Geeks", `/api/chat` devolvía 500 porque el proceso de `atlas web` no cargaba el `.env` del repo (sin `ATLAS_LLM_API_KEY`, caía a modo determinístico, que fallaba en esa marca), y el panel "Ver detalles" mostraba el error literal `[object Object]`. Corregido con `apps/web/src/lib/load-env.ts` y `format-atlas-error.ts`. Informe: [`WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md`](./releases/WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md). Este episodio es la primera señal real de uso del pilotaje — no fue un test sintético.
+**Hotfix más reciente (commit `aeea5f5`, 2026-08-10):** durante uso real con la marca "Geeks", `/api/chat` devolvía 500 porque el proceso de `atlas web` no cargaba el `.env` del repo (sin `ATLAS_LLM_API_KEY`, caía a modo determinístico, que fallaba en esa marca), y el panel "Ver detalles" mostraba el error literal `[object Object]`. Corregido con `apps/web/src/lib/load-env.ts` y `format-atlas-error.ts`. Informe: [`WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md`](./releases/archive/WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md). Este episodio es la primera señal real de uso del pilotaje — no fue un test sintético.
 
 **Gaps conocidos, sin resolver todavía:**
 
@@ -517,7 +517,7 @@ Durante la validación se detectaron y cerraron cuatro hallazgos, además de tre
 - Página "Configuración" sigue siendo un placeholder ("Próximamente").
 - Feedback genérico de aprendizaje (más allá del caso estructurado warranty 45→60) no está implementado — INT-009 cubre el camino canónico probado.
 
-**Bibliografía completa (histórico, no hace falta releer para entender el estado actual — esta entrada consolidada es la fuente de verdad):** [`WEB_UI_PHASE_3_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3_IMPLEMENTATION.md), [`WEB_UI_PHASE_3D_B_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3D_B_IMPLEMENTATION.md), [`WEB_UI_PHASE_3E_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3E_IMPLEMENTATION.md), [`WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md`](./releases/WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md), [`WEB_UI_PHASE_3F_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3F_IMPLEMENTATION.md), [`WEB_UI_PHASE_3G2_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3G2_IMPLEMENTATION.md), [`WEB_UI_WORLD_CLASS_FINAL_AUDIT.md`](./releases/WEB_UI_WORLD_CLASS_FINAL_AUDIT.md), [`WEB_UI_PHASE_3H_AUDIT.md`](./releases/WEB_UI_PHASE_3H_AUDIT.md), [`WEB_UI_PHASE_3H_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3H_IMPLEMENTATION.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md`](./releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md`](./releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md), [`WEB_UI_NAVIGATION_RENDER_LOOP_FIX.md`](./releases/WEB_UI_NAVIGATION_RENDER_LOOP_FIX.md), [`WEB_UI_THEME_SWITCH_AND_LIGHT_LOGO_FIX.md`](./releases/WEB_UI_THEME_SWITCH_AND_LIGHT_LOGO_FIX.md), [`WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md`](./releases/WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md), [`WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md`](./releases/WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md).
+**Bibliografía completa (histórico, no hace falta releer para entender el estado actual — esta entrada consolidada es la fuente de verdad):** [`WEB_UI_PHASE_3_IMPLEMENTATION.md`](./releases/archive/WEB_UI_PHASE_3_IMPLEMENTATION.md), [`WEB_UI_PHASE_3D_B_IMPLEMENTATION.md`](./releases/archive/WEB_UI_PHASE_3D_B_IMPLEMENTATION.md), [`WEB_UI_PHASE_3E_IMPLEMENTATION.md`](./releases/archive/WEB_UI_PHASE_3E_IMPLEMENTATION.md), [`WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md`](./releases/archive/WEB_UI_PHASE_3F_ACTIVITY_DESIGN.md), [`WEB_UI_PHASE_3F_IMPLEMENTATION.md`](./releases/archive/WEB_UI_PHASE_3F_IMPLEMENTATION.md), [`WEB_UI_PHASE_3G2_IMPLEMENTATION.md`](./releases/archive/WEB_UI_PHASE_3G2_IMPLEMENTATION.md), [`WEB_UI_WORLD_CLASS_FINAL_AUDIT.md`](./releases/archive/WEB_UI_WORLD_CLASS_FINAL_AUDIT.md), [`WEB_UI_PHASE_3H_AUDIT.md`](./releases/archive/WEB_UI_PHASE_3H_AUDIT.md), [`WEB_UI_PHASE_3H_IMPLEMENTATION.md`](./releases/archive/WEB_UI_PHASE_3H_IMPLEMENTATION.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md`](./releases/archive/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md), [`WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md`](./releases/archive/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md), [`WEB_UI_NAVIGATION_RENDER_LOOP_FIX.md`](./releases/archive/WEB_UI_NAVIGATION_RENDER_LOOP_FIX.md), [`WEB_UI_THEME_SWITCH_AND_LIGHT_LOGO_FIX.md`](./releases/archive/WEB_UI_THEME_SWITCH_AND_LIGHT_LOGO_FIX.md), [`WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md`](./releases/archive/WEB_UI_CHAT_ENV_AND_ERROR_DISPLAY_FIX.md), [`WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md`](./releases/archive/WEB_UI_KNOWLEDGE_UPLOAD_IMPLEMENTATION.md).
 
 **Verificación de cierre (independiente, no autoreportada):** ejecutada por Claude en esta sesión el 2026-08-10, sobre una copia aislada del repo en el commit real `aeea5f5` (no una versión anterior ni el self-report de Cursor). Confirma: pipeline completo verde, boundary Kernel intacto, conteo de tests exacto, y un gap real (chip "Clientes VIP") encontrado por revisión cruzada contra evidencia visual del propio usuario, no por autoreporte del agente implementador.
 

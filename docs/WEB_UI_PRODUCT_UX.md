@@ -3,7 +3,7 @@
 **Tipo:** Propuesta UX/UI — Fase 2  
 **Fecha:** 9 de agosto de 2026  
 **Estado:** Aprobado para implementación incremental (Fase 3)  
-**Prerequisito:** [`releases/WEB_UI_AUDIT.md`](../releases/WEB_UI_AUDIT.md) — Fase 1 PASS  
+**Prerequisito:** [`releases/WEB_UI_AUDIT.md`](../releases/archive/WEB_UI_AUDIT.md) — Fase 1 PASS  
 **Alcance:** `@atlas/web` (`apps/web/`) — interfaz operacional principal de producto  
 **Fuera de alcance:** P2.6 Cloud, auth multi-usuario, billing, analytics, proyectos backend (hasta diseño explícito)
 
@@ -658,7 +658,7 @@ Orden estricto (incremental, cada paso shippable):
 | 2 | App shell + router + BrandSwitcher | shell components |
 | 3 | Glosario + error formatter | `src/i18n/es.ts`, `error-formatter.ts` |
 | 4 | Chat v2 (markdown, input, loading) | `ChatThread`, `ChatInput` |
-| 5 | `GET /api/history` + reload | `server.ts`, ver [`WEB_UI_CHAT_HISTORY_RELOAD_FIX.md`](../releases/WEB_UI_CHAT_HISTORY_RELOAD_FIX.md) |
+| 5 | `GET /api/history` + reload | `server.ts`, ver [`WEB_UI_CHAT_HISTORY_RELOAD_FIX.md`](../releases/archive/WEB_UI_CHAT_HISTORY_RELOAD_FIX.md) |
 | 6 | Actividad ATLAS (discreta) | `ChatActivity` |
 | 7 | Corrección inline | `CorrectionDialog` |
 | 8 | Home + empty states | `HomeView` |
@@ -747,10 +747,10 @@ Usuario sin conocimiento previo de ATLAS puede, **solo desde el navegador**:
 
 | Documento | Enlace |
 |-----------|--------|
-| Auditoría Fase 1 | [`releases/WEB_UI_AUDIT.md`](../releases/WEB_UI_AUDIT.md) |
-| Validación E1–E6 | [`releases/MANUAL_VALIDATION_REPORT_2026-08-09.md`](../releases/MANUAL_VALIDATION_REPORT_2026-08-09.md) |
-| Fix historial | [`releases/WEB_UI_CHAT_HISTORY_RELOAD_FIX.md`](../releases/WEB_UI_CHAT_HISTORY_RELOAD_FIX.md) |
-| P2.5 plan original | [`releases/P2_5_WEB_UI_IMPLEMENTATION_PLAN.md`](../releases/P2_5_WEB_UI_IMPLEMENTATION_PLAN.md) |
+| Auditoría Fase 1 | [`releases/WEB_UI_AUDIT.md`](../releases/archive/WEB_UI_AUDIT.md) |
+| Validación E1–E6 | [`releases/MANUAL_VALIDATION_REPORT_2026-08-09.md`](../releases/archive/MANUAL_VALIDATION_REPORT_2026-08-09.md) |
+| Fix historial | [`releases/WEB_UI_CHAT_HISTORY_RELOAD_FIX.md`](../releases/archive/WEB_UI_CHAT_HISTORY_RELOAD_FIX.md) |
+| P2.5 plan original | [`releases/P2_5_WEB_UI_IMPLEMENTATION_PLAN.md`](../releases/archive/P2_5_WEB_UI_IMPLEMENTATION_PLAN.md) |
 | Apps governance | [`apps/README.md`](../apps/README.md) |
 | Playbook QA | [`guides/VERIFICATION_PLAYBOOK.md`](./guides/VERIFICATION_PLAYBOOK.md) |
 
@@ -783,4 +783,4 @@ VEREDICTO FASE 2
 
 ---
 
-*Siguiente paso autorizado: Fase 3 ítems 5–12 (historial reload, actividad, memoria read-only, settings). Entregables 1–4 implementados — ver [`releases/WEB_UI_PHASE_3_IMPLEMENTATION.md`](../releases/WEB_UI_PHASE_3_IMPLEMENTATION.md).*
+*Siguiente paso autorizado: Fase 3 ítems 5–12 (historial reload, actividad, memoria read-only, settings). Entregables 1–4 implementados — ver [`releases/WEB_UI_PHASE_3_IMPLEMENTATION.md`](../releases/archive/WEB_UI_PHASE_3_IMPLEMENTATION.md).*

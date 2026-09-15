@@ -215,7 +215,7 @@ Developer
 
 **Grafo sin ciclos:** `core → events → compiler → runtime → sdk (+ capabilities) → cli`
 
-Especificaciones: [`spec/`](./spec/) · ADRs: [`adr/`](./adr/) · Release Kernel: [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/ATLAS-RELEASE-001-KERNEL_v0.1.md)
+Especificaciones: [`spec/`](./spec/) · ADRs: [`adr/`](./adr/) · Release Kernel: [`releases/ATLAS-RELEASE-001-KERNEL_v0.1.md`](./releases/archive/ATLAS-RELEASE-001-KERNEL_v0.1.md)
 
 ---
 

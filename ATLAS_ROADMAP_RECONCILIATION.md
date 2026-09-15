@@ -101,14 +101,14 @@ Ninguno de los dos usa "ATLAS 3/4/5...". Esa es la causa de la confusión: no es
 
 ---
 
-## 6. Estado real, hoy (2026-08-17)
+## 6. Estado real, hoy (2026-09-15)
 
 ```
 Kernel (Phase 0)                         COMPLETO, CONGELADO
 Knowledge (Phase 1 / "ATLAS 3")          COMPLETO
 Runtime/Workflow/Planning (Phase 2-4)    COMPLETO, CONGELADO
 Memory (Phase 5)                         COMPLETO, CERTIFICADO (ADR-0003)
-Retrieval (Phase 6)                      COMPLETO (MVP, ADR-0005) — doc desactualizado
+Retrieval (Phase 6)                      COMPLETO (MVP, ADR-0005)
 Context / Reasoning (Phase 7-8)          NO IMPLEMENTADO
 Producto P2.1-P2.5                       COMPLETO
 Organizational Intelligence ("ATLAS 4")  COMPLETO (4.1 + 4.2), en origin/main @ 2388eeb
@@ -119,6 +119,4 @@ Decision Intelligence ("ATLAS 5")        NO INICIADO — siguiente paso acordado
 
 ## 7. Cómo usar este documento en una sesión nueva
 
-Cualquier IA (Claude, ChatGPT, Cursor) que retome este proyecto debería, en este orden: leer este documento, luego `VERSION.md`, luego `ATLAS_ARCHITECTURE_MASTER.md`, y solo después considerar lo que diga el historial de un chat. Si el chat dice algo distinto a estos tres documentos, estos documentos tienen prioridad — y si se descubre que están desactualizados (como el caso de §4), se corrigen aquí y no se asume que el chat tenía razón por defecto.
-
-Antes de escribir el RFC de ATLAS 5, actualizar este documento con la entrada correspondiente en la tabla §2, aunque siga "no iniciado" — para que quede trazado desde el momento en que se decide, no solo cuando se termina.
+Cualquier IA (Claude, ChatGPT, Cursor) que retome este proyecto debe seguir la Jerarquía de precedencia definida en §0 de este documento. Este documento (Reconciliación) es útil para entender la correspondencia entre la numeración conceptual usada en chat ("ATLAS 3/4/5...") y los documentos oficiales, pero no tiene autoridad por encima de Git, los ADRs, VERSION.md o spec/ — solo por encima del propio Master y del historial de chat.

@@ -75,5 +75,5 @@ pnpm --filter @atlas/llm test
 
 ## References
 
-- P2.1 plan: `../../releases/P2_1_LLM_ADAPTER_IMPLEMENTATION_PLAN.md`
+- P2.1 plan: `../../releases/archive/P2_1_LLM_ADAPTER_IMPLEMENTATION_PLAN.md`
 - Closure record: `../../VERSION.md` (P2.1 Extension — OpenAI-Compatible Provider)
