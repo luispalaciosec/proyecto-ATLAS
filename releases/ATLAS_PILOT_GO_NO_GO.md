@@ -13,7 +13,7 @@ Todas deben cumplirse:
 | # | Condición | Verificación |
 |---|-----------|--------------|
 | G1 | Estado del producto declarado **listo para piloto** | `VERSION.md` §ATLAS 4.x Integration Closure + `README.md` (reemplaza referencia obsoleta a Fase 3H) |
-| G2 | `@atlas/web` tests **PASS al 100%** (re-verificar número exacto antes de cada ronda de piloto, no asumir 134/134 de agosto) | CI o ejecución local pre-piloto |
+| G2 | `@atlas/web` tests **243/243 PASS** (verificado 2026-09-18 con `pnpm --filter @atlas/web test`; re-verificar antes de cada ronda de piloto) | CI o ejecución local pre-piloto |
 | G3 | `pnpm atlas doctor` → **HEALTHY** en entorno piloto | Antes de sesión 1 |
 | G4 | LLM configurado (`.env`) o plan explícito solo deterministic | Facilitador |
 | G5 | **Facilitador designado** capaz de arrancar `pnpm atlas web` | Rol asignado |
