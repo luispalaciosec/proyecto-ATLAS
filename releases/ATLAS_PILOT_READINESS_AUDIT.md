@@ -52,6 +52,11 @@ ATLAS Web es usable como **producto de sesión local** para conversar, consultar
 - Filtrar por tipo de acción.
 - Volver a Conversación o Conocimiento desde acciones relevantes.
 
+### Inteligencia organizacional (ATLAS 4.x — sin pantalla dedicada)
+
+- Dentro de **Conversación**, ATLAS puede evaluar situaciones de negocio reales contra reglas configuradas (por ejemplo, si un descuento requiere aprobación) y registrar una decisión con la evidencia citada — sin necesitar una pantalla propia, porque comparte el mismo motor de herramientas que la CLI (`@atlas/cli` `executeChatTurn`, verificado en `apps/web/src/server.ts`).
+- **Esto no es visible como funcionalidad** en la interfaz — el usuario debe preguntarlo en lenguaje natural para activarlo. El piloto debe observar explícitamente si un usuario llega a esto por su cuenta o solo cuando se le sugiere (ver T13 del protocolo).
+
 ### Home como centro de trabajo
 
 - Accesos rápidos a Conversación, Conocimiento, Marcas y Actividad.

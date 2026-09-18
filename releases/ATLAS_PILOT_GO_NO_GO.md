@@ -12,8 +12,8 @@ Todas deben cumplirse:
 
 | # | Condición | Verificación |
 |---|-----------|--------------|
-| G1 | Fase 3H declarada **READY FOR PILOT** | `WEB_UI_PHASE_3H_IMPLEMENTATION.md` |
-| G2 | `@atlas/web` tests **134/134 PASS** (último gate conocido) | CI o ejecución local pre-piloto |
+| G1 | Estado del producto declarado **listo para piloto** | `VERSION.md` §ATLAS 4.x Integration Closure + `README.md` (reemplaza referencia obsoleta a Fase 3H) |
+| G2 | `@atlas/web` tests **PASS al 100%** (re-verificar número exacto antes de cada ronda de piloto, no asumir 134/134 de agosto) | CI o ejecución local pre-piloto |
 | G3 | `pnpm atlas doctor` → **HEALTHY** en entorno piloto | Antes de sesión 1 |
 | G4 | LLM configurado (`.env`) o plan explícito solo deterministic | Facilitador |
 | G5 | **Facilitador designado** capaz de arrancar `pnpm atlas web` | Rol asignado |
@@ -25,7 +25,7 @@ Todas deben cumplirse:
 | G11 | **Ningún paquete Frozen** modificado en preparación | `git diff packages/` vacío |
 | G12 | Expectativa alineada: **no es SaaS cloud autónomo** | Stakeholders |
 
-**Veredicto GO actual (documentación):** **SÍ** — cumple G1–G3, G7–G9, G11 según auditoría 2026-08-09. **Pendiente operativo:** G4–G6, G10, G12 por equipo piloto.
+**Veredicto GO actual (documentación):** **SÍ** — cumple G1, G3, G7–G9, G11 según auditoría actualizada 2026-09-18. **G2:** pendiente de re-verificación con un run real de tests `@atlas/web` (conteo exacto) **antes de la primera sesión de piloto** — no asumir 134/134 de agosto. **Pendiente operativo:** G4–G6, G10, G12 por equipo piloto.
 
 ---
 
@@ -118,15 +118,15 @@ El piloto se considera **completado con evidencia** cuando:
 
 ---
 
-## 8. Veredicto documentación (2026-08-09)
+## 8. Veredicto documentación (2026-09-18)
 
 | Gate | Estado |
 |------|--------|
-| GO técnico/documental | **PASS** |
+| GO técnico/documental | **PASS** (G1 alineado a cierre ATLAS 4.x; G2 re-verificar tests antes de sesión 1) |
 | GO operativo (usuarios + facilitador) | **Pendiente equipo** |
 | NO-GO activo | **Ninguno** conocido |
 
-**Recomendación:** **READY FOR PILOT** una vez asignados facilitador, usuarios y LLM en entorno piloto.
+**Recomendación:** **READY FOR PILOT** una vez asignados facilitador, usuarios, LLM en entorno piloto y **G2** confirmado con ejecución local o CI inmediatamente antes de la primera sesión.
 
 ---
 

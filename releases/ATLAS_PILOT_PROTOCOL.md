@@ -195,6 +195,19 @@ pnpm atlas web       # mantener proceso vivo toda la sesión
 | **Confusión** | No encuentra acciones |
 | **Fracaso** | Overflow / botones inutilizables |
 
+### T13 — Consulta de negocio real (ATLAS 4.x)
+
+| Campo | Contenido |
+|-------|-----------|
+| **Objetivo** | Descubrir si el usuario puede obtener una evaluación de negocio real (política, descuento, aprobación) sin saber que existe esa capacidad |
+| **Instrucción** | «Pregúntale a ATLAS algo que normalmente le preguntarías a un compañero antes de aprobar algo — por ejemplo, si puedes darle una condición especial a un cliente, o qué se decidió la última vez sobre algo parecido.» |
+| **Observar** | ¿La respuesta cita una política o regla concreta? ¿Explica si requiere aprobación de alguien? ¿El usuario entiende que la respuesta viene de una regla real, no de una opinión genérica del asistente? |
+| **Éxito** | El usuario reconoce que obtuvo una evaluación basada en una regla de su negocio (no una respuesta genérica), y puede explicar en sus palabras qué le dijo ATLAS |
+| **Confusión** | El usuario no distingue si la respuesta fue una regla real o una suposición del modelo; no sabe que puede pedir que se registre la decisión |
+| **Fracaso** | El usuario nunca formula una pregunta que dispare esta capacidad, o la respuesta no distingue evaluación normativa de conversación libre |
+
+**Nota para el facilitador:** esta tarea no tiene una pantalla dedicada — se activa dentro de Conversación según lo que el usuario pregunte. Si en la tarea T02 (Primera conversación) el usuario ya hizo naturalmente una pregunta de este tipo, no repitas T13; márcala como cubierta y anota la evidencia ahí.
+
 ---
 
 ## 5. Preguntas al usuario (post-sesión)
