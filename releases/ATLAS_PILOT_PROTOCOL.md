@@ -1,3 +1,5 @@
+Ronda 2: estudio de usabilidad con usuarios pyme anónimos. Este paquete aplica después de cerrar la Ronda 1 (Banco Amazonas, ver PILOT_LOG.md). Los criterios G6 (usuarios reclutados) y A1–A9 pertenecen a esta ronda y no condicionan el inicio de la Ronda 1.
+
 # ATLAS — Protocolo de piloto real controlado
 
 **Fecha:** 2026-08-09  

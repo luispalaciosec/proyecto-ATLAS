@@ -1,3 +1,5 @@
+Ronda 1 del piloto: uso real con Banco Amazonas. Este documento es el plan activo. El paquete releases/ATLAS_PILOT_*.md define la Ronda 2 (usabilidad con usuarios pyme anónimos), que solo comienza después de cerrar esta ronda.
+
 # Horizonte 1 — Piloto real de ATLAS
 
 **Estado del código:** baseline de producto ATLAS 4.x (P2.1–P2.5 + INT-001–009 consolidados). Kernel v0.1 congelado. Excepción: bugs reales descubiertos durante el piloto se corrigen; features nuevas fuera de INT-010, no.
@@ -6,6 +8,27 @@
 **Workspace:** `geeks-banco-amazonas` (slug dedicado — memoria físicamente aislada, sin mezclar con otros clientes de Geeks).
 **Proveedor LLM recomendado:** Anthropic (`claude-sonnet-5`) — ver `USER_MANUAL.md` sección 10 sobre por qué no Groq para esto.
 **Interfaz:** Web UI (`http://127.0.0.1:4173`), no CLI. La terminal solo se usa para arrancar el servidor.
+
+---
+
+## Go/No-Go ligero de la Ronda 1
+
+Marcador para que Luis decida y marque. No lo marques tú.
+
+- [ ] `pnpm atlas doctor` devuelve HEALTHY.
+- [ ] `pnpm --filter @atlas/web test` en verde, ejecutado el mismo día de la sesión 1.
+- [ ] LLM configurado (verificar solo que `.env` tiene las variables definidas, sin imprimir valores).
+- [ ] Datos de Banco Amazonas: confirmado por escrito con el cliente si pueden enviarse a un proveedor externo de LLM (Anthropic). Si no están confirmados, usar solo datos ficticios o anonimizados. Equivale a N8 del paquete de Ronda 2.
+- [ ] Expectativa alineada: ATLAS corre local y no es un SaaS multiusuario (equivale a G12).
+
+### Qué probar de ATLAS 4.x en la Ronda 1
+
+- [ ] **Registrar una decisión:** pedir a ATLAS que registre una decisión de descuento (cliente, porcentaje solicitado, resultado, quién decidió).
+  - [ ] **Resultado:**
+- [ ] **Evaluar una solicitud:** preguntar si un descuento nuevo está autorizado y verificar que la respuesta cite la política y la decisión previa.
+  - [ ] **Resultado:**
+- [ ] **Recuperar evidencia:** pedir «¿qué decidimos con este cliente y por qué?» y verificar que cita decisión y evidencia registradas.
+  - [ ] **Resultado:**
 
 ---
 

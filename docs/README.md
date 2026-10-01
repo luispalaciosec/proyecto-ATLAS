@@ -42,6 +42,9 @@ Architecture proposals (RFCs) live in [`proposals/rfc/`](./proposals/rfc/).
 | [../releases/ATLAS_PILOT_FEEDBACK.md](../releases/ATLAS_PILOT_FEEDBACK.md) | Product / Pilot | Plantilla feedback por sesión |
 | [../releases/ATLAS_PILOT_EVIDENCE_BACKLOG.md](../releases/ATLAS_PILOT_EVIDENCE_BACKLOG.md) | Product / Pilot | Backlog evidencia piloto |
 | [../releases/ATLAS_PILOT_GO_NO_GO.md](../releases/ATLAS_PILOT_GO_NO_GO.md) | Product / Pilot | Criterios go/no-go piloto |
+| [../PILOT_LOG.md](../PILOT_LOG.md) | Product / Pilot | **Ronda 1** — plan activo uso real Banco Amazonas |
+
+**Secuencia piloto:** **Ronda 1** = [`PILOT_LOG.md`](../PILOT_LOG.md) (raíz); **Ronda 2** = filas `ATLAS_PILOT_*` arriba (usabilidad pyme anónima; solo después de cerrar Ronda 1).
 | [../releases/WEB_UI_WORLD_CLASS_REVIEW.md](../releases/archive/WEB_UI_WORLD_CLASS_REVIEW.md) | Product / Frontend | Revisión técnica complementaria (gaps API, componentes) |
 | [guides/VERIFICATION_PLAYBOOK.md](./guides/VERIFICATION_PLAYBOOK.md) | Owner / QA | Casos de uso manuales antes de publicar docs |
 
