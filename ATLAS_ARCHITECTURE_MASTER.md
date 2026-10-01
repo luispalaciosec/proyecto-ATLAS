@@ -1559,6 +1559,8 @@ Status:
 
 Planned.
 
+**Determinismo / proveedores:** niveles T0/T1 y puerto ReasoningEngine — ver [`ADR-0006`](./adr/ADR-0006-REASONING_ENGINE_DETERMINISM_TIERS.md) (conflicto entre familias `spec/reasoning/` e `spec/intelligence/` resuelto por ADR-0006).
+
 Reasoning transforms Context into structured decisions.
 
 Pipeline:

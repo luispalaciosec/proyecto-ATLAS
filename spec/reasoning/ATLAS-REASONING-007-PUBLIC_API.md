@@ -6,6 +6,8 @@ status: Draft
 owner: Atlas Architecture Board
 ---
 
+> Enmendado por ADR-0006: el determinismo se organiza en niveles T0/T1; ver ADR.
+
 # ATLAS Reasoning Public API
 
 ## Purpose
