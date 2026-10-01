@@ -1,4 +1,4 @@
-Ronda 1 del piloto: uso real con Banco Amazonas. Este documento es el plan activo. El paquete releases/ATLAS_PILOT_*.md define la Ronda 2 (usabilidad con usuarios pyme anónimos), que solo comienza después de cerrar esta ronda.
+Ronda 1 del piloto: uso real con Banco Amazonas. Este documento es el plan activo. El paquete [releases/ATLAS_PILOT_PROTOCOL.md](releases/ATLAS_PILOT_PROTOCOL.md) (`ATLAS_PILOT_*`) define la Ronda 2 (usabilidad con usuarios pyme anónimos), que solo comienza después de cerrar esta ronda.
 
 # Horizonte 1 — Piloto real de ATLAS
 
@@ -13,7 +13,7 @@ Ronda 1 del piloto: uso real con Banco Amazonas. Este documento es el plan activ
 
 ## Go/No-Go ligero de la Ronda 1
 
-Marcador para que Luis decida y marque. No lo marques tú.
+Checklist pendiente de confirmación por el responsable del piloto antes de la sesión 1.
 
 - [ ] `pnpm atlas doctor` devuelve HEALTHY.
 - [ ] `pnpm --filter @atlas/web test` en verde, ejecutado el mismo día de la sesión 1.

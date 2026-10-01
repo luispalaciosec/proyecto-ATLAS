@@ -37,16 +37,16 @@ Architecture proposals (RFCs) live in [`proposals/rfc/`](./proposals/rfc/).
 | [../releases/WEB_UI_PHASE_3H_IMPLEMENTATION.md](../releases/archive/WEB_UI_PHASE_3H_IMPLEMENTATION.md) | Product / Frontend | Fase 3H — pilot polish + honestidad sesión |
 | [../releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md](../releases/archive/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_AUDIT.md) | Product / UX / A11y | Fase 3I Parte A — auditoría accesibilidad + responsive (WCAG 2.2 AA) |
 | [../releases/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md](../releases/archive/WEB_UI_PHASE_3I_ACCESSIBILITY_RESPONSIVE_IMPLEMENTATION.md) | Product / Frontend / A11y | Fase 3I Parte B — implementación P0 + P1 accesibilidad |
+| [../PILOT_LOG.md](../PILOT_LOG.md) | Product / Pilot | **Ronda 1** — plan activo uso real Banco Amazonas |
 | [../releases/ATLAS_PILOT_READINESS_AUDIT.md](../releases/ATLAS_PILOT_READINESS_AUDIT.md) | Product / Pilot | Auditoría preparación piloto real |
 | [../releases/ATLAS_PILOT_PROTOCOL.md](../releases/ATLAS_PILOT_PROTOCOL.md) | Product / Pilot | Protocolo sesiones piloto |
 | [../releases/ATLAS_PILOT_FEEDBACK.md](../releases/ATLAS_PILOT_FEEDBACK.md) | Product / Pilot | Plantilla feedback por sesión |
 | [../releases/ATLAS_PILOT_EVIDENCE_BACKLOG.md](../releases/ATLAS_PILOT_EVIDENCE_BACKLOG.md) | Product / Pilot | Backlog evidencia piloto |
 | [../releases/ATLAS_PILOT_GO_NO_GO.md](../releases/ATLAS_PILOT_GO_NO_GO.md) | Product / Pilot | Criterios go/no-go piloto |
-| [../PILOT_LOG.md](../PILOT_LOG.md) | Product / Pilot | **Ronda 1** — plan activo uso real Banco Amazonas |
-
-**Secuencia piloto:** **Ronda 1** = [`PILOT_LOG.md`](../PILOT_LOG.md) (raíz); **Ronda 2** = filas `ATLAS_PILOT_*` arriba (usabilidad pyme anónima; solo después de cerrar Ronda 1).
 | [../releases/WEB_UI_WORLD_CLASS_REVIEW.md](../releases/archive/WEB_UI_WORLD_CLASS_REVIEW.md) | Product / Frontend | Revisión técnica complementaria (gaps API, componentes) |
 | [guides/VERIFICATION_PLAYBOOK.md](./guides/VERIFICATION_PLAYBOOK.md) | Owner / QA | Casos de uso manuales antes de publicar docs |
+
+**Secuencia piloto:** **Ronda 1** = [`PILOT_LOG.md`](../PILOT_LOG.md) (raíz); **Ronda 2** = filas `ATLAS_PILOT_*` arriba (usabilidad pyme anónima; solo después de cerrar Ronda 1).
 
 **Manual operativo vigente:** [../USER_MANUAL.md](../USER_MANUAL.md) (raíz del repo). Un eventual `guides/USER_MANUAL.md` sería un documento distinto y más extenso; no sustituye al manual de raíz. **Planned (opcional):** `dev/GETTING_STARTED.md`, `dev/CLI_REFERENCE.md`, static site under `docs/web/`.
 
