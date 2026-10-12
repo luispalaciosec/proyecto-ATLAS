@@ -9,7 +9,10 @@ import multer from 'multer';
 import { formatWebUrl, resolveWebHost, resolveWebPort } from './config.js';
 import { formatAtlasError } from './lib/format-atlas-error.js';
 import { registerLlmSettingsRoutes } from './lib/llm-settings/routes.js';
-import { resolveLlmSettingsFilePath } from './lib/llm-settings/settings-store.js';
+import {
+  resolveLlmSettingsFilePath,
+  resolveSavedAtlasLlmOptions,
+} from './lib/llm-settings/settings-store.js';
 import { loadEnvFromFile } from './lib/load-env.js';
 import { MAX_UPLOAD_BYTES } from './lib/knowledge-upload/constants.js';
 import { normalizeKnowledgeFolder } from './lib/knowledge-upload/folder.js';
@@ -130,10 +133,18 @@ export interface WebServerOptions {
   readonly fetchImpl?: typeof fetch;
 }
 
+/**
+ * Without an explicit SessionStore, the default one reads LLM settings saved from
+ * /configuracion (they take precedence over ATLAS_LLM_*). An injected store is used as is.
+ */
 export function createWebServer(
-  sessionStore: SessionStore = new SessionStore(),
+  injectedSessionStore?: SessionStore,
   options: WebServerOptions = {},
 ): Express {
+  const llmSettingsFilePath = options.llmSettingsFilePath ?? resolveLlmSettingsFilePath();
+  const sessionStore =
+    injectedSessionStore ??
+    new SessionStore({ resolveLlmOptions: () => resolveSavedAtlasLlmOptions(llmSettingsFilePath) });
   const app = express();
 
   app.use(express.json({ limit: '1mb' }));
@@ -145,7 +156,7 @@ export function createWebServer(
 
   registerLlmSettingsRoutes(app, {
     sessionStore,
-    filePath: options.llmSettingsFilePath ?? resolveLlmSettingsFilePath(),
+    filePath: llmSettingsFilePath,
     ...(options.fetchImpl !== undefined ? { fetchImpl: options.fetchImpl } : {}),
   });
 

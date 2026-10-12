@@ -6,9 +6,8 @@ import { join } from 'node:path';
 import type { Express } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { applyLlmSettingsToEnv } from '../src/lib/llm-settings/settings-store.js';
+import { toAtlasLlmOptions } from '../src/lib/llm-settings/settings-store.js';
 import { createWebServer, type WebServerOptions } from '../src/server.js';
-import { SessionStore } from '../src/session-store.js';
 
 // Fictitious keys only — never real credentials.
 const FAKE_KEY = 'sk-test-FICTICIA-000000a3f2';
@@ -93,7 +92,7 @@ describe('LLM settings API', () => {
   let settingsFile = '';
 
   function createApp(options: Omit<WebServerOptions, 'llmSettingsFilePath'> = {}): Express {
-    return createWebServer(new SessionStore(), { ...options, llmSettingsFilePath: settingsFile });
+    return createWebServer(undefined, { ...options, llmSettingsFilePath: settingsFile });
   }
 
   beforeEach(() => {
@@ -109,7 +108,6 @@ describe('LLM settings API', () => {
   });
 
   afterEach(() => {
-    applyLlmSettingsToEnv(undefined);
     vi.unstubAllGlobals();
     process.chdir(savedCwd);
     rmSync(testRoot, { recursive: true, force: true });
@@ -182,11 +180,12 @@ describe('LLM settings API', () => {
       provider: 'gemini',
       apiKey: FAKE_KEY,
     });
-    expect(process.env.ATLAS_LLM_PROVIDER).toBe('openai-compatible');
-    expect(process.env.ATLAS_LLM_BASE_URL).toBe(GEMINI_BASE_URL);
+    // Saved settings reach AtlasService through a resolver; process.env is never modified.
+    expect(process.env.ATLAS_LLM_PROVIDER).toBeUndefined();
+    expect(process.env.ATLAS_LLM_API_KEY).toBeUndefined();
   });
 
-  it('gives saved settings priority over env variables and restores env on DELETE', async () => {
+  it('gives saved settings priority over env variables and falls back to env on DELETE', async () => {
     process.env.ATLAS_LLM_API_KEY = OTHER_FAKE_KEY;
     process.env.ATLAS_LLM_MODEL = 'claude-env-model';
 
@@ -199,7 +198,7 @@ describe('LLM settings API', () => {
 
       const afterSave = await call(baseUrl, '/api/settings/llm');
       expect(afterSave.json).toMatchObject({ source: 'saved', provider: 'gemini' });
-      expect(process.env.ATLAS_LLM_API_KEY).toBe(FAKE_KEY);
+      expect(process.env.ATLAS_LLM_API_KEY).toBe(OTHER_FAKE_KEY);
 
       const afterDelete = await call(baseUrl, '/api/settings/llm', 'DELETE');
       expect(afterDelete.json).toMatchObject({
@@ -265,6 +264,65 @@ describe('LLM settings API', () => {
     expect(geminiRequests[0]?.authorization).toBe(`Bearer ${FAKE_KEY}`);
   });
 
+  it('switches chat between env and saved providers without restarting', async () => {
+    process.env.ATLAS_LLM_API_KEY = OTHER_FAKE_KEY;
+    process.env.ATLAS_LLM_MODEL = 'claude-env-model';
+    const hosts: string[] = [];
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+        const parsed = new URL(String(url));
+
+        if (parsed.hostname === 'api.anthropic.com') {
+          hosts.push(parsed.hostname);
+          return Response.json({
+            content: [{ type: 'text', text: 'Desde Anthropic.' }],
+            stop_reason: 'end_turn',
+            usage: { input_tokens: 1, output_tokens: 1 },
+          });
+        }
+
+        if (parsed.hostname === 'generativelanguage.googleapis.com') {
+          hosts.push(parsed.hostname);
+          return Response.json({
+            choices: [
+              { message: { role: 'assistant', content: 'Desde Gemini.' }, finish_reason: 'stop' },
+            ],
+            usage: { prompt_tokens: 1, completion_tokens: 1 },
+          });
+        }
+
+        return originalFetch(url, init);
+      }),
+    );
+
+    await withServer(createApp(), async (baseUrl) => {
+      const fromEnv = await call(baseUrl, '/api/chat', 'POST', { goal: 'consulta ficticia' });
+      expect(fromEnv.json.llm_message).toBe('Desde Anthropic.');
+
+      await call(baseUrl, '/api/settings/llm', 'PUT', {
+        provider: 'gemini',
+        model: 'gemini-test-model',
+        apiKey: FAKE_KEY,
+      });
+      const fromSaved = await call(baseUrl, '/api/chat', 'POST', { goal: 'consulta ficticia' });
+      expect(fromSaved.json.llm_message).toBe('Desde Gemini.');
+
+      await call(baseUrl, '/api/settings/llm', 'DELETE');
+      const backToEnv = await call(baseUrl, '/api/chat', 'POST', { goal: 'consulta ficticia' });
+      expect(backToEnv.json.llm_message).toBe('Desde Anthropic.');
+      expectNoSecret(backToEnv, FAKE_KEY, OTHER_FAKE_KEY);
+    });
+
+    expect(hosts).toEqual([
+      'api.anthropic.com',
+      'generativelanguage.googleapis.com',
+      'api.anthropic.com',
+    ]);
+    expect(process.env.ATLAS_LLM_API_KEY).toBe(OTHER_FAKE_KEY);
+  });
+
   it('requires a key on first save, keeps it for the same endpoint, and demands it again when the base URL changes', async () => {
     await withServer(createApp(), async (baseUrl) => {
       const missing = await call(baseUrl, '/api/settings/llm', 'PUT', {
@@ -326,7 +384,21 @@ describe('LLM settings API', () => {
       });
     });
 
-    expect(process.env.ATLAS_LLM_API_KEY).toBe('ollama');
+    expect(process.env.ATLAS_LLM_API_KEY).toBeUndefined();
+    expect(
+      toAtlasLlmOptions({
+        version: 1,
+        provider: 'ollama',
+        model: 'modelo-local-ficticio',
+        baseUrl: 'http://localhost:11434/v1',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      }),
+    ).toEqual({
+      providerId: 'openai-compatible',
+      model: 'modelo-local-ficticio',
+      apiKey: 'ollama',
+      baseUrl: 'http://localhost:11434/v1',
+    });
   });
 
   it.each([

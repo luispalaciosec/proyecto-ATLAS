@@ -9,6 +9,8 @@ import {
 } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import type { AtlasLlmOptions } from '@atlas/sdk';
+
 import { t } from '../../i18n/index.js';
 import {
   LLM_DEFAULT_BASE_URLS,
@@ -31,21 +33,11 @@ import {
  * Precedence: a saved file wins over the ATLAS_LLM_* environment variables.
  * Without a saved file, the environment variables are used as before.
  *
- * Application: `@atlas/cli`'s AtlasService reads ATLAS_LLM_* from process.env each
- * time it creates a client, so applying saved settings means writing them into
- * process.env (remembering the original values to restore them) and letting the
- * SessionStore recreate its clients.
+ * Application: the SessionStore gives `@atlas/cli`'s AtlasService a resolver
+ * (`resolveSavedAtlasLlmOptions`) that reads this file each time a client is created.
+ * When nothing is saved the resolver returns undefined and AtlasService keeps its
+ * original ATLAS_LLM_* behavior. process.env is never modified.
  */
-
-const LLM_ENV_KEYS = [
-  'ATLAS_LLM_PROVIDER',
-  'ATLAS_LLM_BASE_URL',
-  'ATLAS_LLM_API_KEY',
-  'ATLAS_LLM_MODEL',
-] as const;
-
-type LlmEnvKey = (typeof LLM_ENV_KEYS)[number];
-type LlmEnvSnapshot = Record<LlmEnvKey, string | undefined>;
 
 /** The sdk requires a non-empty key; local Ollama ignores it. */
 const OLLAMA_PLACEHOLDER_KEY = 'ollama';
@@ -80,8 +72,6 @@ export class LlmSettingsValidationError extends Error {
     this.name = 'LlmSettingsValidationError';
   }
 }
-
-let envBaseline: LlmEnvSnapshot | undefined;
 
 export function resolveLlmSettingsFilePath(): string {
   const fromEnv = process.env.ATLAS_LLM_SETTINGS_FILE;
@@ -145,59 +135,24 @@ export function deleteStoredLlmSettings(filePath: string): void {
   rmSync(filePath, { force: true });
 }
 
-function snapshotEnv(): LlmEnvSnapshot {
-  return {
-    ATLAS_LLM_PROVIDER: process.env.ATLAS_LLM_PROVIDER,
-    ATLAS_LLM_BASE_URL: process.env.ATLAS_LLM_BASE_URL,
-    ATLAS_LLM_API_KEY: process.env.ATLAS_LLM_API_KEY,
-    ATLAS_LLM_MODEL: process.env.ATLAS_LLM_MODEL,
-  };
+/** Converts saved settings into the options AtlasService passes to createAtlas. */
+export function toAtlasLlmOptions(settings: StoredLlmSettings): AtlasLlmOptions {
+  const baseUrl = providerUsesBaseUrl(settings.provider) ? settings.baseUrl : undefined;
+
+  return Object.freeze({
+    providerId: sdkProviderIdFor(settings.provider),
+    model: settings.model,
+    apiKey:
+      settings.apiKey ?? (settings.provider === 'ollama' ? OLLAMA_PLACEHOLDER_KEY : undefined),
+    ...(baseUrl !== undefined ? { baseUrl } : {}),
+  });
 }
 
-function setEnv(key: LlmEnvKey, value: string | undefined): void {
-  if (value === undefined) {
-    delete process.env[key];
-  } else {
-    process.env[key] = value;
-  }
-}
+/** Resolver for AtlasService: saved settings, or undefined to keep the env behavior. */
+export function resolveSavedAtlasLlmOptions(filePath: string): AtlasLlmOptions | undefined {
+  const stored = readStoredLlmSettings(filePath);
 
-/** The ATLAS_LLM_* values as they were before any saved settings were applied. */
-function readEnvBaseline(): LlmEnvSnapshot {
-  return envBaseline ?? snapshotEnv();
-}
-
-/**
- * Writes the saved settings into process.env (or restores the original values when
- * nothing is saved). Clients created afterwards by AtlasService pick them up.
- */
-export function applyLlmSettingsToEnv(settings: StoredLlmSettings | undefined): void {
-  if (settings === undefined) {
-    if (envBaseline !== undefined) {
-      for (const key of LLM_ENV_KEYS) {
-        setEnv(key, envBaseline[key]);
-      }
-
-      envBaseline = undefined;
-    }
-
-    return;
-  }
-
-  if (envBaseline === undefined) {
-    envBaseline = snapshotEnv();
-  }
-
-  setEnv('ATLAS_LLM_PROVIDER', sdkProviderIdFor(settings.provider));
-  setEnv('ATLAS_LLM_MODEL', settings.model);
-  setEnv(
-    'ATLAS_LLM_BASE_URL',
-    providerUsesBaseUrl(settings.provider) ? settings.baseUrl : undefined,
-  );
-  setEnv(
-    'ATLAS_LLM_API_KEY',
-    settings.apiKey ?? (settings.provider === 'ollama' ? OLLAMA_PLACEHOLDER_KEY : undefined),
-  );
+  return stored !== undefined ? toAtlasLlmOptions(stored) : undefined;
 }
 
 function inferProviderKind(
@@ -234,11 +189,10 @@ export function resolveEffectiveLlmConfig(filePath: string): EffectiveLlmConfig 
     });
   }
 
-  const env = readEnvBaseline();
-  const model = readNonEmpty(env.ATLAS_LLM_MODEL);
-  const apiKey = readNonEmpty(env.ATLAS_LLM_API_KEY);
-  const baseUrl = readNonEmpty(env.ATLAS_LLM_BASE_URL);
-  const providerId = readNonEmpty(env.ATLAS_LLM_PROVIDER);
+  const model = readNonEmpty(process.env.ATLAS_LLM_MODEL);
+  const apiKey = readNonEmpty(process.env.ATLAS_LLM_API_KEY);
+  const baseUrl = readNonEmpty(process.env.ATLAS_LLM_BASE_URL);
+  const providerId = readNonEmpty(process.env.ATLAS_LLM_PROVIDER);
 
   if (
     model === undefined &&

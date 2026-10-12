@@ -6,12 +6,10 @@ import type { SessionStore } from '../../session-store.js';
 import { testLlmConnection } from './connection-test.js';
 import {
   LlmSettingsValidationError,
-  applyLlmSettingsToEnv,
   buildLlmSettingsView,
   deleteStoredLlmSettings,
   isEffectiveConfigComplete,
   parseLlmSettingsInput,
-  readStoredLlmSettings,
   resolveApiKeyForInput,
   resolveEffectiveLlmConfig,
   toStoredLlmSettings,
@@ -45,9 +43,6 @@ function invalidTestResult(message: string): LlmConnectionTestResult {
 export function registerLlmSettingsRoutes(app: Express, options: LlmSettingsRoutesOptions): void {
   const { sessionStore, filePath } = options;
 
-  // Saved settings take precedence over ATLAS_LLM_* from the first request on.
-  applyLlmSettingsToEnv(readStoredLlmSettings(filePath));
-
   app.use('/api/settings', (_request, response, next) => {
     response.setHeader('cache-control', 'no-store');
     next();
@@ -68,7 +63,6 @@ export function registerLlmSettingsRoutes(app: Express, options: LlmSettingsRout
       const stored = toStoredLlmSettings(input, apiKey);
 
       writeStoredLlmSettings(filePath, stored);
-      applyLlmSettingsToEnv(stored);
       sessionStore.resetLlmClients();
 
       response.json(buildLlmSettingsView(filePath));
@@ -80,7 +74,6 @@ export function registerLlmSettingsRoutes(app: Express, options: LlmSettingsRout
   app.delete('/api/settings/llm', (_request, response) => {
     try {
       deleteStoredLlmSettings(filePath);
-      applyLlmSettingsToEnv(undefined);
       sessionStore.resetLlmClients();
 
       response.json(buildLlmSettingsView(filePath));

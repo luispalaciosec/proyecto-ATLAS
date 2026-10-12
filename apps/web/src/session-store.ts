@@ -52,6 +52,7 @@ import {
   prepareIngestedDocumentKnowledge,
   storeIngestedDocumentChunk,
   storeIngestedDocumentKnowledgeObject,
+  type AtlasLlmOptions,
 } from '@atlas/sdk';
 import {
   mapActivityEventsToProduct,
@@ -110,7 +111,8 @@ function createChatSessionId(): string {
 }
 
 export class SessionStore {
-  #atlasService = new AtlasService();
+  readonly #llmOptionsResolver: (() => AtlasLlmOptions | undefined) | undefined;
+  #atlasService: AtlasService;
   readonly #sessions = new Map<string, ChatSessionState>();
   readonly #deterministicHistory = new Map<string, UiHistoryMessage[]>();
   readonly #activityLog = new Map<string, RawActivityEvent[]>();
@@ -120,6 +122,21 @@ export class SessionStore {
     { readonly conversationId: string; readonly createdAt: string }
   >();
   readonly #bootstrappedWorkspaces = new Set<string>();
+
+  /**
+   * `resolveLlmOptions` supplies LLM options saved from the web page; returning
+   * undefined keeps AtlasService's ATLAS_LLM_* env behavior.
+   */
+  constructor(options: { readonly resolveLlmOptions?: () => AtlasLlmOptions | undefined } = {}) {
+    this.#llmOptionsResolver = options.resolveLlmOptions;
+    this.#atlasService = this.#createAtlasService();
+  }
+
+  #createAtlasService(): AtlasService {
+    return new AtlasService(
+      this.#llmOptionsResolver !== undefined ? { resolveLlmOptions: this.#llmOptionsResolver } : {},
+    );
+  }
 
   #createActivityId(): string {
     return `activity.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`;
@@ -451,11 +468,11 @@ export class SessionStore {
 
   /**
    * Drops cached Atlas clients so the next request builds them with the current
-   * ATLAS_LLM_* configuration (used after saving LLM settings from the web page).
+   * LLM configuration (used after saving LLM settings from the web page).
    * Conversations are rebuilt from their persisted history, as after a restart.
    */
   resetLlmClients(): void {
-    this.#atlasService = new AtlasService();
+    this.#atlasService = this.#createAtlasService();
     this.#sessions.clear();
   }
 
