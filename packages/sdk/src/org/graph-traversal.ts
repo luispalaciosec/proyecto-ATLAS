@@ -43,17 +43,19 @@ export async function getRelated(
     return true;
   });
 
-  const resolvedTargets = await Promise.all(
-    matchingRelationships.map(async (relationshipRecord) => {
-      const content = parseOrgContent(relationshipRecord);
+  // Sequential on purpose: the memory engine rejects concurrent reads.
+  const resolvedTargets: (MemoryRecord | undefined)[] = [];
 
-      if (!isOrgRelationshipContent(content)) {
-        return undefined;
-      }
+  for (const relationshipRecord of matchingRelationships) {
+    const content = parseOrgContent(relationshipRecord);
 
-      return resolveAnyEntityById(atlas, content.targetRecord);
-    }),
-  );
+    if (!isOrgRelationshipContent(content)) {
+      resolvedTargets.push(undefined);
+      continue;
+    }
+
+    resolvedTargets.push(await resolveAnyEntityById(atlas, content.targetRecord));
+  }
 
   return Object.freeze(
     resolvedTargets.filter((record): record is MemoryRecord => record !== undefined),

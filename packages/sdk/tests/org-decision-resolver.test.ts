@@ -108,3 +108,88 @@ describe('resolveDecisionWithEvidence', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 });
+
+describe('decisions citing several evidence records', () => {
+  // Regression: getRelated used to resolve targets with Promise.all, and the memory engine
+  // rejects concurrent reads ("already has an active execution") as soon as a decision
+  // cites two or more evidence records.
+  it('resolves decisions citing 2 and 3 evidence records, keeping the cited order', async () => {
+    const { atlas, dir } = createTestAtlas();
+
+    await atlas.org.upsertEntity(
+      'Client',
+      'client.ficticio-demo',
+      Object.freeze({ legalName: 'Cliente Ficticio S.A.', segment: 'VIP', renewalActive: true }),
+    );
+
+    const evidenceIds = [
+      'record.evidence.ficticia-1',
+      'record.evidence.ficticia-2',
+      'record.evidence.ficticia-3',
+    ];
+
+    for (const evidenceId of evidenceIds) {
+      await atlas.org.storeEvidence(
+        evidenceId,
+        Object.freeze({
+          content: `Evidencia ${evidenceId}`,
+          sourceType: 'manual',
+          recordedBy: 'Test',
+        }),
+      );
+    }
+
+    const baseDecision = {
+      subjectType: 'discount_request',
+      clientLegalName: 'Cliente Ficticio S.A.',
+      outcome: 'approved' as const,
+      decidedBy: 'Gerente Ficticio',
+    };
+
+    await atlas.org.recordDecision(
+      'record.decision.ficticia-tres-evidencias',
+      Object.freeze({
+        ...baseDecision,
+        requestedPercent: 8,
+        approvedPercent: 6,
+        decidedAt: '2026-03-01',
+      }),
+      'client.ficticio-demo',
+      evidenceIds,
+    );
+    await atlas.org.recordDecision(
+      'record.decision.ficticia-dos-evidencias',
+      Object.freeze({
+        ...baseDecision,
+        requestedPercent: 12,
+        approvedPercent: 7,
+        decidedAt: '2026-07-01',
+      }),
+      'client.ficticio-demo',
+      evidenceIds.slice(0, 2),
+    );
+
+    const latest = await resolveDecisionWithEvidence(
+      atlas,
+      'Cliente Ficticio S.A.',
+      'discount_request',
+    );
+    const history = await resolveDecisionHistoryWithEvidence(
+      atlas,
+      'Cliente Ficticio S.A.',
+      'discount_request',
+    );
+    const citedIds = (entry: {
+      readonly evidence: readonly { metadata: Record<string, unknown> }[];
+    }) => entry.evidence.map((record) => record.metadata.entityId);
+
+    expect(latest).toBeDefined();
+    expect(citedIds(latest!)).toEqual(evidenceIds.slice(0, 2));
+    expect(history).toHaveLength(2);
+    expect(parseDecision(readEntityPayload(history[0]!.decision)).decidedAt).toBe('2026-07-01');
+    expect(citedIds(history[0]!)).toEqual(evidenceIds.slice(0, 2));
+    expect(citedIds(history[1]!)).toEqual(evidenceIds);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+});
