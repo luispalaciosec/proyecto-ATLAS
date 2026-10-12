@@ -26,6 +26,12 @@ import {
  */
 export class AtlasService {
   #sessionClient: Atlas | undefined;
+  /** Optional LLM options source (e.g. Web settings); `undefined` keeps the ATLAS_LLM_* env behavior. */
+  readonly #llmOptionsOverride: (() => AtlasLlmOptions | undefined) | undefined;
+
+  constructor(options: { readonly resolveLlmOptions?: () => AtlasLlmOptions | undefined } = {}) {
+    this.#llmOptionsOverride = options.resolveLlmOptions;
+  }
 
   #resolveMemoryFilePath(): string {
     const fromEnv = process.env.ATLAS_MEMORY_FILE;
@@ -38,6 +44,12 @@ export class AtlasService {
   }
 
   #resolveLlmOptions(): AtlasLlmOptions {
+    const override = this.#llmOptionsOverride?.();
+
+    if (override !== undefined) {
+      return Object.freeze({ ...override });
+    }
+
     const apiKey = process.env.ATLAS_LLM_API_KEY;
     const model = process.env.ATLAS_LLM_MODEL;
     const providerId = process.env.ATLAS_LLM_PROVIDER;
