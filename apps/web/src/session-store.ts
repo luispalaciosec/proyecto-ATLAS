@@ -38,6 +38,7 @@ import {
   mergeKnowledgeFolderLists,
   registerKnowledgeFolderIfMissing,
 } from './lib/knowledge-upload/knowledge-folders-store.js';
+import { labelKnowledgeChunk } from './lib/knowledge-upload/chunk-label.js';
 import { chunkText } from './lib/knowledge-upload/chunk-text.js';
 import { chunkExcelWorkbook } from './lib/knowledge-upload/chunk-excel.js';
 import {
@@ -649,7 +650,7 @@ export class SessionStore {
 
         const stored = await storeIngestedDocumentChunk(session.client.memory, {
           ingest,
-          content: excelChunk.content,
+          content: labelKnowledgeChunk(fileName, index, excelChunks.length, excelChunk.content),
           chunk: {
             chunkIndex: index,
             totalChunks: excelChunks.length,
@@ -692,7 +693,7 @@ export class SessionStore {
 
       const stored = await storeIngestedDocumentChunk(session.client.memory, {
         ingest,
-        content: chunkTextValue,
+        content: labelKnowledgeChunk(fileName, index, chunks.length, chunkTextValue),
         chunk: {
           chunkIndex: index,
           totalChunks: chunks.length,

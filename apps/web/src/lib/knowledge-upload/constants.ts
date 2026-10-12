@@ -1,5 +1,15 @@
+import { KNOWLEDGE_CONTEXT_SNIPPET_MAX_LENGTH } from '@atlas/sdk';
+
+import { KNOWLEDGE_CHUNK_LABEL_MAX_LENGTH } from './chunk-label.js';
+
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
-export const KNOWLEDGE_CHUNK_MAX_CHARS = 6000;
+/**
+ * Each fragment is sent to the model as "<label>\n<text>" and the SDK cuts every snippet at
+ * KNOWLEDGE_CONTEXT_SNIPPET_MAX_LENGTH (1200), so label + newline + text must fit in it:
+ * 1200 − 117 (longest label) − 1 = 1082. Anything longer used to be silently cut off.
+ */
+export const KNOWLEDGE_CHUNK_MAX_CHARS =
+  KNOWLEDGE_CONTEXT_SNIPPET_MAX_LENGTH - KNOWLEDGE_CHUNK_LABEL_MAX_LENGTH - 1;
 
 export const SUPPORTED_EXTENSIONS = ['pdf', 'docx', 'pptx', 'txt', 'md', 'xls', 'xlsx'] as const;
 
