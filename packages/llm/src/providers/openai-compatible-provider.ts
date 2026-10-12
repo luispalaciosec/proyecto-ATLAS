@@ -277,7 +277,7 @@ export function createOpenAICompatibleProvider(
       const body: Record<string, unknown> = {
         model,
         messages: mapMessages(request.messages),
-        max_tokens: request.maxTokens ?? 1024,
+        max_tokens: request.maxTokens ?? 4096,
       };
 
       if (request.tools !== undefined && request.tools.length > 0) {

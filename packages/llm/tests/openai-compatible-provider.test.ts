@@ -431,3 +431,36 @@ describe('createOpenAICompatibleProvider retries on 429/503', () => {
     errorSpy.mockRestore();
   });
 });
+
+describe('createOpenAICompatibleProvider max_tokens', () => {
+  async function sentMaxTokens(maxTokens?: number): Promise<unknown> {
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) =>
+      Response.json({
+        choices: [{ message: { role: 'assistant', content: 'Listo' }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 1, completion_tokens: 1 },
+      }),
+    );
+    const provider = createOpenAICompatibleProvider({
+      apiKey: 'secret-key',
+      model: 'gemini-test',
+      baseUrl: 'https://custom.example.com/v1',
+      fetchImpl,
+    });
+
+    await provider.complete({
+      messages: [{ role: 'user', content: 'Hola' }],
+      ...(maxTokens !== undefined ? { maxTokens } : {}),
+    });
+
+    return (JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body)) as { max_tokens?: unknown })
+      .max_tokens;
+  }
+
+  it('defaults to 4096 so reasoning models have room for thinking plus the answer', async () => {
+    await expect(sentMaxTokens()).resolves.toBe(4096);
+  });
+
+  it('keeps an explicit maxTokens from the request', async () => {
+    await expect(sentMaxTokens(512)).resolves.toBe(512);
+  });
+});
