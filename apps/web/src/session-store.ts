@@ -110,7 +110,7 @@ function createChatSessionId(): string {
 }
 
 export class SessionStore {
-  readonly #atlasService = new AtlasService();
+  #atlasService = new AtlasService();
   readonly #sessions = new Map<string, ChatSessionState>();
   readonly #deterministicHistory = new Map<string, UiHistoryMessage[]>();
   readonly #activityLog = new Map<string, RawActivityEvent[]>();
@@ -447,6 +447,16 @@ export class SessionStore {
 
   get atlasService(): AtlasService {
     return this.#atlasService;
+  }
+
+  /**
+   * Drops cached Atlas clients so the next request builds them with the current
+   * ATLAS_LLM_* configuration (used after saving LLM settings from the web page).
+   * Conversations are rebuilt from their persisted history, as after a restart.
+   */
+  resetLlmClients(): void {
+    this.#atlasService = new AtlasService();
+    this.#sessions.clear();
   }
 
   recordDeterministicExchange(

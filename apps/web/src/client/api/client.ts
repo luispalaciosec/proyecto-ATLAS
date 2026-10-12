@@ -10,6 +10,11 @@ import type { KnowledgeDocumentsResponseProduct } from '../../presentation/map-k
 import type { KnowledgeFoldersResponseProduct } from '../../presentation/map-knowledge-folders.js';
 import { extractApiErrorMessage } from '../../lib/format-atlas-error.js';
 import type { KnowledgeUploadResponseProduct } from '../../presentation/map-knowledge-upload.js';
+import type {
+  LlmConnectionTestResult,
+  LlmSettingsInput,
+  LlmSettingsView,
+} from '../../presentation/llm-settings.js';
 import { getState } from '../state/app-state.js';
 
 export interface CorrectionApiPayload {
@@ -377,4 +382,64 @@ export async function sendCorrection(
   }
 
   return payload;
+}
+
+export class SettingsApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'SettingsApiError';
+    this.status = status;
+  }
+}
+
+async function readSettingsResponse<T>(response: Response, fallback: string): Promise<T> {
+  const payload = (await response.json().catch(() => ({}))) as T & { error?: string };
+
+  if (!response.ok) {
+    throw new SettingsApiError(payload.error ?? fallback, response.status);
+  }
+
+  return payload;
+}
+
+export async function fetchLlmSettings(): Promise<LlmSettingsView> {
+  const response = await fetch('/api/settings/llm');
+
+  return readSettingsResponse<LlmSettingsView>(response, 'Unable to load LLM settings');
+}
+
+export async function saveLlmSettings(input: LlmSettingsInput): Promise<LlmSettingsView> {
+  const response = await fetch('/api/settings/llm', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+
+  return readSettingsResponse<LlmSettingsView>(response, 'Unable to save LLM settings');
+}
+
+export async function resetLlmSettings(): Promise<LlmSettingsView> {
+  const response = await fetch('/api/settings/llm', { method: 'DELETE' });
+
+  return readSettingsResponse<LlmSettingsView>(response, 'Unable to reset LLM settings');
+}
+
+/** Tests the proposed settings, or the effective ones when `input` is omitted. */
+export async function testLlmSettings(input?: LlmSettingsInput): Promise<LlmConnectionTestResult> {
+  const response = await fetch('/api/settings/llm/test', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input ?? {}),
+  });
+  const payload = (await response.json().catch(() => ({}))) as Partial<LlmConnectionTestResult> & {
+    error?: string;
+  };
+
+  if (typeof payload.ok === 'boolean' && typeof payload.message === 'string') {
+    return payload as LlmConnectionTestResult;
+  }
+
+  throw new SettingsApiError(payload.error ?? 'Unable to test LLM settings', response.status);
 }

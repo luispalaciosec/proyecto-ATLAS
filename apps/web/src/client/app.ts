@@ -17,6 +17,7 @@ import {
 } from './pages/knowledge.js';
 import { renderActivity, refreshActivityView } from './pages/activity.js';
 import { renderBrands, refreshBrandsView } from './pages/brands.js';
+import { renderSettings } from './pages/settings.js';
 import {
   type AppRoute,
   getState,
@@ -148,33 +149,12 @@ function renderCurrentRoute(): void {
       refreshBrandsView();
       break;
     case '/configuracion':
-      renderSettingsPlaceholder(shellElements.main);
+      renderSettings(shellElements.main);
       break;
     default:
       renderHome(shellElements.main);
       break;
   }
-}
-
-function renderSettingsPlaceholder(main: HTMLElement): void {
-  main.innerHTML = `
-    <section class="page">
-      <header class="page__header">
-        <h1 class="page__title">${t('pages.settingsTitle')}</h1>
-      </header>
-      <article class="card">
-        <h2 class="card__title">${t('common.comingSoon')}</h2>
-        <p class="card__body">${t('common.comingSoonBody')}</p>
-        <div class="actions-row">
-          <button type="button" class="btn btn--primary" id="placeholder-go-chat">${t('home.startChat')}</button>
-        </div>
-      </article>
-    </section>
-  `;
-
-  main.querySelector('#placeholder-go-chat')?.addEventListener('click', () => {
-    setRoute('/chat');
-  });
 }
 
 export { switchWorkspace };

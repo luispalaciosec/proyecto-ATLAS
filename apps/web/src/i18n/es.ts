@@ -373,6 +373,105 @@ export const es = {
     libraryFoldersHint:
       'Las carpetas vacías también aparecen aquí. Selecciona una al subir documentos.',
   },
+  settings: {
+    subtitle:
+      'Elige qué servicio de IA usa ATLAS. Los cambios se aplican sin reiniciar la aplicación.',
+    loading: 'Cargando configuración…',
+    loadError: 'No pudimos cargar la configuración.',
+    statusTitle: 'Estado actual',
+    statusConfigured: 'Asistente de IA configurado.',
+    statusNotConfigured: 'Sin configurar: ATLAS responde en modo básico, sin asistente de IA.',
+    sourceSaved: 'Origen: guardado desde esta página.',
+    sourceEnv:
+      'Origen: variables de entorno. Si guardas una configuración aquí, tendrá prioridad sobre ellas.',
+    sourceNone: 'Origen: no hay configuración guardada ni variables de entorno.',
+    statusProvider: 'Proveedor: {name}',
+    statusModel: 'Modelo: {model}',
+    statusBaseUrl: 'URL base: {url}',
+    statusKey: 'Clave: {masked}',
+    keyMasked: 'termina en {last4}',
+    keyMaskedShort: 'guardada (oculta)',
+    keyNone: 'sin clave',
+    formTitle: 'Proveedor de IA',
+    providerLabel: 'Proveedor',
+    providers: {
+      anthropic: 'Anthropic (Claude)',
+      gemini: 'Google Gemini (vía OpenAI-compatible)',
+      ollama: 'Ollama (local)',
+      'openai-compatible': 'Otro compatible con OpenAI',
+    },
+    baseUrlLabel: 'URL base',
+    baseUrlHint:
+      'Se rellena con el valor habitual del proveedor. Cámbiala solo si tu proveedor indica otra.',
+    modelLabel: 'Modelo',
+    modelHint: 'Ejemplos: {examples}. Verifica el nombre vigente en la consola del proveedor.',
+    modelExamples: {
+      anthropic: 'claude-sonnet-5-5, claude-haiku-5-5',
+      gemini: 'gemini-3.8-flash',
+      ollama: 'llama3.1:8b, qwen2.5:7b',
+      'openai-compatible': 'el nombre que indique tu proveedor',
+    },
+    apiKeyLabel: 'Clave de API',
+    apiKeyPlaceholderNew: 'Pega aquí tu clave',
+    apiKeyPlaceholderKeep: 'Déjala vacía para conservar la clave guardada',
+    apiKeyHintOllama: 'Ollama local no necesita clave. Puedes dejar el campo vacío.',
+    apiKeySecurityNote:
+      'La clave se guarda solo en este equipo (.atlas/llm-settings.json) con permisos de lectura únicamente para tu usuario. No está cifrada: no es una protección de nivel producción. El navegador nunca vuelve a recibirla.',
+    testButton: 'Probar conexión',
+    testing: 'Probando conexión…',
+    saveButton: 'Guardar',
+    saving: 'Guardando…',
+    resetButton: 'Volver a las variables de entorno',
+    resetDone:
+      'Se eliminó la configuración guardada. ATLAS vuelve a usar las variables de entorno.',
+    saved: 'Configuración guardada. Las próximas respuestas usan este proveedor.',
+    saveError: 'No pudimos guardar la configuración.',
+    recommendationsTitle: 'Recomendaciones por proveedor',
+    freeTierWarning: 'No uses el tier gratuito con datos reales de clientes.',
+    limitsNote:
+      'Precios, límites y condiciones cambian con frecuencia: confírmalos en la web del proveedor antes de decidir.',
+    recommendations: {
+      anthropic:
+        'De pago por uso. Tus mensajes y la información que ATLAS cite salen de tu equipo hacia Anthropic. Revisa su política de datos vigente para la API.',
+      gemini:
+        'Tiene un nivel gratuito con límites bajos que cambian a menudo. Según las condiciones de Google, el contenido enviado en el nivel gratuito puede usarse para mejorar sus productos; el nivel de pago tiene otras condiciones. En ambos casos los datos salen de tu equipo hacia Google.',
+      ollama:
+        'Gratis y local: si la URL apunta a tu propio equipo, los datos no salen de él. Necesita un equipo con memoria suficiente, y la calidad y el uso de herramientas dependen del modelo que instales.',
+      'openai-compatible':
+        'Cualquier servicio compatible con la API de OpenAI (otro proveedor en la nube o un servidor propio). Costo, privacidad y límites dependen de ese proveedor.',
+    },
+    test: {
+      ok: 'Conexión correcta ({ms} ms).',
+      badRequest:
+        'El proveedor rechazó la solicitud (400). Revisa el nombre del modelo y la URL base.',
+      unauthorized: 'La clave no es válida o expiró (401). Revisa la clave de API.',
+      forbidden:
+        'La clave no tiene permiso para usar este modelo o servicio (403). Revisa los permisos en la consola del proveedor.',
+      notFound:
+        'No se encontró el modelo o la dirección (404). Revisa el nombre del modelo y la URL base.',
+      rateLimited:
+        'El proveedor está limitando las solicitudes o se agotó la cuota (429). Espera un momento o revisa tu plan.',
+      unavailable:
+        'El servicio del proveedor no está disponible ahora ({status}). Inténtalo más tarde.',
+      httpError: 'El proveedor respondió con un error ({status}).',
+      network:
+        'No pudimos conectar con el proveedor. Revisa la URL base y tu conexión (si es Ollama, que esté en ejecución).',
+      timeout: 'El proveedor tardó demasiado en responder. Inténtalo de nuevo.',
+      notConfigured: 'No hay ninguna configuración que probar.',
+    },
+    errors: {
+      invalidProvider: 'Elige un proveedor válido.',
+      modelRequired: 'Escribe el nombre del modelo.',
+      baseUrlRequired: 'Escribe la URL base del proveedor.',
+      baseUrlInvalid:
+        'La URL base debe empezar por http:// o https:// y no puede incluir usuario ni contraseña.',
+      apiKeyRequired: 'Escribe la clave de API.',
+      apiKeyRequiredForChange:
+        'Cambiaste el proveedor o la URL base: vuelve a escribir la clave para ese servicio.',
+      apiKeyInvalid: 'La clave tiene un formato no válido (espacios o caracteres de control).',
+      unexpected: 'Ocurrió un error inesperado con la configuración.',
+    },
+  },
 } as const;
 
 export type TranslationKey = string;

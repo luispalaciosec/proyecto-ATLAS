@@ -8,6 +8,8 @@ import multer from 'multer';
 
 import { formatWebUrl, resolveWebHost, resolveWebPort } from './config.js';
 import { formatAtlasError } from './lib/format-atlas-error.js';
+import { registerLlmSettingsRoutes } from './lib/llm-settings/routes.js';
+import { resolveLlmSettingsFilePath } from './lib/llm-settings/settings-store.js';
 import { loadEnvFromFile } from './lib/load-env.js';
 import { MAX_UPLOAD_BYTES } from './lib/knowledge-upload/constants.js';
 import { normalizeKnowledgeFolder } from './lib/knowledge-upload/folder.js';
@@ -121,7 +123,17 @@ function handleKnowledgeUploadError(
   return false;
 }
 
-export function createWebServer(sessionStore: SessionStore = new SessionStore()): Express {
+export interface WebServerOptions {
+  /** Defaults to ATLAS_LLM_SETTINGS_FILE or `.atlas/llm-settings.json` under the cwd. */
+  readonly llmSettingsFilePath?: string;
+  /** Used only by "Probar conexión"; injected in tests. */
+  readonly fetchImpl?: typeof fetch;
+}
+
+export function createWebServer(
+  sessionStore: SessionStore = new SessionStore(),
+  options: WebServerOptions = {},
+): Express {
   const app = express();
 
   app.use(express.json({ limit: '1mb' }));
@@ -129,6 +141,12 @@ export function createWebServer(sessionStore: SessionStore = new SessionStore())
 
   app.get('/api/health', (_request, response) => {
     response.json({ ok: true });
+  });
+
+  registerLlmSettingsRoutes(app, {
+    sessionStore,
+    filePath: options.llmSettingsFilePath ?? resolveLlmSettingsFilePath(),
+    ...(options.fetchImpl !== undefined ? { fetchImpl: options.fetchImpl } : {}),
   });
 
   app.get('/api/workspaces', (_request, response) => {
