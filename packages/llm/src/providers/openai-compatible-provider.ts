@@ -15,6 +15,34 @@ export interface OpenAICompatibleProviderOptions {
   readonly model: string;
   readonly baseUrl?: string;
   readonly fetchImpl?: typeof fetch;
+  /** Wait used between retries; injectable for tests. Defaults to setTimeout. */
+  readonly sleep?: (ms: number) => Promise<void>;
+}
+
+/** Transient provider answers worth retrying (rate limit, temporarily unavailable). */
+const RETRYABLE_STATUSES = new Set([429, 503]);
+const MAX_ATTEMPTS = 3;
+const MAX_RETRY_DELAY_MS = 8_000;
+
+function defaultSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Delay before retry `attempt`: the server hint (Gemini `"retryDelay": "13s"` in the body, or a
+ * Retry-After header in seconds) or else 1s, 2s… `undefined` when the server asks to wait longer
+ * than MAX_RETRY_DELAY_MS: retrying sooner would only fail again.
+ */
+function resolveRetryDelayMs(
+  errorText: string,
+  retryAfter: string | null,
+  attempt: number,
+): number | undefined {
+  const hintSeconds = /"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/.exec(errorText)?.[1] ?? retryAfter;
+  const seconds = hintSeconds !== null ? Number.parseFloat(hintSeconds) : Number.NaN;
+  const delayMs = Number.isFinite(seconds) ? seconds * 1000 : 1000 * 2 ** (attempt - 1);
+
+  return delayMs <= MAX_RETRY_DELAY_MS ? delayMs : undefined;
 }
 
 interface OpenAiToolCall {
@@ -241,6 +269,7 @@ export function createOpenAICompatibleProvider(
   );
   const chatCompletionsUrl = resolveChatCompletionsUrl(baseUrl);
   const fetchImpl = options.fetchImpl ?? fetch;
+  const sleep = options.sleep ?? defaultSleep;
 
   return Object.freeze({
     id: 'openai-compatible',
@@ -255,14 +284,34 @@ export function createOpenAICompatibleProvider(
         body.tools = request.tools.map(mapToolDefinition);
       }
 
-      const response = await fetchImpl(chatCompletionsUrl, {
+      const init: RequestInit = {
         method: 'POST',
         headers: Object.freeze({
           'content-type': 'application/json',
           authorization: `Bearer ${apiKey}`,
         }),
         body: JSON.stringify(body),
-      });
+      };
+      let response = await fetchImpl(chatCompletionsUrl, init);
+
+      for (
+        let attempt = 1;
+        !response.ok && RETRYABLE_STATUSES.has(response.status) && attempt < MAX_ATTEMPTS;
+        attempt += 1
+      ) {
+        const delayMs = resolveRetryDelayMs(
+          await response.clone().text(),
+          response.headers.get('retry-after'),
+          attempt,
+        );
+
+        if (delayMs === undefined) {
+          break;
+        }
+
+        await sleep(delayMs);
+        response = await fetchImpl(chatCompletionsUrl, init);
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
