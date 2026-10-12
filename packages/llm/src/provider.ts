@@ -16,6 +16,11 @@ export interface LlmToolCall {
   readonly id: string;
   readonly name: string;
   readonly arguments: Readonly<Record<string, unknown>>;
+  /**
+   * Opaque provider-specific data that must be echoed back unchanged on the next request
+   * (e.g. Gemini `extra_content.google.thought_signature`). Providers that do not use it ignore it.
+   */
+  readonly providerExtra?: unknown;
 }
 
 export type LlmMessageRole = 'system' | 'user' | 'assistant' | 'tool';

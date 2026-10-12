@@ -172,6 +172,73 @@ describe('createOpenAICompatibleProvider', () => {
     ]);
   });
 
+  it('echoes provider extra_content (e.g. Gemini thought signatures) back on the next request', async () => {
+    const extra = { google: { thought_signature: 'sig-abc' } };
+    const responses = [
+      Response.json({
+        choices: [
+          {
+            message: {
+              role: 'assistant',
+              content: null,
+              tool_calls: [
+                {
+                  id: 'call_1',
+                  type: 'function',
+                  function: { name: 'memory_search', arguments: '{"query":"pedido"}' },
+                  extra_content: extra,
+                },
+              ],
+            },
+            finish_reason: 'tool_calls',
+          },
+        ],
+        usage: { prompt_tokens: 1, completion_tokens: 1 },
+      }),
+      Response.json({
+        choices: [{ message: { role: 'assistant', content: 'Done' }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 1, completion_tokens: 1 },
+      }),
+    ];
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => {
+      const next = responses.shift();
+
+      if (next === undefined) {
+        throw new Error('unexpected extra request');
+      }
+
+      return next;
+    });
+
+    const provider = createOpenAICompatibleProvider({
+      apiKey: 'secret-key',
+      model: 'gemini-test',
+      baseUrl: 'https://custom.example.com/v1',
+      fetchImpl,
+    });
+
+    const first = await provider.complete({
+      messages: [{ role: 'user', content: 'Find prior orders' }],
+    });
+    const assistantMessage = first.message;
+
+    expect(assistantMessage.toolCalls?.[0]?.providerExtra).toEqual(extra);
+
+    await provider.complete({
+      messages: [
+        { role: 'user', content: 'Find prior orders' },
+        assistantMessage,
+        { role: 'tool', toolCallId: 'call_1', content: '{}' },
+      ],
+    });
+
+    const secondBody = JSON.parse(String((fetchImpl.mock.calls[1]?.[1] as RequestInit)?.body)) as {
+      messages: Array<{ tool_calls?: Array<{ extra_content?: unknown }> }>;
+    };
+
+    expect(secondBody.messages[1]?.tool_calls?.[0]?.extra_content).toEqual(extra);
+  });
+
   it('uses the Qwen-compatible default base URL when baseUrl is omitted', async () => {
     const fetchImpl = vi.fn(async (input: string | URL | Request) => {
       expect(String(input)).toBe(

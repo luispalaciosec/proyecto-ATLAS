@@ -24,6 +24,8 @@ interface OpenAiToolCall {
     readonly name: string;
     readonly arguments: string;
   };
+  /** Provider-specific passthrough (Gemini thought signatures live here). */
+  readonly extra_content?: unknown;
 }
 
 interface OpenAiMessage {
@@ -128,6 +130,9 @@ function mapMessages(messages: readonly LlmMessage[]): readonly OpenAiMessage[] 
                 name: toolCall.name,
                 arguments: JSON.stringify(toolCall.arguments),
               }),
+              ...(toolCall.providerExtra !== undefined
+                ? { extra_content: toolCall.providerExtra }
+                : {}),
             }),
           ),
         });
@@ -178,6 +183,7 @@ function mapToolCalls(toolCalls: readonly OpenAiToolCall[] | undefined): readonl
         id: toolCall.id,
         name: toolCall.function.name,
         arguments: parseToolArguments(toolCall.function.arguments),
+        ...(toolCall.extra_content !== undefined ? { providerExtra: toolCall.extra_content } : {}),
       }),
     );
   }
