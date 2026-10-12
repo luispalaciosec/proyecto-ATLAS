@@ -15,6 +15,28 @@ export interface AnthropicProviderOptions {
   readonly apiKey: string;
   readonly model: string;
   readonly fetchImpl?: typeof fetch;
+  /** Wait used between retries; injectable for tests. Defaults to setTimeout. */
+  readonly sleep?: (ms: number) => Promise<void>;
+}
+
+/** Transient answers worth retrying: rate limit, unavailable, overloaded (Anthropic 529). */
+const RETRYABLE_STATUSES = new Set([429, 503, 529]);
+const MAX_ATTEMPTS = 3;
+const MAX_RETRY_DELAY_MS = 8_000;
+
+function defaultSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Delay before retry `attempt`: the Retry-After header (seconds) when present, else 1s, 2s…
+ * `undefined` when the server asks to wait longer than MAX_RETRY_DELAY_MS: fail fast instead.
+ */
+function resolveRetryDelayMs(retryAfter: string | null, attempt: number): number | undefined {
+  const seconds = retryAfter !== null ? Number.parseFloat(retryAfter) : Number.NaN;
+  const delayMs = Number.isFinite(seconds) ? seconds * 1000 : 1000 * 2 ** (attempt - 1);
+
+  return delayMs <= MAX_RETRY_DELAY_MS ? delayMs : undefined;
 }
 
 interface AnthropicContentBlock {
@@ -196,6 +218,7 @@ export function createAnthropicProvider(options: AnthropicProviderOptions): LlmP
   const apiKey = options.apiKey.trim();
   const model = options.model.trim();
   const fetchImpl = options.fetchImpl ?? fetch;
+  const sleep = options.sleep ?? defaultSleep;
 
   return Object.freeze({
     id: 'anthropic',
@@ -215,7 +238,7 @@ export function createAnthropicProvider(options: AnthropicProviderOptions): LlmP
         body.tools = request.tools.map(mapToolDefinition);
       }
 
-      const response = await fetchImpl(ANTHROPIC_MESSAGES_URL, {
+      const init: RequestInit = {
         method: 'POST',
         headers: Object.freeze({
           'content-type': 'application/json',
@@ -223,7 +246,23 @@ export function createAnthropicProvider(options: AnthropicProviderOptions): LlmP
           'anthropic-version': ANTHROPIC_VERSION,
         }),
         body: JSON.stringify(body),
-      });
+      };
+      let response = await fetchImpl(ANTHROPIC_MESSAGES_URL, init);
+
+      for (
+        let attempt = 1;
+        !response.ok && RETRYABLE_STATUSES.has(response.status) && attempt < MAX_ATTEMPTS;
+        attempt += 1
+      ) {
+        const delayMs = resolveRetryDelayMs(response.headers.get('retry-after'), attempt);
+
+        if (delayMs === undefined) {
+          break;
+        }
+
+        await sleep(delayMs);
+        response = await fetchImpl(ANTHROPIC_MESSAGES_URL, init);
+      }
 
       if (!response.ok) {
         const errorText = await response.text();

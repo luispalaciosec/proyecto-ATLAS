@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createBudgetTracker } from '../src/budget.js';
+import { createAnthropicProvider } from '../src/providers/anthropic-provider.js';
 
 describe('createBudgetTracker', () => {
   it('marks exceeded when maxTurns is passed', () => {
@@ -107,6 +108,131 @@ describe('createAnthropicProvider', () => {
 
     expect(logSpy).not.toHaveBeenCalled();
     expect(errorSpy).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
+});
+
+describe('createAnthropicProvider retries on 429/503/529', () => {
+  const okBody = {
+    content: [{ type: 'text', text: 'Listo' }],
+    stop_reason: 'end_turn',
+    usage: { input_tokens: 1, output_tokens: 1 },
+  };
+  const overloaded = () =>
+    Response.json(
+      { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } },
+      { status: 529 },
+    );
+
+  function setup(responses: Response[]) {
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => {
+      const next = responses.shift();
+
+      if (next === undefined) {
+        throw new Error('unexpected extra request');
+      }
+
+      return next;
+    });
+    const sleep = vi.fn(async (_ms: number) => undefined);
+    const provider = createAnthropicProvider({
+      apiKey: 'secret-key',
+      model: 'claude-test-model',
+      fetchImpl,
+      sleep,
+    });
+
+    return { fetchImpl, sleep, provider };
+  }
+
+  const request = { messages: [{ role: 'user' as const, content: 'Hola' }] };
+
+  it('retries a 429 after the Retry-After the server asks for, then succeeds', async () => {
+    const { fetchImpl, sleep, provider } = setup([
+      new Response('rate limited', { status: 429, headers: { 'retry-after': '3' } }),
+      Response.json(okBody),
+    ]);
+
+    const result = await provider.complete(request);
+
+    expect(result.message.content).toBe('Listo');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledExactlyOnceWith(3000);
+  });
+
+  it('gives up after 3 attempts on repeated 529 with growing waits and the same error as before', async () => {
+    const { fetchImpl, sleep, provider } = setup([overloaded(), overloaded(), overloaded()]);
+
+    await expect(provider.complete(request)).rejects.toThrow(
+      /^Anthropic API error \(529\): .*overloaded_error/,
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(sleep.mock.calls.map(([ms]) => ms)).toEqual([1000, 2000]);
+  });
+
+  it('does not retry when the server asks to wait longer than the cap', async () => {
+    const { fetchImpl, sleep, provider } = setup([
+      new Response('rate limited', { status: 429, headers: { 'retry-after': '45' } }),
+    ]);
+
+    await expect(provider.complete(request)).rejects.toThrow(
+      'Anthropic API error (429): rate limited',
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it('retries a 503 but never other errors', async () => {
+    const unavailable = setup([
+      new Response('unavailable', { status: 503 }),
+      Response.json(okBody),
+    ]);
+
+    await unavailable.provider.complete(request);
+    expect(unavailable.fetchImpl).toHaveBeenCalledTimes(2);
+    expect(unavailable.sleep).toHaveBeenCalledExactlyOnceWith(1000);
+
+    const badRequest = setup([new Response('bad model', { status: 400 })]);
+
+    await expect(badRequest.provider.complete(request)).rejects.toThrow(
+      'Anthropic API error (400): bad model',
+    );
+    expect(badRequest.fetchImpl).toHaveBeenCalledTimes(1);
+    expect(badRequest.sleep).not.toHaveBeenCalled();
+  });
+
+  it('behaves exactly as before when the first attempt succeeds', async () => {
+    const { fetchImpl, sleep, provider } = setup([Response.json(okBody)]);
+
+    await provider.complete(request);
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it('resends the identical request on every attempt without logging the key', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { fetchImpl, provider } = setup([
+      overloaded(),
+      new Response('rate limited', { status: 429, headers: { 'retry-after': '1' } }),
+      Response.json(okBody),
+    ]);
+
+    await provider.complete(request);
+
+    const inits = fetchImpl.mock.calls.map(([, init]) => init);
+    expect(inits).toHaveLength(3);
+    expect(new Set(inits.map((init) => init?.body)).size).toBe(1);
+    expect(
+      inits.every(
+        (init) => (init?.headers as Record<string, string>)['x-api-key'] === 'secret-key',
+      ),
+    ).toBe(true);
+    expect(logSpy).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalled();
+
     logSpy.mockRestore();
     errorSpy.mockRestore();
   });
