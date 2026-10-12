@@ -384,7 +384,9 @@ export function createOrgLlmToolExecutors(atlas: Atlas): readonly ToolExecutor[]
       definition: Object.freeze({
         name: 'org_resolve_decision',
         description:
-          'Resolve the most recent organizational decision for a client and return cited evidence.',
+          'Resolve the most recent organizational decision for a client and return cited evidence. ' +
+          'Set includeHistory to true to return ALL decisions for the client (most recent first), ' +
+          'each with its notes and cited evidence.',
         parameters: Object.freeze({
           type: 'object' as const,
           properties: Object.freeze({
@@ -396,6 +398,11 @@ export function createOrgLlmToolExecutors(atlas: Atlas): readonly ToolExecutor[]
               type: 'string',
               description: 'Optional decision subject type filter (e.g. discount_request).',
             }),
+            includeHistory: Object.freeze({
+              type: 'boolean',
+              description:
+                'When true, return every recorded decision for the client instead of only the most recent one.',
+            }),
           }),
           required: Object.freeze(['clientLegalName']),
         }),
@@ -403,6 +410,21 @@ export function createOrgLlmToolExecutors(atlas: Atlas): readonly ToolExecutor[]
       execute: async (args: Readonly<Record<string, unknown>>) => {
         const clientLegalName = asString(args.clientLegalName, 'clientLegalName');
         const subjectType = asOptionalString(args.subjectType, 'subjectType');
+        const includeHistory = asOptionalBoolean(args.includeHistory, 'includeHistory');
+
+        if (includeHistory) {
+          const history = await atlas.org.resolveDecisionHistoryWithEvidence(
+            clientLegalName,
+            subjectType,
+          );
+
+          if (history.length === 0) {
+            return `No hay ninguna decisión registrada para ${clientLegalName}.`;
+          }
+
+          return atlas.org.formatDecisionHistory(history);
+        }
+
         const resolved = await atlas.org.resolveDecisionWithEvidence(clientLegalName, subjectType);
 
         if (resolved === undefined) {

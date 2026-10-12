@@ -78,3 +78,24 @@ export async function resolveDecisionWithEvidence(
     evidence,
   });
 }
+
+/**
+ * All decisions for a client (most recent first), each with its cited evidence.
+ * Additive helper: resolveDecisionWithEvidence (most recent only) is unchanged.
+ */
+export async function resolveDecisionHistoryWithEvidence(
+  atlas: Atlas,
+  clientLegalName: string,
+  subjectType?: string,
+): Promise<readonly ResolvedDecisionWithEvidence[]> {
+  const decisions = await resolveDecisionsForClient(atlas, clientLegalName, subjectType);
+  const history: ResolvedDecisionWithEvidence[] = [];
+
+  for (const decision of decisions) {
+    const evidence = await getRelated(atlas, getEntityId(decision), ORG_RELATIONSHIP_CITES);
+
+    history.push(Object.freeze({ decision, evidence }));
+  }
+
+  return Object.freeze(history);
+}

@@ -2,6 +2,7 @@ import type { Atlas } from '../atlas/atlas.js';
 import { formatDecisionWithEvidence as formatDecisionWithEvidenceText } from '../org/decision-answer.js';
 import {
   type ResolvedDecisionWithEvidence,
+  resolveDecisionHistoryWithEvidence,
   resolveDecisionWithEvidence,
 } from '../org/decision-resolver.js';
 import { recordDecision, storeDecision, storeEvidence } from '../org/decision-store.js';
@@ -68,6 +69,24 @@ export class OrgMemoryModule {
 
   resolveDecisionWithEvidence(clientLegalName: string, subjectType?: string) {
     return resolveDecisionWithEvidence(this.#atlas, clientLegalName, subjectType);
+  }
+
+  resolveDecisionHistoryWithEvidence(clientLegalName: string, subjectType?: string) {
+    return resolveDecisionHistoryWithEvidence(this.#atlas, clientLegalName, subjectType);
+  }
+
+  async formatDecisionHistory(history: readonly ResolvedDecisionWithEvidence[]): Promise<string> {
+    const blocks: string[] = [];
+
+    for (const [index, entry] of history.entries()) {
+      const formatted = await this.formatDecisionWithEvidence(entry);
+
+      blocks.push(
+        `Decisión ${index + 1} de ${history.length} (más reciente primero):\n${formatted}`,
+      );
+    }
+
+    return blocks.join('\n\n');
   }
 
   async formatDecisionWithEvidence(resolved: ResolvedDecisionWithEvidence): Promise<string> {

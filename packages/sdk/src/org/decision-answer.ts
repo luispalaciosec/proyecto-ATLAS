@@ -30,6 +30,10 @@ export function formatDecisionWithEvidence(
     );
   }
 
+  if (decision.notes !== undefined) {
+    lines.push(`Notas: ${decision.notes}`);
+  }
+
   if (resolved.evidence.length > 0) {
     lines.push('Evidencia citada:');
 
