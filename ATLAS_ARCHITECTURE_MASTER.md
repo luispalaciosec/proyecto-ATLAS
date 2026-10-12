@@ -1212,6 +1212,8 @@ Persist turn
 
 **Documented limitations:** INT-009 canonical case is structured warranty correction (45→60 days); generic feedback learning is not implemented. Web persistence is local filesystem per workspace, not cloud.
 
+**Dependencia web → SDK (fragmentos de Conocimiento):** desde `fb86f17`, `apps/web` calcula el tamaño máximo de sus fragmentos (`KNOWLEDGE_CHUNK_MAX_CHARS`, hoy 1082) a partir de `KNOWLEDGE_CONTEXT_SNIPPET_MAX_LENGTH` exportada por `@atlas/sdk` (1200), restando la etiqueta `[Documento: <archivo> · fragmento i/n]`. Si el SDK cambia ese valor, la web se ajusta sola; si deja de exportarlo, la web deja de compilar.
+
 Reference: [`VERSION.md`](./VERSION.md) § ATLAS 4.x — Integration Closure.
 
 ---
@@ -1784,6 +1786,24 @@ Changes to these components require a new Architecture Decision Record (ADR).
 | @atlas/intelligence (Planning Sprint 10F) | Frozen |
 
 The frozen status guarantees platform stability while the remaining cognitive capabilities are implemented.
+
+## 26A. Excepciones autorizadas al congelamiento
+
+El Owner autorizó explícitamente los siguientes cambios en paquetes Frozen. Ninguno cambia la firma de APIs existentes ni el comportamiento de los consumidores que no usan las opciones nuevas.
+
+| Paquete | Archivo(s) | Tipo | Cambio | Commit |
+|---|---|---|---|---|
+| `@atlas/sdk` | `org/` (decision-resolver, decision-answer, org-llm-tools, org-memory-module) | Aditivo | Historial de decisiones (`resolveDecisionHistoryWithEvidence`, `formatDecisionHistory`), parámetro opcional `includeHistory` en `org_resolve_decision` y "Notas:" en la respuesta. | `1bf796e` |
+| `@atlas/llm` | `provider.ts`, `providers/openai-compatible-provider.ts` | Aditivo | Campo opcional `LlmToolCall.providerExtra`; reenvío de `extra_content` en tool_calls (thought signatures de Gemini). | `9176b42` |
+| `@atlas/cli` | `services/atlas-service.ts` | Aditivo (12 líneas) | Constructor opcional `AtlasService({ resolveLlmOptions })`: si devuelve opciones, tienen prioridad sobre `ATLAS_LLM_*`; si no, comportamiento idéntico. Lo usa `/configuracion` de la web. | `bba6e66` |
+| `@atlas/sdk` | `org/graph-traversal.ts` | Corrección de bug | `getRelated` resuelve en secuencia en lugar de con `Promise.all`, porque el motor de memoria rechaza lecturas concurrentes. Antes fallaba cualquier decisión que citara 2 o más evidencias. Mismo resultado y mismo orden. | `1b96054` |
+| `@atlas/llm` | `providers/openai-compatible-provider.ts` | Robustez | Reintento ante 429/503: máximo 3 intentos, respeta `retryDelay` y `Retry-After`, tope de 8 s y falla enseguida si el servidor pide más. Opción `sleep` inyectable. | `df107f7` |
+| `@atlas/llm` | `providers/openai-compatible-provider.ts` | Ajuste de valor por defecto | `max_tokens` por defecto de 1024 a 4096 solo en este proveedor, porque, según informes de la comunidad, Gemini cuenta el razonamiento dentro del límite. Un `maxTokens` explícito sigue mandando. Anthropic sigue en 1024. | `f88ba9b` |
+| `@atlas/llm` | `providers/anthropic-provider.ts` | Robustez | Reintento ante 429/503/529 con las mismas reglas: máximo 3 intentos, `Retry-After`, tope de 8 s. Opción `sleep` inyectable. | `f7b0e51` |
+
+Todas llevan tests de regresión. En `f7b0e51` (HEAD al registrar esta tabla), `pnpm test -- --force` pasó 46/46 tareas sin caché: `@atlas/llm` 31, `@atlas/web` 286, `@atlas/sdk` 160, `@atlas/cli` 78, sin bajar ningún paquete.
+
+Estas excepciones **no levantan el congelamiento**: cualquier otro cambio en estos paquetes sigue requiriendo un ADR. Dado que `@atlas/sdk` (submódulo `org/`) y `@atlas/llm` (proveedores) acumulan varias excepciones, se recomienda un ADR que defina qué partes de ellos pueden evolucionar fuera del congelamiento.
 
 ---
 
