@@ -185,10 +185,29 @@ function mapToolCalls(content: readonly AnthropicContentBlock[]): readonly LlmTo
   return Object.freeze(toolCalls);
 }
 
+interface AnthropicUsage {
+  readonly input_tokens?: number;
+  readonly output_tokens?: number;
+  readonly cache_creation_input_tokens?: number;
+  readonly cache_read_input_tokens?: number;
+}
+
+/**
+ * With prompt caching, input_tokens only counts the uncached part. The UI and the tool-loop
+ * budget measure total context size, so cache writes and reads are added back in.
+ */
+function totalInputTokens(usage: AnthropicUsage | undefined): number {
+  return (
+    (usage?.input_tokens ?? 0) +
+    (usage?.cache_creation_input_tokens ?? 0) +
+    (usage?.cache_read_input_tokens ?? 0)
+  );
+}
+
 function mapAnthropicResponse(body: {
   readonly content?: readonly AnthropicContentBlock[];
   readonly stop_reason?: string;
-  readonly usage?: { readonly input_tokens?: number; readonly output_tokens?: number };
+  readonly usage?: AnthropicUsage;
 }): LlmCompletionResult {
   const content = body.content ?? [];
   const textParts = content
@@ -205,7 +224,7 @@ function mapAnthropicResponse(body: {
   return Object.freeze({
     message,
     usage: Object.freeze({
-      inputTokens: body.usage?.input_tokens ?? 0,
+      inputTokens: totalInputTokens(body.usage),
       outputTokens: body.usage?.output_tokens ?? 0,
     }),
     stopReason: mapStopReason(body.stop_reason),
@@ -230,12 +249,22 @@ export function createAnthropicProvider(options: AnthropicProviderOptions): LlmP
         messages: anthropicMessages,
       };
 
-      if (system !== undefined) {
+      // Prompt caching: one breakpoint after the tool definitions (stable across turns) and one
+      // after the system prompt (stable across the calls of one turn). The API silently ignores
+      // a breakpoint whose cached prefix is shorter than the model's minimum cacheable length;
+      // that minimum is NOT verified for Haiku 5.5 or Sonnet 5.5.
+      if (system !== undefined && system.trim().length > 0) {
+        body.system = [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }];
+      } else if (system !== undefined) {
         body.system = system;
       }
 
       if (request.tools !== undefined && request.tools.length > 0) {
-        body.tools = request.tools.map(mapToolDefinition);
+        const tools = request.tools.map(mapToolDefinition);
+
+        body.tools = tools.map((tool, index) =>
+          index === tools.length - 1 ? { ...tool, cache_control: { type: 'ephemeral' } } : tool,
+        );
       }
 
       const init: RequestInit = {
@@ -272,7 +301,7 @@ export function createAnthropicProvider(options: AnthropicProviderOptions): LlmP
       const payload = (await response.json()) as {
         readonly content?: readonly AnthropicContentBlock[];
         readonly stop_reason?: string;
-        readonly usage?: { readonly input_tokens?: number; readonly output_tokens?: number };
+        readonly usage?: AnthropicUsage;
       };
 
       return mapAnthropicResponse(payload);

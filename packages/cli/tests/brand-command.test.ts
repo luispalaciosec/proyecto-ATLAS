@@ -18,6 +18,15 @@ import {
   loadRecentFeedbackContext,
 } from '../src/workspace/feedback-context.js';
 
+/** Text of the Anthropic `system` field, sent as a string or as cacheable text blocks. */
+function systemText(system: unknown): string {
+  if (Array.isArray(system)) {
+    return system.map((block: { text?: unknown }) => String(block.text ?? '')).join('\n');
+  }
+
+  return typeof system === 'string' ? system : '';
+}
+
 class ScriptLineReader implements ChatLineReader {
   readonly #lines: string[];
   #index = 0;
@@ -135,9 +144,9 @@ describe('atlas brand LLM context', () => {
       reader: new ScriptLineReader(['hello brand', '/exit']),
     });
 
-    const brandBody = fetchBodies[0] as { system?: string };
-    expect(brandBody.system).toContain('Electronics retail for enthusiasts');
-    expect(brandBody.system).toContain('No discounts without approval');
+    const brandBody = fetchBodies[0] as { system?: unknown };
+    expect(systemText(brandBody.system)).toContain('Electronics retail for enthusiasts');
+    expect(systemText(brandBody.system)).toContain('No discounts without approval');
 
     fetchBodies.length = 0;
 
@@ -146,8 +155,8 @@ describe('atlas brand LLM context', () => {
       reader: new ScriptLineReader(['hello chat', '/exit']),
     });
 
-    const chatBody = fetchBodies[0] as { system?: string };
-    expect(chatBody.system).not.toContain('Electronics retail for enthusiasts');
+    const chatBody = fetchBodies[0] as { system?: unknown };
+    expect(systemText(chatBody.system)).not.toContain('Electronics retail for enthusiasts');
 
     rmSync(root, { recursive: true, force: true });
   });
@@ -355,9 +364,9 @@ describe('atlas brand proactive feedback context', () => {
       reader: new ScriptLineReader(['new campaign', '/exit']),
     });
 
-    const firstFetch = fetchBodies[0] as { system?: string };
-    expect(firstFetch.system).toContain('mention free shipping');
-    expect(firstFetch.system).toContain('Known corrections from previous sessions');
+    const firstFetch = fetchBodies[0] as { system?: unknown };
+    expect(systemText(firstFetch.system)).toContain('mention free shipping');
+    expect(systemText(firstFetch.system)).toContain('Known corrections from previous sessions');
 
     rmSync(root, { recursive: true, force: true });
   });

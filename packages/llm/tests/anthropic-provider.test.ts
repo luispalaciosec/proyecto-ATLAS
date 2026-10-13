@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createBudgetTracker } from '../src/budget.js';
+import type { LlmToolDefinition } from '../src/provider.js';
 import { createAnthropicProvider } from '../src/providers/anthropic-provider.js';
 
 describe('createBudgetTracker', () => {
@@ -95,11 +96,14 @@ describe('createAnthropicProvider', () => {
     expect(fetchImpl).toHaveBeenCalledOnce();
     const requestBody = JSON.parse(String((fetchImpl.mock.calls[0]?.[1] as RequestInit)?.body)) as {
       model: string;
-      system: string;
+      system: unknown;
       tools: Array<{ name: string }>;
     };
     expect(requestBody.model).toBe('claude-test-model');
-    expect(requestBody.system).toBe('You are Atlas.');
+    // Sent as a cacheable text block since prompt caching (same text as before).
+    expect(requestBody.system).toEqual([
+      { type: 'text', text: 'You are Atlas.', cache_control: { type: 'ephemeral' } },
+    ]);
     expect(requestBody.tools[0]?.name).toBe('memory_search');
     expect(result.stopReason).toBe('tool_use');
     expect(result.message.toolCalls?.[0]?.name).toBe('memory_search');
@@ -235,5 +239,132 @@ describe('createAnthropicProvider retries on 429/503/529', () => {
 
     logSpy.mockRestore();
     errorSpy.mockRestore();
+  });
+});
+
+describe('createAnthropicProvider prompt caching', () => {
+  const tools: LlmToolDefinition[] = [
+    {
+      name: 'memory_search',
+      description: 'Search memory',
+      parameters: {
+        type: 'object',
+        properties: { query: { type: 'string', description: 'Query' } },
+        required: ['query'],
+      },
+    },
+    {
+      name: 'org_evaluate_discount',
+      description: 'Evaluate a discount',
+      parameters: {
+        type: 'object',
+        properties: { clientLegalName: { type: 'string', description: 'Client' } },
+        required: ['clientLegalName'],
+      },
+    },
+  ];
+
+  function setup(responses: Response[]) {
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => {
+      const next = responses.shift();
+
+      if (next === undefined) {
+        throw new Error('unexpected extra request');
+      }
+
+      return next;
+    });
+    const sleep = vi.fn(async (_ms: number) => undefined);
+    const provider = createAnthropicProvider({
+      apiKey: 'secret-key',
+      model: 'claude-test-model',
+      fetchImpl,
+      sleep,
+    });
+    const sentBody = (call = 0) =>
+      JSON.parse(String(fetchImpl.mock.calls[call]?.[1]?.body)) as Record<string, unknown>;
+
+    return { fetchImpl, sleep, provider, sentBody };
+  }
+
+  const okResponse = (usage: Record<string, number>) =>
+    Response.json({ content: [{ type: 'text', text: 'Listo' }], stop_reason: 'end_turn', usage });
+
+  it('marks the system prompt and only the last tool definition with cache_control', async () => {
+    const { provider, sentBody } = setup([okResponse({ input_tokens: 1, output_tokens: 1 })]);
+
+    await provider.complete({
+      messages: [
+        { role: 'system', content: 'You are Atlas.' },
+        { role: 'user', content: 'Hola' },
+      ],
+      tools,
+    });
+
+    const body = sentBody() as { system: unknown; tools: Array<Record<string, unknown>> };
+
+    expect(body.system).toEqual([
+      { type: 'text', text: 'You are Atlas.', cache_control: { type: 'ephemeral' } },
+    ]);
+    expect(body.tools[0]).not.toHaveProperty('cache_control');
+    expect(body.tools[1]?.cache_control).toEqual({ type: 'ephemeral' });
+    expect(body.tools[1]?.name).toBe('org_evaluate_discount');
+  });
+
+  it('sends no cache_control at all without system prompt and without tools', async () => {
+    const { provider, fetchImpl, sentBody } = setup([
+      okResponse({ input_tokens: 1, output_tokens: 1 }),
+    ]);
+
+    await provider.complete({ messages: [{ role: 'user', content: 'Hola' }] });
+
+    expect(String(fetchImpl.mock.calls[0]?.[1]?.body)).not.toContain('cache_control');
+    expect(sentBody()).not.toHaveProperty('system');
+    expect(sentBody()).not.toHaveProperty('tools');
+  });
+
+  it('reports total input tokens: uncached + cache writes + cache reads', async () => {
+    const { provider } = setup([
+      okResponse({
+        input_tokens: 10,
+        cache_creation_input_tokens: 200,
+        cache_read_input_tokens: 3000,
+        output_tokens: 5,
+      }),
+    ]);
+
+    const result = await provider.complete({ messages: [{ role: 'user', content: 'Hola' }] });
+
+    expect(result.usage).toEqual({ inputTokens: 3210, outputTokens: 5 });
+  });
+
+  it('keeps the previous usage when the cache fields are absent', async () => {
+    const { provider } = setup([okResponse({ input_tokens: 42, output_tokens: 7 })]);
+
+    const result = await provider.complete({ messages: [{ role: 'user', content: 'Hola' }] });
+
+    expect(result.usage).toEqual({ inputTokens: 42, outputTokens: 7 });
+  });
+
+  it('still honors an explicit maxTokens and retries with the same cached body', async () => {
+    const { provider, fetchImpl, sleep, sentBody } = setup([
+      new Response('overloaded', { status: 529 }),
+      okResponse({ input_tokens: 3, cache_read_input_tokens: 100, output_tokens: 2 }),
+    ]);
+
+    const result = await provider.complete({
+      messages: [
+        { role: 'system', content: 'You are Atlas.' },
+        { role: 'user', content: 'Hola' },
+      ],
+      tools,
+      maxTokens: 2048,
+    });
+
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledExactlyOnceWith(1000);
+    expect(sentBody(0).max_tokens).toBe(2048);
+    expect(sentBody(1)).toEqual(sentBody(0));
+    expect(result.usage).toEqual({ inputTokens: 103, outputTokens: 2 });
   });
 });
